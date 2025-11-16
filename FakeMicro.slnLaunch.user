@@ -1,0 +1,17 @@
+[
+  {
+    "Name": "新建配置文件",
+    "Projects": [
+      {
+        "Path": "src\\FakeMicro.Silo\\FakeMicro.Silo.csproj",
+        "Action": "Start",
+        "DebugTarget": "Host"
+      },
+      {
+        "Path": "src\\FakeMicro.Api\\FakeMicro.Api.csproj",
+        "Action": "Start",
+        "DebugTarget": "api-delayed"
+      }
+    ]
+  }
+]

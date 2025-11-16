@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Orleans.Core" Version="9.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Serialization" Version="9.2.1" />
+    <!-- SqlSugar ORM 支持 -->
+
+    <PackageReference Include="SqlSugarCore" Version="5.1.4.207" />
+    <!-- 数据验证支持 -->
+    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+  </ItemGroup>
+
+
+
+</Project>

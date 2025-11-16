@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Web API相关包 -->
+    <PackageReference Include="Hangfire.Core" Version="1.8.22" />
+    <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.19.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
+    <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="Serilog" Version="4.3.0" />
+    <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
+    <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
+    <PackageReference Include="Microsoft.Orleans.Client" Version="7.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+  </ItemGroup>
+  <!-- 项目引用 -->
+  <ItemGroup>
+    <ProjectReference Include="..\FakeMicro.Grains\FakeMicro.Grains.csproj" />
+    <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
+    <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
+    <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
+  </ItemGroup>
+  <!-- 排除所有原始控制器文件，只保留TestController -->
+  <ItemGroup>
+    <Compile Remove="OrleansApiHost.cs" />
+    <!-- 排除除TestController外的所有控制器 -->
+    <Compile Remove="Controllers\*.cs" />
+    <Compile Include="Controllers\AdminController.cs" />
+    <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Controllers\CounterController.cs" />
+    <Compile Include="Controllers\DictionaryController.cs" />
+    <Compile Include="Controllers\EventsController.cs" />
+    <Compile Include="Controllers\FilesController.cs" />
+    <Compile Include="Controllers\HangfireJobsController.cs" />
+    <Compile Include="Controllers\HealthController.cs" />
+    <Compile Include="Controllers\MessagesController.cs" />
+    <Compile Include="Controllers\MonitoringController.cs" />
+    <Compile Include="Controllers\PermissionController.cs" />
+    <Compile Include="Controllers\ProtectedController.cs" />
+    <Compile Include="Controllers\SysOpenController.cs" />
+    <Compile Include="Controllers\UserController.cs" />
+  </ItemGroup>
+
+</Project>

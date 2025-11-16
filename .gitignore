@@ -1,0 +1,153 @@
+# FakeMicro 项目 .gitignore 文件
+
+# 依赖目录
+**/node_modules/
+**/bin/
+**/obj/
+**/packages/
+
+# 构建输出
+**/dist/
+**/build/
+**/out/
+**/target/
+
+# 日志文件
+**/logs/
+**/*.log
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/lerna-debug.log*
+
+# 运行时数据
+**/pids/
+**/*.pid
+**/*.seed
+**/*.pid.lock
+
+# 覆盖率目录
+**/coverage/
+*.lcov
+
+# 依赖缓存
+**/.npm
+**/.eslintcache
+
+# 可选 npm 缓存目录
+**/.npm
+
+# 可选 REPL 历史
+**/.node_repl_history
+
+# 输出目录
+**/release/
+
+# 依赖树
+**/.yarn-integrity
+
+# dotenv 环境变量文件
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# 验证文件
+**/vercel.json
+
+# 编辑器目录和文件
+**/.vscode/
+**/.idea/
+*.swp
+*.swo
+*~
+
+# 操作系统生成的文件
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# 用户特定文件
+**/.suo
+**/.ntvs*
+**/.njsproj
+**/.sln*
+**/*.sw?
+
+# 项目特定忽略
+**/appsettings.Development.json
+**/appsettings.Production.json
+**/appsettings.Staging.json
+
+# 前端构建缓存
+**/.vite/
+**/.cache/
+
+# 测试文件
+**/TestResults/
+
+# 包文件
+*.7z
+*.dmg
+*.gz
+*.iso
+*.jar
+*.rar
+*.tar
+*.zip
+
+# 数据库文件
+*.mdf
+*.ldf
+*.sdf
+
+# 备份文件
+*.bak
+*.tmp
+*.temp
+
+# 证书文件
+*.pfx
+*.p12
+*.cer
+*.crt
+
+# 临时文件
+**/temp/
+**/tmp/
+
+# 配置文件（生产环境敏感信息）
+**/appsettings.json
+
+# 前端特定忽略
+frontend/public/icons/
+frontend/public/screenshots/
+frontend/.env.local
+frontend/.env.*.local
+
+# Orleans 特定忽略
+**/OrleansConfiguration.xml
+**/ClientConfiguration.xml
+
+# Hangfire 数据库
+Hangfire*
+
+# ELK 相关
+**/elasticsearch/
+**/logstash/
+**/kibana/
+
+# Docker 相关（可选，如果使用 Docker）
+!.docker/
+docker-compose.override.yml
+
+# 开发工具
+**/.history/
+
+
+.vs/

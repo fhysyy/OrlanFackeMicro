@@ -1,0 +1,46 @@
+## JWT配置参数和API鉴权相关参数值
+### JWT 配置参数 1. 配置来源优先级
+- 环境变量 : JWT_SECRET_KEY (最高优先级)
+- 配置文件 : 从 AppSettings:Jwt 部分读取
+- 默认值 : FakeMicroDefaultSecretKeyForDevelopmentOnlyChangeInProduction 2. JwtConfig 类参数定义
+- SecretKey : JWT签名密钥
+- Issuer : 令牌签发者，默认为 FakeMicro
+- Audience : 令牌接收者，默认为 FakeMicro-Users
+- ExpireMinutes : 令牌过期时间(分钟)，默认为 60
+- RefreshExpireDays : 刷新令牌过期时间(天)，默认为 7 3. 密钥处理逻辑
+- 密钥长度必须≥32字符，不足时会使用SHA256进行哈希扩展
+- 密钥处理： Encoding.UTF8.GetBytes(secretKey)
+### JWT 令牌生成参数 1. 声明参数 (Claims)
+- ClaimTypes.NameIdentifier : 用户ID
+- ClaimTypes.Name : 用户名
+- "role" : 用户角色 (自定义角色声明类型)
+- ClaimTypes.Role : 用户角色 (标准角色声明类型)
+- JwtRegisteredClaimNames.Jti : 令牌唯一标识符 (GUID) 2. 令牌描述参数
+- Expires : DateTime.UtcNow.AddMinutes(_expireMinutes)
+- Issuer : 令牌签发者
+- Audience : 令牌接收者
+- SigningCredentials :
+  - 密钥: new SymmetricSecurityKey(key)
+  - 算法: SecurityAlgorithms.HmacSha256Signature
+### JWT 令牌验证参数 1. TokenValidationParameters
+- ValidateIssuer : false (开发环境)
+- ValidateAudience : false (开发环境)
+- ValidateLifetime : true
+- ValidateIssuerSigningKey : true
+- ValidIssuer : 令牌签发者
+- ValidAudience : 令牌接收者
+- IssuerSigningKey : new SymmetricSecurityKey(key)
+- RoleClaimType : "role"
+- ClockSkew : TimeSpan.FromMinutes(5) (允许5分钟的时钟偏差)
+### API 请求鉴权参数 1. 认证头格式
+- Authorization : Bearer {token} 2. 授权策略定义
+- User策略 : 仅需认证用户
+- Admin策略 : 认证用户且角色满足 Roles.HasRole(role, Roles.Admin)
+- SystemAdmin策略 : 认证用户且角色满足 Roles.HasRole(role, Roles.SystemAdmin)
+- ContentManager策略 : 认证用户且角色满足 Roles.HasRole(role, Roles.ContentManager)
+- Auditor策略 : 认证用户且角色满足 Roles.HasRole(role, Roles.Auditor) 3. 角色声明兼容性处理
+- 系统会同时检查 "role" 和 ClaimTypes.Role 两种声明类型
+- 在令牌验证时，如果只有 "role" 声明而没有 ClaimTypes.Role 声明，会自动添加 ClaimTypes.Role 声明
+### 角色层级关系
+- SystemAdmin (5) > Admin (4) > ContentManager (3) > Auditor (2) > User (1)
+- 使用 Roles.HasRole() 方法检查角色权限层级

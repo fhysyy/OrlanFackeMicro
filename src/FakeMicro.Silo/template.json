@@ -1,0 +1,124 @@
+{
+  "Database": {
+    "Type": "PostgreSQL",
+    "Server": "localhost",
+    "Port": 5432,
+    "Database": "fakemicro",
+    "Username": "postgres",
+    "Password": "123456",
+    "TrustServerCertificate": false,
+    "ConnectionTimeout": 30,
+    "MinPoolSize": 5,
+    "MaxPoolSize": 100
+  },
+  "Orleans": {
+    "ClusterId": "FakeMicroCluster",
+    "ServiceId": "FakeMicroService",
+    "SiloPort": 11111,
+    "GatewayPort": 30000,
+    "UseLocalhostClustering": true,
+    "CollectionAgeMinutes": 5,
+    "CollectionQuantumSeconds": 1,
+    "DashboardPort": 8080,
+    "DashboardHost": "localhost",
+    "DashboardUpdateIntervalMs": 2000
+  },
+  "Jwt": {
+    "SecretKey": "your-secret-key",
+    "Issuer": "FakeMicro",
+    "Audience": "FakeMicro-Users",
+    "ExpireMinutes": 60,
+    "RefreshExpireDays": 7
+  },
+  "RabbitMQ": {
+    "HostName": "localhost",
+    "Port": 5672,
+    "UserName": "guest",
+    "Password": "",
+    "VirtualHost": "/"
+  },
+  "RateLimit": {
+    "WindowSeconds": 60,
+    "MaxRequests": 10000,
+    "BurstLimit": 200
+  },
+  "AdvancedRateLimit": {
+    "Default": {
+      "MaxRequests": 60,
+      "WindowSeconds": 60,
+      "BucketCapacity": 60,
+      "TokensPerSecond": 1.0
+    },
+    "AuthEndpoints": {
+      "MaxRequests": 10,
+      "WindowSeconds": 60,
+      "BucketCapacity": 10,
+      "TokensPerSecond": 0.2
+    },
+    "ApiEndpoints": {
+      "MaxRequests": 100,
+      "WindowSeconds": 60,
+      "BucketCapacity": 100,
+      "TokensPerSecond": 2.0
+    },
+    "FileEndpoints": {
+      "MaxRequests": 20,
+      "WindowSeconds": 60,
+      "BucketCapacity": 20,
+      "TokensPerSecond": 0.5
+    },
+    "AdminEndpoints": {
+      "MaxRequests": 200,
+      "WindowSeconds": 60,
+      "BucketCapacity": 200,
+      "TokensPerSecond": 4.0
+    }
+  },
+  "Elasticsearch": {
+    "Url": "http://localhost:9200",
+    "IndexFormat": "fakemicro-logs-{0:yyyy.MM}",
+    "NumberOfShards": 1,
+    "NumberOfReplicas": 0,
+    "Username": "",
+    "Password": ""
+  },
+  "FileStorage": {
+    "LocalStoragePath": "uploads",
+    "MaxFileSize": 104857600,
+    "AllowedFileTypes": [
+      "image/jpeg",
+      "image/png",
+      "image/gif",
+      "image/webp",
+      "application/pdf",
+      "text/plain",
+      "application/msword",
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      "application/vnd.ms-excel",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    ],
+    "PreviewBaseUrl": "https://localhost:5280/api/files/preview",
+    "DefaultPreviewExpiryMinutes": 60
+  },
+  "Cors": {
+    "AllowedOrigins": [
+      "http://localhost:3000",
+      "http://127.0.0.1:3000",
+      "http://localhost:3001",
+      "http://127.0.0.1:3001"
+    ],
+    "AllowCredentials": true
+  },
+
+  "AnomalyDetection": {
+    "Enabled": true,
+    "FailedAttemptsThreshold": 5,
+    "ShortTimeWindowSeconds": 60,
+    "LongFailedAttemptsThreshold": 20,
+    "LongTimeWindowSeconds": 3600,
+    "BlockDurationSeconds": 300,
+    "MaxRequestsPerMinute": 100,
+    "BlockSuspiciousIps": true,
+    "LogAnomalies": true
+  }
+}

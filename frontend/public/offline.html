@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>离线模式 - FakeMicro Admin</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 20px;
+        }
+        
+        .offline-container {
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .offline-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+        
+        h1 {
+            font-size: 28px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+        
+        p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            opacity: 0.9;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #409EFF;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #66b1ff;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        .connection-status {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            font-size: 14px;
+        }
+        
+        .status-online {
+            background: rgba(76, 175, 80, 0.2);
+            border-left: 4px solid #4CAF50;
+        }
+        
+        .status-offline {
+            background: rgba(244, 67, 54, 0.2);
+            border-left: 4px solid #F44336;
+        }
+        
+        @media (max-width: 768px) {
+            .offline-container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="offline-container">
+        <div class="offline-icon">📶</div>
+        <h1>网络连接已断开</h1>
+        <p>当前处于离线状态，部分功能可能无法正常使用。请检查网络连接后重试。</p>
+        
+        <div class="actions">
+            <button class="btn btn-primary" onclick="window.location.reload()">
+                <span>🔄</span> 重新加载
+            </button>
+            <button class="btn btn-secondary" onclick="checkConnection()">
+                <span>🔍</span> 检查连接
+            </button>
+        </div>
+        
+        <div id="connectionStatus" class="connection-status status-offline">
+            <strong>当前状态：</strong>离线
+        </div>
+    </div>
+
+    <script>
+        // 检查网络连接状态
+        function checkConnection() {
+            const statusElement = document.getElementById('connectionStatus')
+            
+            if (navigator.onLine) {
+                statusElement.innerHTML = '<strong>当前状态：</strong>在线'
+                statusElement.className = 'connection-status status-online'
+                
+                // 3秒后自动刷新
+                setTimeout(() => {
+                    window.location.reload()
+                }, 3000)
+            } else {
+                statusElement.innerHTML = '<strong>当前状态：</strong>离线'
+                statusElement.className = 'connection-status status-offline'
+            }
+        }
+        
+        // 监听网络状态变化
+        window.addEventListener('online', () => {
+            checkConnection()
+        })
+        
+        window.addEventListener('offline', () => {
+            checkConnection()
+        })
+        
+        // 页面加载时检查状态
+        document.addEventListener('DOMContentLoaded', () => {
+            checkConnection()
+        })
+        
+        // 定期检查连接状态（每30秒）
+        setInterval(checkConnection, 30000)
+    </script>
+</body>
+</html>

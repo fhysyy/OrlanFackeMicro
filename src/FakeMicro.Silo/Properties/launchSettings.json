@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Host": {
+      "commandName": "Project",
+      "applicationUrl": "https://localhost:56538;http://localhost:56539"
+    }
+  }
+}

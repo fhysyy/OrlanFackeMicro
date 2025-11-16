@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <LangVersion>14.0</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OrleansBuildTimeCodeGen>true</OrleansBuildTimeCodeGen>
+    <OrleansSerialization>true</OrleansSerialization>
+  </PropertyGroup>
+  
+  <ItemGroup>
+    <None Remove="msbuild.log" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Orleans核心包 -->
+    <PackageReference Include="Microsoft.Orleans.Core" Version="9.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.8.0" />
+    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="9.2.1" />
+    
+    <!-- 日志和依赖注入 -->
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Npgsql" Version="9.0.4" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
+    <ProjectReference Include="..\FakeMicro.DatabaseAccess\FakeMicro.DatabaseAccess.csproj" />
+    <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
+    
+    <!-- 事件总线 -->
+    <PackageReference Include="DotNetCore.CAP" Version="8.4.1" />
+  </ItemGroup>
+
+</Project>

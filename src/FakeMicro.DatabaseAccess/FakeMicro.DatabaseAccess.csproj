@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <OrleansBuildTimeCodeGen>true</OrleansBuildTimeCodeGen>
+    <OrleansSerialization>true</OrleansSerialization>
+  </PropertyGroup>
+
+
+  <ItemGroup>
+    <!-- SqlSugar ORM (统一使用的ORM框架) -->
+    <PackageReference Include="SqlSugarCore" Version="5.1.4.207" />
+    
+    <!-- 数据库驱动 (主要使用PostgreSQL) -->
+    <PackageReference Include="Npgsql" Version="9.0.4" />
+    
+    <!-- 缓存支持 -->
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
+    
+    <!-- Orleans序列化支持 (与其他项目版本一致) -->
+    <PackageReference Include="Microsoft.Orleans.Serialization" Version="9.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
+    <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
+    <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <NoWarn>NU1701</NoWarn>
+  </PropertyGroup>
+
+</Project>

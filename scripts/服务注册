@@ -1,0 +1,101 @@
+FakeMicro 系统服务注册分析
+1. API 项目 (FakeMicro.Api) 服务注册
+配置服务：
+
+AppSettings - 单例，应用程序主配置
+DatabaseConfig - 单例，数据库配置
+OrleansConfig - 单例，Orleans集群配置
+JwtConfig - 单例，JWT认证配置
+RabbitMQConfig - 单例，消息队列配置
+RateLimitConfig - 单例，限流配置
+AdvancedRateLimitConfig - 单例，高级限流配置
+CorsConfig - 单例，跨域配置
+FileStorageConfig - 单例，文件存储配置
+ElasticsearchConfig - 单例，日志配置
+IConfigurationValidator - 单例，配置验证服务
+数据库服务：
+
+IDatabaseConnectionManager - 单例，数据库连接管理
+IRepository<T, TKey> - 作用域，通用仓储接口
+IUserRepository - 作用域，用户仓储
+IMessageRepository - 作用域，消息仓储
+IPermissionRepository - 作用域，权限仓储
+IRoleRepository - 作用域，角色仓储
+IAuditLogRepository - 作用域，审计日志仓储
+IStudentRepository - 作用域，学生仓储
+IClassRepository - 作用域，班级仓储
+IExamRepository - 作用域，考试仓储
+IExamScoreRepository - 作用域，考试成绩仓储
+IQuestionScoreRepository - 作用域，题目分数仓储
+IDictionaryTypeRepository - 作用域，字典类型仓储
+IDictionaryItemRepository - 作用域，字典项仓储
+IScoreAnalysisService - 作用域，分数分析服务
+API 安全服务：
+
+ApiKeyService - 作用域，API密钥服务
+RequestSignatureService - 作用域，请求签名服务
+AnomalyDetectionService - 单例，异常检测服务
+认证授权服务：
+
+JWT Bearer 认证中间件
+多种授权策略（User、Admin、SystemAdmin、ContentManager、Auditor）
+Orleans 服务：
+
+Orleans 客户端
+OrleansClientInitializer - 单例，客户端初始化服务
+其他服务：
+
+HttpContextAccessor - 单例，HTTP上下文访问器
+MemoryCache - 单例，内存缓存
+JwtService - 作用域，JWT服务
+IEventPublisher - 作用域，事件发布器
+Hangfire 后台任务服务
+2. Silo 项目 (FakeMicro.Silo) 服务注册
+配置服务：
+
+AppSettings - 单例，应用程序配置
+JwtSettings - 单例，JWT设置（兼容类型）
+数据库服务：
+
+通过 AddDatabaseServices 注册所有数据库相关服务
+Orleans 特定服务：
+
+Orleans Silo 配置
+内存存储提供者（默认、Messages、Users、Files）
+Orleans Dashboard
+3. 数据库访问层 (FakeMicro.DatabaseAccess) 服务注册
+核心服务：
+
+DatabaseConfig - 单例，数据库配置
+IDatabaseConnectionManager - 单例，连接管理
+所有仓储接口的具体实现
+4. 工具类 (FakeMicro.Utilities) 服务注册
+配置扩展：
+
+提供统一的配置服务注册方法
+配置验证和启动过滤器
+服务生命周期分析
+单例服务 (Singleton)：
+
+所有配置类
+数据库连接管理器
+异常检测服务
+Orleans 客户端初始化器
+内存缓存
+作用域服务 (Scoped)：
+
+所有仓储实现
+业务服务
+API 安全服务
+JWT 服务
+瞬时服务 (Transient)：
+
+JWT设置兼容类型
+依赖注入模式
+系统采用分层架构：
+
+配置层 - 单例配置服务
+数据访问层 - 作用域仓储服务
+业务逻辑层 - 作用域业务服务
+API层 - Web特定服务
+这种设计确保了服务的正确生命周期管理和依赖关系解析。

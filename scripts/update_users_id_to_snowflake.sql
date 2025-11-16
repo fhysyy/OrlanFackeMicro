@@ -1,0 +1,10 @@
+-- 修改用户表结构，支持雪花ID
+ALTER TABLE users
+ALTER COLUMN id DROP DEFAULT;
+
+ALTER TABLE users
+ALTER COLUMN id SET DATA TYPE BIGINT;
+
+-- 确保id仍然是主键
+ALTER TABLE users
+ADD CONSTRAINT users_pkey PRIMARY KEY (id)
