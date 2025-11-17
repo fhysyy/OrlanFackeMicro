@@ -9,12 +9,12 @@ namespace FakeMicro.Entities;
 /// </summary>
 [GenerateSerializer]
 [SqlSugar.SugarTable("roles")]
-public class Role : IAuditable, ISoftDeletable
+public class Role :IAuditable, ISoftDeletable
 {
     /// <summary>
     /// 角色ID
     /// </summary>
-    [SqlSugar.SugarColumn(IsPrimaryKey = true, ColumnName = "id")]
+    [SqlSugar.SugarColumn(IsPrimaryKey = true,IsIdentity =true, ColumnName = "id")]
     [Id(0)]
     public long id { get; set; }
 

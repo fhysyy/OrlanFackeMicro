@@ -50,8 +50,8 @@ public static class DatabaseServiceExtensions
         // Dapper相关服务已从依赖注入中移除
 
         // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
-        // services.AddHostedService<DatabaseInitializerHostedService>();
-      // services.AddDatabaseInitializer(configuration.GetConnectionString);
+        services.AddHostedService<DatabaseInitializerHostedService>();
+        // services.AddDatabaseInitializer(configuration.GetConnectionString);
         return services;
     }
 }
