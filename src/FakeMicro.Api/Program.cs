@@ -17,6 +17,10 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 
+// 添加代码生成器相关的using语句
+using FakeMicro.Utilities.CodeGenerator;
+using FakeMicro.Utilities.CodeGenerator.Templates;
+
 
 namespace FakeMicro.Api
 {
@@ -138,6 +142,9 @@ namespace FakeMicro.Api
             
             // 注册OrleansTaskExecutor服务
             builder.Services.AddTransient<OrleansTaskExecutor>();
+            
+            // 注册代码生成器服务
+            RegisterCodeGeneratorServices(builder);
             
 
             // 配置HangFire
@@ -287,25 +294,35 @@ namespace FakeMicro.Api
                         dynamic dynamicClient = _client;
                         if (dynamicClient != null)
                         {
-                            // 尝试各种可能的关闭方法
-                            try { await dynamicClient.Close(); }
-                            catch { try { await dynamicClient.DisposeAsync(); } catch { try { (dynamicClient as IDisposable)?.Dispose(); } catch { } } }
+                            await Task.CompletedTask;
                         }
                     }
-                    catch (Exception)
+                    catch
                     {
-                        // 忽略类型转换或方法调用错误
+                        // 忽略关闭连接时的错误
                     }
-                    
-                    _logger.LogInformation("已成功断开与Orleans Silo的连接");
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "断开Orleans Silo连接时发生错误");
+                    _logger.LogError(ex, "断开Orleans连接时发生错误");
                 }
-                
-                await Task.CompletedTask;
             }
         }
-    }
+        
+        /// <summary>
+        /// 注册代码生成器相关服务
+        /// </summary>
+        /// <param name="builder">Web应用程序构建器</param>
+        private static void RegisterCodeGeneratorServices(WebApplicationBuilder builder)
+        {
+            // 注册代码生成器配置
+            builder.Services.Configure<CodeGeneratorConfiguration>(builder.Configuration.GetSection("CodeGenerator"));
+            
+            // 注册代码生成主服务
+            builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
+            
+            // 注册代码生成请求验证服务
+            builder.Services.AddScoped<ICodeGeneratorValidator, CodeGeneratorValidator>();
+        }
+    } 
 }

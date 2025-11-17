@@ -12,7 +12,7 @@ namespace FakeMicro.Utilities.CodeGenerator
     /// Orleans代码生成器，支持生成接口、Grain、DTO和控制器代码
     /// 遵循Orleans框架最佳实践，集成PostgreSQL数据库
     /// </summary>
-    public class CodeGenerator
+    public class CodeGenerator : ICodeGenerator
     {
         private readonly CodeGeneratorConfiguration _configuration;
         private readonly string _outputPath;
