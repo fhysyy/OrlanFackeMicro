@@ -1,8 +1,10 @@
+using FakeMicro.DatabaseAccess.Extensions;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.DatabaseAccess.Repositories;
 using FakeMicro.DatabaseAccess.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -49,7 +51,7 @@ public static class DatabaseServiceExtensions
 
         // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
         // services.AddHostedService<DatabaseInitializerHostedService>();
-
+      // services.AddDatabaseInitializer(configuration.GetConnectionString);
         return services;
     }
 }

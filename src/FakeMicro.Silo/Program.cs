@@ -57,7 +57,7 @@ namespace FakeMicro.Silo
                     Console.WriteLine($"bin文件存在: {File.Exists(binAppsettingsPath)}");
                 }
                 
-                Console.WriteLine("=== 诊断完成 ===\n");
+                Console.WriteLine("=== 诊断完成 ===");
             }
             catch (Exception ex)
             {
@@ -91,7 +91,7 @@ namespace FakeMicro.Silo
                 }
 
                 // 3. 尝试绑定配置到 SqlSugarOptions
-                Console.WriteLine("\n2. 尝试绑定配置到 SqlSugarOptions:");
+                Console.WriteLine("2. 尝试绑定配置到 SqlSugarOptions:");
                 var sqlSugarOptions = new SqlSugarConfig.SqlSugarOptions();
                 sqlSugarSection.Bind(sqlSugarOptions);
                 Console.WriteLine($"   DbType: {sqlSugarOptions.DbType}");
@@ -100,7 +100,7 @@ namespace FakeMicro.Silo
                 Console.WriteLine($"   SlaveConnectionStrings: {(sqlSugarOptions.SlaveConnectionStrings?.Count ?? 0)} 个从库");
 
                 // 4. 检查服务是否已注册
-                Console.WriteLine("\n3. 检查 SqlSugar 相关服务注册:");
+                Console.WriteLine("3. 检查 SqlSugar 相关服务注册:");
                 var registeredServices = services.Where(s => s.ServiceType.FullName?.Contains("SqlSugar") == true || 
                                                              s.ServiceType.FullName?.Contains("Database") == true).ToList();
                 
@@ -118,7 +118,7 @@ namespace FakeMicro.Silo
                 }
 
                 // 5. 尝试创建 SqlSugar 客户端并测试连接
-                Console.WriteLine("\n4. 尝试创建 SqlSugar 客户端:");
+                Console.WriteLine("4. 尝试创建 SqlSugar 客户端:");
                 try
                 {
                     var connectionString = sqlSugarOptions.ConnectionString;
@@ -153,7 +153,7 @@ namespace FakeMicro.Silo
                     Console.WriteLine($"   详细错误: {ex}");
                 }
                 
-                Console.WriteLine("\n=== 诊断完成 ===");
+                Console.WriteLine("=== 诊断完成 ===");
             }
             catch (Exception ex)
             {
@@ -180,7 +180,7 @@ namespace FakeMicro.Silo
                     Console.WriteLine($"内容根路径: {context.HostingEnvironment.ContentRootPath}");
                     
                     // 配置字符串详细诊断
-                    Console.WriteLine("\n=== 配置字符串诊断 ===");
+                    Console.WriteLine("=== 配置字符串诊断 ===");
                     var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
                     Console.WriteLine($"从GetConnectionString('DefaultConnection')获取的值: {(connectionString ?? "NULL")}");
                     
@@ -189,7 +189,7 @@ namespace FakeMicro.Silo
                     Console.WriteLine($"从配置['ConnectionStrings:DefaultConnection']获取的值: {(directConnectionString ?? "NULL")}");
                     
                     // 检查所有配置键
-                    Console.WriteLine("\n所有配置键:");
+                    Console.WriteLine("所有配置键:");
                     foreach (var key in context.Configuration.AsEnumerable())
                     {
                         if (key.Key.Contains("Connection") || key.Key.Contains("Default") || key.Key.Contains("Database"))
@@ -204,9 +204,15 @@ namespace FakeMicro.Silo
                     // 添加数据库服务
                     services.AddDatabaseServices(context.Configuration);
                     
-                    // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
-                    // services.AddDatabaseInitializer(context.Configuration);
+                    // 添加 SqlSugar 配置绑定
+                    services.Configure<SqlSugarConfig.SqlSugarOptions>(context.Configuration.GetSection("SqlSugar"));
                     
+                    // 添加 Orleans 数据库初始化服务
+                    services.AddTransient<Services.OrleansDatabaseInitializer>();
+
+                    // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
+                    services.AddDatabaseInitializer(context.Configuration);
+
                     Console.WriteLine("服务注册中...");
                     
                     // 修正 JWT 配置注册 - 使用 JwtSettings
@@ -215,7 +221,7 @@ namespace FakeMicro.Silo
                     Console.WriteLine("服务注册完成");
                     
                     // SqlSugar 配置诊断
-                    Console.WriteLine("\n=== SqlSugar 配置诊断 ===");
+                    Console.WriteLine("=== SqlSugar 配置诊断 ===");
                     DiagnoseSqlSugarConfiguration(context.Configuration, services);
                 });
 
@@ -232,15 +238,7 @@ namespace FakeMicro.Silo
                     // 在Orleans 9.x中，UseLocalhostClustering会自动设置必要的IMembershipTable
                     siloBuilder.UseLocalhostClustering(
                         clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster",
-                        serviceId: orleansConfig.ServiceId ?? "FakeMicroService")
-                      .AddAdoNetGrainStorage(
-                        name: "UserStateStore",
-                        configureOptions: options =>
-                        {
-                            options.Invariant = "Npgsql";  // PostgreSQL 的 invariant 名称
-                            options.ConnectionString = connectionString;
-                          // 可选：使用 JSON 格式存储而不是二进制
-                        });
+                        serviceId: orleansConfig.ServiceId ?? "FakeMicroService");
 
                     // 🚀 配置PostgreSQL持久化存储（生产模式 - 无内存存储）
                     if (!string.IsNullOrEmpty(connectionString))
@@ -264,12 +262,14 @@ namespace FakeMicro.Silo
                                 options.ConnectionString = connectionString;
                             });
 
-                            // 配置用户状态存储
-                            siloBuilder.AddAdoNetGrainStorage("UserStateStore", options =>
-                            {
-                                options.Invariant = "Npgsql";
-                                options.ConnectionString = connectionString;
-                            });
+                    // 配置用户状态存储
+                        siloBuilder.AddAdoNetGrainStorage("UserStateStore", options =>
+                        {
+                            options.Invariant = "Npgsql";
+                            options.ConnectionString = connectionString;
+                            // 启用自动创建表功能
+                           // options.UseJsonFormat = true;
+                        });
 
                             // 配置Orleans系统存储
                             siloBuilder.AddAdoNetGrainStorage("OrleansClusterManifest", options =>
@@ -325,20 +325,25 @@ namespace FakeMicro.Silo
                 Console.WriteLine("启动Silo...");
                 try
                 {
+                    // 首先初始化 Orleans 数据库表结构
+                    using (var scope = host.Services.CreateScope())
+                    {
+                        var dbInitializer = scope.ServiceProvider.GetService<Services.OrleansDatabaseInitializer>();
+                        if (dbInitializer != null)
+                        {
+                            Console.WriteLine("正在初始化 Orleans 数据库表结构...");
+                            await dbInitializer.InitializeOrleansTablesAsync();
+                            Console.WriteLine("✅ Orleans 数据库表结构初始化完成");
+                        }
+                        else
+                        {
+                            Console.WriteLine("❌ 无法获取 Orleans 数据库初始化器");
+                        }
+                    }
+
                     await host.StartAsync();
                     Console.WriteLine("Orleans Silo运行中");
                     Console.WriteLine("Silo启动成功！按Ctrl+C停止...");
-                    //siloBuilder.AddAdoNetGrainStorageAsDefault(options =>
-                    //{
-                    //    options.Invariant = "Npgsql";
-                    //    options.ConnectionString = fallbackConnectionString;
-                    //});
-
-                    //siloBuilder.AddAdoNetGrainStorage("PubSubStore", options =>
-                    //{
-                    //    options.Invariant = "Npgsql";
-                    //    options.ConnectionString = fallbackConnectionString;
-                    //});
                     // 保持应用运行
                     await Task.Delay(-1);
                 }
