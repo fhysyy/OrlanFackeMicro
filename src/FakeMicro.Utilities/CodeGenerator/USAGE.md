@@ -47,18 +47,20 @@ public class MyService
 
 #### 命令行使用
 
+代码生成器作为FakeMicro.Utilities的一部分使用。可以通过直接调用CLI类来使用：
+
 ```bash
 # 生成所有类型的代码
-dotnet run --project CodeGeneratorDemo.csproj generate Product
+dotnet run --project FakeMicro.Utilities.csproj -- --generate Product
 
 # 生成特定类型
-dotnet run --project CodeGeneratorDemo.csproj generate User Interface Grain
+dotnet run --project FakeMicro.Utilities.csproj -- --generate User Interface Grain
 
 # 列出所有可用实体
-dotnet run --project CodeGeneratorDemo.csproj list
+dotnet run --project FakeMicro.Utilities.csproj -- --list
 
 # 预览生成的代码
-dotnet run --project CodeGeneratorDemo.csproj preview Product
+dotnet run --project FakeMicro.Utilities.csproj -- --preview Product
 ```
 
 ## 📋 支持的生成类型
