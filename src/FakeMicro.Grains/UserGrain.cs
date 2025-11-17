@@ -21,7 +21,7 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 用户Grain实现 - 遵循Orleans 9.x最佳实践
     /// </summary>
-    [StorageProvider(ProviderName = "UserStateStore")]
+
     public class UserGrain : Grain, IUserGrain
     {
         private readonly IUserRepository _repository;
@@ -32,7 +32,10 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 持久化状态 - Orleans 9.x最佳实践：直接声明属性
         /// </summary>
-        public IPersistentState<UserState> UserState { get; set; }
+        public readonly IPersistentState<UserState> UserState;
+
+        //  private readonly IPersistentState<CounterState> _state;
+
 
         /// <summary>
         /// 保存状态的方法别名，与Orleans 9.x最佳实践保持一致
@@ -41,9 +44,11 @@ namespace FakeMicro.Grains
 
         public UserGrain(
             IUserRepository userRepository,
+            [PersistentState("userState", "UserStateStore")] IPersistentState<UserState> state,
             ILogger<UserGrain> logger,
             IOptions<JwtSettings> jwtSettings)
         {
+            UserState = state;
             // Orleans 9.x: IPersistentState 通过属性注入，不需要构造函数参数
             _repository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

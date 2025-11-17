@@ -232,7 +232,15 @@ namespace FakeMicro.Silo
                     // 在Orleans 9.x中，UseLocalhostClustering会自动设置必要的IMembershipTable
                     siloBuilder.UseLocalhostClustering(
                         clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster",
-                        serviceId: orleansConfig.ServiceId ?? "FakeMicroService");
+                        serviceId: orleansConfig.ServiceId ?? "FakeMicroService")
+                      .AddAdoNetGrainStorage(
+                        name: "UserStateStore",
+                        configureOptions: options =>
+                        {
+                            options.Invariant = "Npgsql";  // PostgreSQL 的 invariant 名称
+                            options.ConnectionString = connectionString;
+                          // 可选：使用 JSON 格式存储而不是二进制
+                        });
 
                     // 🚀 配置PostgreSQL持久化存储（生产模式 - 无内存存储）
                     if (!string.IsNullOrEmpty(connectionString))
@@ -359,28 +367,6 @@ namespace FakeMicro.Silo
                         siloBuilder.UseLocalhostClustering(
                             clusterId: fallbackOrleansConfig.ClusterId ?? "FakeMicroCluster",
                             serviceId: fallbackOrleansConfig.ServiceId ?? "FakeMicroService");
-
-                        //if (!string.IsNullOrEmpty(fallbackConnectionString))
-                        //{
-                        //    // 使用PostgreSQL持久化存储（无内存存储）
-                        //    siloBuilder.AddAdoNetGrainStorageAsDefault(options =>
-                        //    {
-                        //        options.Invariant = "Npgsql";
-                        //        options.ConnectionString = fallbackConnectionString;
-                        //    });
-                            
-                        //    siloBuilder.AddAdoNetGrainStorage("PubSubStore", options =>
-                        //    {
-                        //        options.Invariant = "Npgsql";
-                        //        options.ConnectionString = fallbackConnectionString;
-                        //    });
-
-                        //    Console.WriteLine("✅ PostgreSQL持久化存储重新配置成功 - 无内存存储");
-                        //}
-                        //else
-                        //{
-                        //    throw new InvalidOperationException("❌ 回退配置失败：未找到PostgreSQL连接字符串");
-                        //}
                     });
 
                     var fallbackHost = fallbackHostBuilder.Build();

@@ -14,10 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- Orleans核心包 -->
+    <!-- Orleans核心包 - 使用一致的版本 -->
+    <PackageReference Include="Microsoft.Orleans.Sdk" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Core" Version="9.2.1" />
-    <PackageReference Include="Microsoft.Orleans.Runtime.Abstractions" Version="3.8.0" />
-    <PackageReference Include="Microsoft.Orleans.Serialization.Abstractions" Version="9.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
     
     <!-- 日志和依赖注入 -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0" />

@@ -99,7 +99,15 @@ namespace FakeMicro.Api
                     options.ServiceId = "FakeMicroService";
                 });
                 // 配置本地集群连接
-                clientBuilder.UseLocalhostClustering(gatewayPort: 30000);
+                clientBuilder.UseLocalhostClustering(30000, "FakeMicroService", "FakeMicroCluster");
+                //.AddAdoNetGrainStorage(
+                //name: "PostgreSQLStore",
+                //configureOptions: options =>
+                //{
+                //    options.Invariant = "Npgsql";  // PostgreSQL 的 invariant 名称
+                //    options.ConnectionString = "Host=localhost;Database=OrleansStorage;Username=postgres;Password=your_password;";
+                //    options.UseJsonFormat = true; // 可选：使用 JSON 格式存储而不是二进制
+                //});
             });
 
 
@@ -197,30 +205,30 @@ namespace FakeMicro.Api
         private static void ConfigureDefaultJobs()
         {
             // 添加系统健康检查任务 - 每小时执行一次
-            RecurringJob.AddOrUpdate<SystemHealthService>(
-                "system-health-check",
-                service => service.PerformHealthCheck(),
-                "0 * * * *");
+            //RecurringJob.AddOrUpdate<SystemHealthService>(
+            //    "system-health-check",
+            //    service => service.PerformHealthCheck(),
+            //    "0 * * * *");
             
-            // 添加简单的日志记录任务 - 每分钟执行一次
-            RecurringJob.AddOrUpdate(
-                "sample-log-task",
-                () => Console.WriteLine($"[{DateTime.Now}] 定时任务执行示例"),
-                "* * * * *");
+            //// 添加简单的日志记录任务 - 每分钟执行一次
+            //RecurringJob.AddOrUpdate(
+            //    "sample-log-task",
+            //    () => Console.WriteLine($"[{DateTime.Now}] 定时任务执行示例"),
+            //    "* * * * *");
             
-            // 添加Orleans HelloGrain定时任务 - 每5分钟执行一次
-            RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
-                "orleans-hello-task",
-                executor => executor.ExecuteGrainOperationAsync("hello", "sayhello", 
-                    new System.Collections.Generic.Dictionary<string, object> { { "greeting", "Hello from Hangfire scheduled task" } }),
-                "*/5 * * * *");
+            //// 添加Orleans HelloGrain定时任务 - 每5分钟执行一次
+            //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
+            //    "orleans-hello-task",
+            //    executor => executor.ExecuteGrainOperationAsync("hello", "sayhello", 
+            //        new System.Collections.Generic.Dictionary<string, object> { { "greeting", "Hello from Hangfire scheduled task" } }),
+            //    "*/5 * * * *");
             
-            // 添加Orleans CounterGrain定时任务 - 每10分钟执行一次
-            RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
-                "orleans-counter-task",
-                executor => executor.ExecuteGrainOperationAsync("counter", "increment", 
-                    new System.Collections.Generic.Dictionary<string, object> { { "grainId", "hangfire-counter" } }),
-                "*/10 * * * *");
+            //// 添加Orleans CounterGrain定时任务 - 每10分钟执行一次
+            //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
+            //    "orleans-counter-task",
+            //    executor => executor.ExecuteGrainOperationAsync("counter", "increment", 
+            //        new System.Collections.Generic.Dictionary<string, object> { { "grainId", "hangfire-counter" } }),
+            //    "*/10 * * * *");
         }
         
         // Orleans客户端连接服务，负责在应用启动时验证Orleans连接
