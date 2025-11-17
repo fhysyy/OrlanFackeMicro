@@ -100,6 +100,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         public int? MaxLength { get; set; }
 
+        public bool IsNullable { get; set; }
+
         /// <summary>
         /// 获取驼峰命名的属性名
         /// </summary>

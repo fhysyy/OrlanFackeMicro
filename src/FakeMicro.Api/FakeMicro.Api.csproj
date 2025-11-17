@@ -35,6 +35,7 @@
     <Compile Remove="Controllers\*.cs" />
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
+    <Compile Include="Controllers\CodeGeneratorController.cs" />
     <Compile Include="Controllers\CounterController.cs" />
     <Compile Include="Controllers\DictionaryController.cs" />
     <Compile Include="Controllers\EventsController.cs" />

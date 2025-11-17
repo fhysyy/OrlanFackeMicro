@@ -3,6 +3,10 @@ using FakeMicro.Utilities.CodeGenerator.Requests;
 using FakeMicro.Utilities.CodeGenerator.Templates;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace FakeMicro.Api.Controllers
 {
@@ -92,7 +96,7 @@ namespace FakeMicro.Api.Controllers
                     return Ok(new 
                     { 
                         success = true, 
-                        message = result.Message ?? "代码生成成功",
+                      //  message = result.Message ?? "代码生成成功",
                         data = new 
                         {
                             entityName = entityMetadata.EntityName,
