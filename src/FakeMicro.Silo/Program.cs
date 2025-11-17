@@ -1,4 +1,5 @@
 using FakeMicro.Utilities.Configuration;
+using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -212,6 +213,9 @@ namespace FakeMicro.Silo
 
                     // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
                     services.AddDatabaseInitializer(context.Configuration);
+
+                    // 添加代码生成器服务
+                    services.AddCodeGenerator(context.Configuration);
 
                     Console.WriteLine("服务注册中...");
                     
