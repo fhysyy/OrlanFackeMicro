@@ -151,7 +151,7 @@ namespace FakeMicro.Entities
         /// </summary>
         [SqlSugar.SugarColumn(ColumnName = "updated_at")]
         [Id(18)]
-        public DateTime updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 发送者用户信息
@@ -168,6 +168,16 @@ namespace FakeMicro.Entities
         [SugarColumn(IsIgnore = true)]
         [Id(20)]
         public User? Receiver { get; set; }
+
+        [Id(21)]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+        public string created_by { get; set; }
+
+        [Id(22)]
+
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+        public string updated_by { get; set; }
+
     }
 
     /// <summary>
@@ -253,7 +263,7 @@ namespace FakeMicro.Entities
         /// </summary>
         [SqlSugar.SugarColumn(ColumnName = "updated_at")]
         [Id(9)]
-        public DateTime updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 是否删除
@@ -266,5 +276,17 @@ namespace FakeMicro.Entities
         /// </summary>
         [Id(11)]
         public DateTime? deleted_at { get; set; }
+       
+
+      
+
+        [Id(12)]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+        public string created_by { get; set; }
+
+        [Id(13)]
+
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+        public string updated_by { get; set; }
     }
 }

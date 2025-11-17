@@ -106,7 +106,7 @@ namespace FakeMicro.Entities
         [JsonPropertyOrder(10)]
         [Id(10)]
         [SugarColumn(IsNullable = true, ColumnName = "updated_at")]
-        public DateTime updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 是否已删除（软删除标记）
@@ -145,5 +145,15 @@ namespace FakeMicro.Entities
             get => mime_type; 
             set => mime_type = value; 
         }
+        [Id(16)]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+        public string created_by { get; set; }
+
+        [Id(15)]
+
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+        public string updated_by { get; set; }
+
+
     }
 }

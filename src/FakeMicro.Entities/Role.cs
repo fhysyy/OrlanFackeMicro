@@ -77,7 +77,7 @@ public class Role :IAuditable, ISoftDeletable
     /// </summary>
     [SqlSugar.SugarColumn(ColumnName = "updated_at", IsNullable = true)]
     [Id(8)]
-    public DateTime updated_at { get; set; }
+    public DateTime? updated_at { get; set; }
 
     /// <summary>
     /// 是否删除
@@ -92,4 +92,15 @@ public class Role :IAuditable, ISoftDeletable
     [SqlSugar.SugarColumn(ColumnName = "deleted_at",IsNullable =true)]
     [Id(10)]
     public DateTime? deleted_at { get; set; }
+
+
+    [Id(21)]
+    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+    public string created_by { get; set; }
+
+    [Id(22)]
+
+    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+    public string updated_by { get; set; }
+
 }

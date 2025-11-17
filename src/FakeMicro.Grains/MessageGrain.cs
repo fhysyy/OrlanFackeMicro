@@ -114,7 +114,7 @@ namespace FakeMicro.Grains
                 ScheduledAt = _currentMessage.scheduled_at,
                 ExpiresAt = _currentMessage.expires_at,
                 CreatedAt = _currentMessage.created_at,
-                UpdatedAt = _currentMessage.updated_at
+                UpdatedAt = _currentMessage.updated_at.Value
             };
         }
 
@@ -238,7 +238,7 @@ namespace FakeMicro.Grains
                 Variables = _currentTemplate.variables != null ? (System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(_currentTemplate.variables) ?? new Dictionary<string, string>()) : new Dictionary<string, string>(),
                 IsEnabled = _currentTemplate.is_enabled,
                 CreatedAt = _currentTemplate.created_at,
-                UpdatedAt = _currentTemplate.updated_at
+                UpdatedAt = _currentTemplate.updated_at.Value
             };
         }
 

@@ -153,7 +153,7 @@ namespace FakeMicro.Entities
         /// </summary>
         [Id(19)]
         [SugarColumn(IsNullable = true, ColumnName = "updated_at")]
-        public DateTime updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 是否删除
@@ -168,16 +168,19 @@ namespace FakeMicro.Entities
         [Id(21)]
         [SugarColumn(IsNullable = true, ColumnName = "deleted_at")]
         public DateTime? deleted_at { get; set; }
+
+        [Id(22)]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+        public string created_by { get; set; }
+
+        [Id(23)]
+
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+        public string updated_by { get; set; }
+ 
+
     }
-    
-    /// <summary>
-    /// 可审计接口
-    /// </summary>
-    public interface IAuditable
-    {
-        DateTime created_at { get; set; }
-        DateTime updated_at { get; set; }
-    }
+
     
     /// <summary>
     /// 软删除接口

@@ -10,17 +10,18 @@ namespace FakeMicro.Entities
     [SqlSugar.SugarTable("fake_class")]
     [GenerateSerializer]
 
-    public class FakeClass : IAuditable, ISoftDeletable
+    public class FakeClass :IAuditable, ISoftDeletable
     {
         [SqlSugar.SugarColumn(IsIdentity =true, IsPrimaryKey =true,ColumnName ="id")]
         [Id(0)]
         public long Id { get; set; }
-        [SqlSugar.SugarColumn(IsNullable =true,ColumnName = "created_at")]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_at")]
         [Id(1)]
         public DateTime created_at { get; set; }
         [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_at")]
         [Id(2)]
-        public DateTime updated_at { get; set; }
+        public DateTime? updated_at { get; set; }
+
         [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "is_deleted")]
         [Id(3)]
         public bool is_deleted { get; set; }
@@ -48,8 +49,15 @@ namespace FakeMicro.Entities
         [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "grade_name")]
         [Id(10)]
         public string GradeName { get; set; }
-   
+        [Id(11)]
 
-  
-        }
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+        public string created_by { get; set; }
+
+        [Id(12)]
+
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+        public string updated_by { get; set; }
+
+    }
 }

@@ -137,7 +137,7 @@ namespace FakeMicro.Grains
                         Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                         Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
                         CreatedAt = user.created_at,
-                        UpdatedAt = user.updated_at
+                        UpdatedAt = user.updated_at.Value
                     };
 
                     response = new AuthResponse
@@ -214,7 +214,7 @@ namespace FakeMicro.Grains
                     Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
                     CreatedAt = user.created_at,
-                    UpdatedAt = user.updated_at
+                    UpdatedAt = user.updated_at.Value
                 };
 
                 return new AuthResponse
@@ -291,7 +291,7 @@ namespace FakeMicro.Grains
                     Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
                     CreatedAt = user.created_at,
-                    UpdatedAt = user.updated_at
+                    UpdatedAt = user.updated_at.Value
                 };
 
                 return new AuthResponse
@@ -417,7 +417,7 @@ namespace FakeMicro.Grains
                     Role = Enum.TryParse<UserRoleEnum>(u.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(u.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
                     CreatedAt = u.created_at,
-                    UpdatedAt = u.updated_at
+                    UpdatedAt = u.updated_at.Value
                 }).ToList();
             }
             catch (Exception ex)

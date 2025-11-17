@@ -159,7 +159,7 @@ namespace FakeMicro.Grains
                         UserState!.State!.EmailVerified = user.email_verified;
                         UserState!.State!.PhoneVerified = user.phone_verified;
                         UserState!.State!.CreatedAt = user.created_at;
-                        UserState!.State!.UpdatedAt = user.updated_at;
+                        UserState!.State!.UpdatedAt = user.updated_at.Value;
                         UserState!.State!.IsLoaded = true;
                     
                         // 批量更新状态 - Orleans状态管理最佳实践
@@ -314,7 +314,7 @@ namespace FakeMicro.Grains
                         Role = userRole,
                         Status = userStatus,
                         CreatedAt = user.created_at,
-                        UpdatedAt = user.updated_at
+                        UpdatedAt = user.updated_at.Value
                     };
                 }
                 catch (Exception ex)

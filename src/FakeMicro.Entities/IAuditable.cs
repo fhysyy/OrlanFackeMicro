@@ -1,6 +1,6 @@
 using System;
 
-namespace FakeMicro.DatabaseAccess
+namespace FakeMicro.Entities
 {
     /// <summary>
     /// 审计接口
@@ -10,21 +10,21 @@ namespace FakeMicro.DatabaseAccess
         /// <summary>
         /// 创建时间
         /// </summary>
-        DateTime CreatedAt { get; set; }
+        DateTime created_at { get; set; }
         
         /// <summary>
         /// 创建人
         /// </summary>
-        string CreatedBy { get; set; }
+        string created_by { get; set; }
         
         /// <summary>
         /// 更新时间
         /// </summary>
-        DateTime? UpdatedAt { get; set; }
+        DateTime? updated_at { get; set; }
         
         /// <summary>
         /// 更新人
         /// </summary>
-        string? UpdatedBy { get; set; }
+        string? updated_by { get; set; }
     }
 }

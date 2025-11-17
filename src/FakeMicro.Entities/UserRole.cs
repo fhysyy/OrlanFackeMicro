@@ -40,5 +40,16 @@ public class UserRole : IAuditable
     /// </summary>
     [SugarColumn(ColumnName = "updated_at")]
     [Id(3)]
-    public DateTime updated_at { get; set; }
+    public DateTime? updated_at { get; set; }
+
+
+    [Id(4)]
+    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
+    public string created_by { get; set; }
+
+    [Id(5)]
+
+    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
+    public string updated_by { get; set; }
+
 }
