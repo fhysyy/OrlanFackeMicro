@@ -95,9 +95,27 @@ namespace FakeMicro.Utilities.CodeGenerator
         {
             var result = new CodeGenerationResult { IsSuccess = true };
 
+            // 生成接口文件
+            if (generationType.HasFlag(GenerationType.Entity))
+            {
+                await GenerateEntityAsync(entity, overwriteStrategy);
+            }
+
             if (generationType.HasFlag(GenerationType.Interface))
             {
                 await GenerateInterfaceAsync(entity, overwriteStrategy);
+            }
+
+            // 生成结果类文件
+            if (generationType.HasFlag(GenerationType.Result))
+            {
+                await GenerateResultAsync(entity, overwriteStrategy);
+            }
+
+            // 生成请求类文件
+            if (generationType.HasFlag(GenerationType.Request))
+            {
+                await GenerateRequestAsync(entity, overwriteStrategy);
             }
 
             if (generationType.HasFlag(GenerationType.Grain))
@@ -118,21 +136,47 @@ namespace FakeMicro.Utilities.CodeGenerator
             return result;
         }
 
+        private async Task GenerateEntityAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        {
+            var content = Templates.EntityTemplate.Generate(entity);
+            var fileName = $"{entity.EntityName}.cs";
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Entities", fileName);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
+
         private async Task GenerateInterfaceAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.InterfaceTemplate.Generate(entity);
             var fileName = $"I{entity.EntityName}Grain.cs";
-            var filePath = Path.Combine(_outputPath, "Interfaces", fileName);
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces", fileName);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
+
+        private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        {
+            var content = Templates.ResultTemplate.Generate(entity);
+            var fileName = $"{entity.EntityName}Results.cs";
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models/Results", fileName);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
+
+        private async Task GenerateRequestAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        {
+            var content = Templates.RequestTemplate.Generate(entity);
+            var fileName = $"{entity.EntityName}Requests.cs";
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models/Requests", fileName);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
         private async Task GenerateGrainAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
-            var template = new Templates.GrainTemplate();
-            var content = template.Generate(entity);
+            var content = Templates.GrainTemplate.Generate(entity);
             var fileName = $"{entity.EntityName}Grain.cs";
-            var filePath = Path.Combine(_outputPath, "Grains", fileName);
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Grains", fileName);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -141,17 +185,16 @@ namespace FakeMicro.Utilities.CodeGenerator
         {
             var content = Templates.DtoTemplate.Generate(entity);
             var fileName = $"{entity.EntityName}Dto.cs";
-            var filePath = Path.Combine(_outputPath, "Dtos", fileName);
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models", fileName);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
         private async Task GenerateControllerAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
-            var template = new Templates.ControllerTemplate();
-            var content = template.Generate(entity);
+            var content = Templates.ControllerTemplate.Generate(entity);
             var fileName = $"{entity.EntityName}Controller.cs";
-            var filePath = Path.Combine(_outputPath, "Controllers", fileName);
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Api/Controllers", fileName);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -241,15 +284,29 @@ namespace FakeMicro.Utilities.CodeGenerator
         {
             var preview = new Dictionary<GenerationType, string>();
 
+            if (generationType.HasFlag(GenerationType.Entity))
+            {
+                preview[GenerationType.Entity] = Templates.EntityTemplate.Generate(entity);
+            }
+
             if (generationType.HasFlag(GenerationType.Interface))
             {
                 preview[GenerationType.Interface] = Templates.InterfaceTemplate.Generate(entity);
             }
 
+            if (generationType.HasFlag(GenerationType.Result))
+            {
+                preview[GenerationType.Result] = Templates.ResultTemplate.Generate(entity);
+            }
+
+            if (generationType.HasFlag(GenerationType.Request))
+            {
+                preview[GenerationType.Request] = Templates.RequestTemplate.Generate(entity);
+            }
+
             if (generationType.HasFlag(GenerationType.Grain))
             {
-                var template = new Templates.GrainTemplate();
-                preview[GenerationType.Grain] = template.Generate(entity);
+                preview[GenerationType.Grain] = Templates.GrainTemplate.Generate(entity);
             }
 
             if (generationType.HasFlag(GenerationType.Dto))
@@ -259,8 +316,7 @@ namespace FakeMicro.Utilities.CodeGenerator
 
             if (generationType.HasFlag(GenerationType.Controller))
             {
-                var template = new Templates.ControllerTemplate();
-                preview[GenerationType.Controller] = template.Generate(entity);
+                preview[GenerationType.Controller] = Templates.ControllerTemplate.Generate(entity);
             }
 
             return preview;

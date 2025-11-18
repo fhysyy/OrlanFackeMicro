@@ -47,6 +47,14 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         public bool IsAuditable { get; set; }
 
+        public bool IsIdentity { get; set; }
+
+        public string ColumnName { get; set; }
+
+        /// <summary>
+        /// 是否实现了审计接口
+        /// </summary>
+
         /// <summary>
         /// 是否实现了软删除接口
         /// </summary>
@@ -100,8 +108,38 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         public int? MaxLength { get; set; }
 
+        /// <summary>
+        /// 最小长度
+        /// </summary>
+        public int? MinLength { get; set; }
+
+        /// <summary>
+        /// 是否可为空
+        /// </summary>
         public bool IsNullable { get; set; }
 
+        /// <summary>
+        /// 是否只读
+        /// </summary>
+        public bool IsReadOnly { get; set; }
+
+        /// <summary>
+        /// 是否自增
+        /// </summary>
+        public bool IsIdentity { get; set; }
+
+        /// <summary>
+        /// 列名
+        /// </summary>
+        public string ColumnName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 默认值
+        /// </summary>
+        public string DefaultValue { get; set; } = string.Empty;
+        /// <summary>
+        /// 是否自增
+        public bool IsAutoIncrement { get; set; }
         /// <summary>
         /// 获取驼峰命名的属性名
         /// </summary>

@@ -83,6 +83,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// 是否生成API文档
         /// </summary>
         public bool GenerateApiDocumentation { get; set; } = true;
+
+        public string OutputPath { get; set; } = "f:/Orleans/OrlanFackeMicro/src";
     }
 
     /// <summary>
@@ -96,6 +98,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         public List<string> DefaultTemplates { get; set; } = new()
         {
             "Interface",
+            "Result",
             "Grain",
             "ServiceInterface", 
             "ServiceGrain",
@@ -108,6 +111,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         public List<string> AvailableTemplates { get; set; } = new()
         {
             "Interface",
+            "Result",
+            "Request",
             "Grain",
             "ServiceInterface",
             "ServiceGrain", 
@@ -119,7 +124,45 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// <summary>
         /// 模板自定义配置
         /// </summary>
-        public Dictionary<string, TemplateSettings> TemplateSettings { get; set; } = new();
+        public Dictionary<string, TemplateSettings> TemplateSettings { get; set; } = new()
+        {
+            ["Interface"] = new TemplateSettings
+            {
+                Enabled = true,
+                FileNamePattern = "I{EntityName}Grain.cs",
+                OutputDirectory = "FakeMicro.Interfaces"
+            },
+            ["Result"] = new TemplateSettings
+            {
+                Enabled = true,
+                FileNamePattern = "{EntityName}Results.cs",
+                OutputDirectory = "FakeMicro.Interfaces/Models/Results"
+            },
+            ["Request"] = new TemplateSettings
+            {
+                Enabled = false,
+                FileNamePattern = "{EntityName}Requests.cs",
+                OutputDirectory = "FakeMicro.Interfaces/Models/Requests"
+            },
+            ["Grain"] = new TemplateSettings
+            {
+                Enabled = true,
+                FileNamePattern = "{EntityName}Grain.cs",
+                OutputDirectory = "FakeMicro.Grains"
+            },
+            ["Dto"] = new TemplateSettings
+            {
+                Enabled = true,
+                FileNamePattern = "{EntityName}Dto.cs",
+                OutputDirectory = "FakeMicro.Interfaces/Models"
+            },
+            ["Controller"] = new TemplateSettings
+            {
+                Enabled = false,
+                FileNamePattern = "{EntityName}Controller.cs",
+                OutputDirectory = "FakeMicro.Api/Controllers"
+            }
+        };
     }
 
     /// <summary>

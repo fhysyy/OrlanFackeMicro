@@ -9,11 +9,14 @@ namespace FakeMicro.Utilities.CodeGenerator
     public enum GenerationType
     {
         None = 0,
-        Interface = 1,
-        Grain = 2,
-        Dto = 4,
-        Controller = 8,
-        All = Interface | Grain | Dto | Controller
+        Entity = 1,
+        Interface = 2,
+        Result = 4,
+        Request = 8,
+        Grain = 16,
+        Dto = 32,
+        Controller = 64,
+        All = Entity | Interface | Result | Request | Grain | Dto | Controller
     }
 
     /// <summary>

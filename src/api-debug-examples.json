@@ -1,0 +1,351 @@
+{
+  "apiDebugExamples": {
+    "description": "FakeMicro API 接口调试JSON示例",
+    "version": "1.0.0",
+    "baseUrl": "http://localhost:5000/api",
+    "endpoints": {
+      "auth": {
+        "register": {
+          "method": "POST",
+          "url": "/auth/register",
+          "description": "用户注册",
+          "requestBody": {
+            "username": "testuser123",
+            "email": "test@example.com",
+            "password": "SecurePassword123!",
+            "phone": "+86-13800138000",
+            "displayName": "测试用户"
+          },
+          "expectedResponse": {
+            "success": true,
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refreshToken": "dGhpcy1pcy1hLXJlZnJlc2gtdG9rZW4=",
+            "expiresAt": "2024-12-31T23:59:59Z",
+            "user": {
+              "id": 12345,
+              "username": "testuser123",
+              "email": "test@example.com",
+              "phone": "+86-13800138000",
+              "displayName": "测试用户",
+              "role": 2,
+              "status": 1,
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-01T00:00:00Z"
+            }
+          }
+        },
+        "login": {
+          "method": "POST",
+          "url": "/auth/login",
+          "description": "用户登录",
+          "requestBody": {
+            "usernameOrEmail": "test@example.com",
+            "password": "SecurePassword123!"
+          },
+          "expectedResponse": {
+            "success": true,
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refreshToken": "dGhpcy1pcy1hLXJlZnJlc2gtdG9rZW4=",
+            "expiresAt": "2024-12-31T23:59:59Z",
+            "user": {
+              "id": 12345,
+              "username": "testuser123",
+              "email": "test@example.com",
+              "phone": "+86-13800138000",
+              "displayName": "测试用户",
+              "role": 2,
+              "status": 1,
+              "createdAt": "2024-01-01T00:00:00Z",
+              "updatedAt": "2024-01-01T00:00:00Z"
+            }
+          }
+        },
+        "refreshToken": {
+          "method": "POST",
+          "url": "/auth/refresh",
+          "description": "刷新令牌",
+          "requestBody": {
+            "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "refreshToken": "dGhpcy1pcy1hLXJlZnJlc2gtdG9rZW4="
+          },
+          "expectedResponse": {
+            "success": true,
+            "token": "new-jwt-token-here",
+            "refreshToken": "new-refresh-token-here",
+            "expiresAt": "2024-12-31T23:59:59Z"
+          }
+        },
+        "changePassword": {
+          "method": "POST",
+          "url": "/auth/change-password",
+          "description": "修改密码",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "requestBody": {
+            "currentPassword": "SecurePassword123!",
+            "newPassword": "NewSecurePassword456!"
+          },
+          "expectedResponse": {
+            "success": true,
+            "message": "密码修改成功"
+          }
+        }
+      },
+      "messages": {
+        "sendMessage": {
+          "method": "POST",
+          "url": "/messages/send",
+          "description": "发送消息",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "Content-Type": "application/json"
+          },
+          "requestBody": {
+            "receiverId": 67890,
+            "receiverEmail": "recipient@example.com",
+            "receiverPhone": "+86-13900139000",
+            "title": "系统通知",
+            "content": "您有一条新的系统消息，请及时查看。",
+            "messageType": 2,
+            "channel": 1,
+            "scheduledAt": null,
+            "expiresAt": "2024-12-31T23:59:59Z",
+            "metadata": {
+              "priority": "high",
+              "category": "system",
+              "source": "admin-panel"
+            }
+          },
+          "expectedResponse": {
+            "success": true,
+            "messageId": "msg_1234567890",
+            "status": "sent",
+            "errorMessage": null
+          }
+        },
+        "sendVerificationCode": {
+          "method": "POST",
+          "url": "/messages/send-verification",
+          "description": "发送验证码",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "Content-Type": "application/json"
+          },
+          "requestBody": {
+            "receiverEmail": "user@example.com",
+            "title": "验证码",
+            "content": "您的验证码是：123456，有效期10分钟。",
+            "messageType": 5,
+            "channel": 2,
+            "scheduledAt": null,
+            "expiresAt": null,
+            "metadata": {
+              "code": "123456",
+              "validMinutes": 10,
+              "purpose": "email_verification"
+            }
+          },
+          "expectedResponse": {
+            "success": true,
+            "messageId": "msg_verification_123",
+            "status": "sent",
+            "errorMessage": null
+          }
+        },
+        "getMessageStatistics": {
+          "method": "GET",
+          "url": "/messages/statistics?userId=12345&startDate=2024-01-01&endDate=2024-12-31",
+          "description": "获取消息统计",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expectedResponse": {
+            "totalMessages": 150,
+            "sentMessages": 120,
+            "deliveredMessages": 110,
+            "readMessages": 95,
+            "failedMessages": 5,
+            "byType": {
+              "system": 30,
+              "notification": 60,
+              "reminder": 25,
+              "marketing": 20,
+              "verification": 15
+            },
+            "byChannel": {
+              "inApp": 80,
+              "email": 40,
+              "sms": 20,
+              "push": 10
+            }
+          }
+        },
+        "processPendingMessages": {
+          "method": "POST",
+          "url": "/messages/process-pending",
+          "description": "处理待发送消息",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "requestBody": {
+            "batchSize": 100,
+            "priority": "high"
+          },
+          "expectedResponse": {
+            "success": true,
+            "processedCount": 25,
+            "message": "成功处理25条待发送消息"
+          }
+        }
+      },
+      "users": {
+        "getUserProfile": {
+          "method": "GET",
+          "url": "/users/profile",
+          "description": "获取用户资料",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+          },
+          "expectedResponse": {
+            "id": 12345,
+            "username": "testuser123",
+            "email": "test@example.com",
+            "phone": "+86-13800138000",
+            "displayName": "测试用户",
+            "role": 2,
+            "status": 1,
+            "createdAt": "2024-01-01T00:00:00Z",
+            "updatedAt": "2024-01-01T00:00:00Z",
+            "permissions": [
+              {
+                "resource": "messages:read",
+                "type": 1
+              },
+              {
+                "resource": "messages:write",
+                "type": 1
+              }
+            ]
+          }
+        },
+        "updateUserProfile": {
+          "method": "PUT",
+          "url": "/users/profile",
+          "description": "更新用户资料",
+          "headers": {
+            "Authorization": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+            "Content-Type": "application/json"
+          },
+          "requestBody": {
+            "displayName": "新昵称",
+            "phone": "+86-13700137000"
+          },
+          "expectedResponse": {
+            "success": true,
+            "message": "用户资料更新成功"
+          }
+        }
+      },
+      "admin": {
+        "getSystemHealth": {
+          "method": "GET",
+          "url": "/admin/health",
+          "description": "获取系统健康状态",
+          "headers": {
+            "Authorization": "Bearer admin-token-here"
+          },
+          "expectedResponse": {
+            "status": "healthy",
+            "timestamp": "2024-01-01T12:00:00Z",
+            "services": {
+              "database": "healthy",
+              "cache": "healthy",
+              "messaging": "healthy",
+              "fileStorage": "healthy"
+            },
+            "metrics": {
+              "cpuUsage": 45.2,
+              "memoryUsage": 68.5,
+              "diskUsage": 32.1,
+              "activeConnections": 1250
+            }
+          }
+        },
+        "getSystemStats": {
+          "method": "GET",
+          "url": "/admin/statistics",
+          "description": "获取系统统计信息",
+          "headers": {
+            "Authorization": "Bearer admin-token-here"
+          },
+          "expectedResponse": {
+            "totalUsers": 10000,
+            "activeUsers": 2500,
+            "totalMessages": 500000,
+            "messagesToday": 1500,
+            "storageUsage": {
+              "total": "100GB",
+              "used": "45GB",
+              "available": "55GB"
+            },
+            "performance": {
+              "avgResponseTime": 120,
+              "requestsPerSecond": 850,
+              "errorRate": 0.02
+            }
+          }
+        }
+      }
+    },
+    "commonHeaders": {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "User-Agent": "FakeMicro-API-Client/1.0.0"
+    },
+    "errorResponses": {
+      "unauthorized": {
+        "success": false,
+        "error": "Unauthorized",
+        "message": "无效的访问令牌",
+        "code": 401
+      },
+      "forbidden": {
+        "success": false,
+        "error": "Forbidden",
+        "message": "权限不足",
+        "code": 403
+      },
+      "notFound": {
+        "success": false,
+        "error": "Not Found",
+        "message": "请求的资源不存在",
+        "code": 404
+      },
+      "validationError": {
+        "success": false,
+        "error": "Validation Error",
+        "message": "请求参数验证失败",
+        "code": 400,
+        "details": {
+          "email": "邮箱格式不正确",
+          "password": "密码长度至少8位"
+        }
+      },
+      "serverError": {
+        "success": false,
+        "error": "Internal Server Error",
+        "message": "服务器内部错误",
+        "code": 500
+      }
+    },
+    "usageNotes": [
+      "所有需要认证的接口都需要在请求头中包含有效的JWT令牌",
+      "JWT令牌格式：Authorization: Bearer <token>",
+      "日期时间格式使用ISO 8601标准：YYYY-MM-DDTHH:mm:ssZ",
+      "枚举值请参考对应的枚举定义文件",
+      "分页查询参数：page（页码，从1开始）、pageSize（每页大小，默认20）",
+      "排序参数：sortBy（排序字段）、sortOrder（asc/desc）"
+    ]
+  }
+}

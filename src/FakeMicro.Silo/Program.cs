@@ -311,16 +311,12 @@ namespace FakeMicro.Silo
                     // 移除不兼容的配置选项，使用Orleans 9.x支持的配置
                     siloBuilder.Configure<ClusterMembershipOptions>(options => options.NumMissedProbesLimit = 3);
 
-                    // 配置日志
-                    //siloBuilder.ConfigureLogging(logging =>
-                    //{
-                    //    logging.AddConsole();
-                    //    logging.SetMinimumLevel(LogLevel.Information);
-                    //});
-
-                    // 在Orleans 9.x中，Grain注册是自动的，不需要手动配置ApplicationParts
-                    // 确保所有Grain项目都引用了Microsoft.Orleans.Sdk包，Grain会自动被发现
-
+                    //配置日志
+                    siloBuilder.ConfigureLogging(logging =>
+                    {
+                        logging.AddConsole();
+                        logging.SetMinimumLevel(LogLevel.Information);
+                    });
                     Console.WriteLine("Orleans配置完成");
                 });
 

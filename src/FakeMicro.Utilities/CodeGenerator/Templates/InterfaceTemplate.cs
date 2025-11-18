@@ -1,15 +1,13 @@
-using System;
-using System.Collections.Generic;
 using System.Text;
 
 namespace FakeMicro.Utilities.CodeGenerator.Templates
 {
     /// <summary>
-    /// Grain接口模板
+    /// IGrain接口模板
     /// </summary>
     public static class InterfaceTemplate
     {
-        public static string Generate(EntityMetadata metadata)
+        public static string Generate(EntityMetadata entity)
         {
             var sb = new StringBuilder();
             
@@ -19,296 +17,112 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"//     生成时间: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
             sb.AppendLine($"// </auto-generated>");
             sb.AppendLine();
-
-            // Using 语句
-            sb.AppendLine("using System;");
-            sb.AppendLine("using System.Collections.Generic;");
+            
+            // Using语句
             sb.AppendLine("using System.Threading;");
             sb.AppendLine("using System.Threading.Tasks;");
+            sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine($"using {entity.Namespace}.Models;");
+            sb.AppendLine($"using {entity.Namespace}.Models.Requests;");
+            sb.AppendLine($"using {entity.Namespace}.Models.Results;");
             sb.AppendLine("using Orleans;");
-            sb.AppendLine("using Orleans.Concurrency;");
-            sb.AppendLine($"using {metadata.Namespace};");
-            sb.AppendLine("using FakeMicro.Interfaces.Models;");
             sb.AppendLine();
-
+            
             // 命名空间
-            sb.AppendLine("namespace FakeMicro.Interfaces");
+            sb.AppendLine($"namespace {entity.Namespace}.Interfaces");
             sb.AppendLine("{");
-
-            // 类注释
+            
+            // 接口定义
             sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// {metadata.EntityDescription} Grain接口");
+            sb.AppendLine($"    /// {entity.EntityDescription}Grain接口");
             sb.AppendLine("    /// </summary>");
-            //sb.AppendLine($"    public interface I{metadata.EntityName}Grain : IGrainWith{metadata.PrimaryKeyType}Key");
-            sb.AppendLine($"    public interface I{metadata.EntityName}Grain : IGrainWithStringKey");
+            sb.AppendLine($"    public interface I{entity.EntityName}Grain : IGrainWithStringKey");
             sb.AppendLine("    {");
-
+            
             // 基础CRUD方法
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine("        /// 初始化Grain");
+            sb.AppendLine($"        /// 获取{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [AlwaysInterleave]");
-            sb.AppendLine("        Task InitializeAsync(CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<{entity.EntityName}Dto?> GetAsync(CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
+            
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 获取{metadata.EntityDescription}");
+            sb.AppendLine($"        /// 创建{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [ReadOnly]");
-            sb.AppendLine($"        Task<{metadata.EntityName}Dto?> GetAsync(CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<Create{entity.EntityName}Result> CreateAsync(Create{entity.EntityName}Request request, CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
+            
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 从数据库获取{metadata.EntityDescription}");
+            sb.AppendLine($"        /// 更新{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [ReadOnly]");
-            sb.AppendLine($"        Task<{metadata.EntityName}Dto?> GetFromDatabaseAsync(CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<Update{entity.EntityName}Result> UpdateAsync(Update{entity.EntityName}Request request, CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
+            
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 创建{metadata.EntityDescription}");
+            sb.AppendLine($"        /// 删除{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<Create{metadata.EntityName}Result> CreateAsync({metadata.EntityName}Dto dto, CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<Delete{entity.EntityName}Result> DeleteAsync(CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 更新{metadata.EntityDescription}");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<Update{metadata.EntityName}Result> UpdateAsync({metadata.EntityName}Dto dto, CancellationToken cancellationToken = default);");
-            sb.AppendLine();
-
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 删除{metadata.EntityDescription}");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<Delete{metadata.EntityName}Result> DeleteAsync(CancellationToken cancellationToken = default);");
-            sb.AppendLine();
-
-            // 检查存在性方法
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 检查{metadata.EntityDescription}是否存在");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [ReadOnly]");
-            sb.AppendLine("        Task<bool> ExistsAsync(CancellationToken cancellationToken = default);");
-            sb.AppendLine();
-
+            
             // 软删除支持
-            if (metadata.IsSoftDeletable)
+            if (entity.IsSoftDeletable)
             {
                 sb.AppendLine("        /// <summary>");
-                sb.AppendLine($"        /// 软删除{metadata.EntityDescription}");
+                sb.AppendLine($"        /// 软删除{entity.EntityDescription}");
                 sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        Task<Delete{metadata.EntityName}Result> SoftDeleteAsync(CancellationToken cancellationToken = default);");
-                sb.AppendLine();
-
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine($"        /// 恢复{metadata.EntityDescription}");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        Task<Update{metadata.EntityName}Result> RestoreAsync(CancellationToken cancellationToken = default);");
+                sb.AppendLine($"        Task<Delete{entity.EntityName}Result> SoftDeleteAsync(CancellationToken cancellationToken = default);");
                 sb.AppendLine();
             }
-
+            
             // 查询方法
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 获取{metadata.EntityDescription}列表");
+            sb.AppendLine($"        /// 获取{entity.EntityDescription}列表");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [ReadOnly]");
-            sb.AppendLine($"        Task<List<{metadata.EntityName}Dto>> GetListAsync(int pageIndex = 1, int pageSize = 20, CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<List<{entity.EntityName}Dto>> GetListAsync(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
-            // 搜索方法（如果有字符串属性）
-            var searchableProperties = metadata.Properties.FindAll(p => 
-                p.Type == "string" && !p.IsPrimaryKey);
             
-            if (searchableProperties.Count > 0)
-            {
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine($"        /// 搜索{metadata.EntityDescription}");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine("        [ReadOnly]");
-                sb.AppendLine($"        Task<List<{metadata.EntityName}Dto>> SearchAsync(string keyword, CancellationToken cancellationToken = default);");
-                sb.AppendLine();
-            }
-
-            // 特定业务方法示例
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 获取{metadata.EntityDescription}统计信息");
+            sb.AppendLine($"        /// 获取{entity.EntityDescription}总数");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        [ReadOnly]");
-            sb.AppendLine($"        Task<{metadata.EntityName}Statistics> GetStatisticsAsync(CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<int> GetCountAsync(CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
+            
+            // 搜索方法
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine($"        /// 搜索{entity.EntityDescription}");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine($"        Task<List<{entity.EntityName}Dto>> SearchAsync(string keyword, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);");
+            sb.AppendLine();
+            
             // 批量操作方法
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 批量更新{metadata.EntityDescription}");
+            sb.AppendLine($"        /// 批量删除{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<BatchUpdate{metadata.EntityName}Result> BatchUpdateAsync(List<{metadata.EntityName}Dto> dtos, CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{GetGrainKeyType(entity.PrimaryKeyType)}> ids, CancellationToken cancellationToken = default);");
             sb.AppendLine();
-
+            
+            // 验证方法
             sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 批量删除{metadata.EntityDescription}");
+            sb.AppendLine($"        /// 验证{entity.EntityDescription}数据");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<BatchDelete{metadata.EntityName}Result> BatchDeleteAsync(List<{metadata.PrimaryKeyType}> ids, CancellationToken cancellationToken = default);");
-            sb.AppendLine();
-
+            sb.AppendLine($"        Task<ValidationResult> ValidateAsync({entity.EntityName}Dto data, CancellationToken cancellationToken = default);");
+            
             sb.AppendLine("    }");
             sb.AppendLine("}");
-
-            // 生成结果类
-            sb.AppendLine();
-            sb.AppendLine("namespace FakeMicro.Interfaces");
-            sb.AppendLine("{");
-
-            // 创建结果类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// 创建{metadata.EntityDescription}结果");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class Create{metadata.EntityName}Result");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public bool Success { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public string? ErrorMessage { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine($"        public {metadata.EntityName}Dto? Created{metadata.EntityName} {{ get; set; }}");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine($"        public {metadata.PrimaryKeyType}? {metadata.PrimaryKeyProperty} {{ get; set; }}");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{metadata.EntityName}Result CreateSuccess({metadata.EntityName}Dto entity, {metadata.PrimaryKeyType} id)");
-            sb.AppendLine($"            => new() {{ Success = true, Created{metadata.EntityName} = entity, {metadata.PrimaryKeyProperty} = id }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{metadata.EntityName}Result CreateFailed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 更新结果类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// 更新{metadata.EntityDescription}结果");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class Update{metadata.EntityName}Result");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public bool Success { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public string? ErrorMessage { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine($"        public {metadata.EntityName}Dto? Updated{metadata.EntityName} {{ get; set; }}");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{metadata.EntityName}Result CreateSuccess({metadata.EntityName}Dto entity)");
-            sb.AppendLine($"            => new() {{ Success = true, Updated{metadata.EntityName} = entity }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{metadata.EntityName}Result CreateFailed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 删除结果类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// 删除{metadata.EntityDescription}结果");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class Delete{metadata.EntityName}Result");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public bool Success { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public string? ErrorMessage { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public bool IsSoftDeleted { get; set; }");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Delete{metadata.EntityName}Result CreateSuccess(bool isSoftDeleted = false)");
-            sb.AppendLine($"            => new() {{ Success = true, IsSoftDeleted = isSoftDeleted }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Delete{metadata.EntityName}Result CreateFailed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 批量更新结果类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// 批量更新{metadata.EntityDescription}结果");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class BatchUpdate{metadata.EntityName}Result");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public bool Success { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public string? ErrorMessage { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public int SuccessCount { get; set; }");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine("        public int FailedCount { get; set; }");
-            sb.AppendLine("        [Id(4)]");
-            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchUpdate{metadata.EntityName}Result CreateSuccess(int successCount)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchUpdate{metadata.EntityName}Result CreateFailed(List<string> errors)");
-            sb.AppendLine($"            => new() {{ Success = false, FailedCount = errors.Count, Errors = errors }};");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 批量删除结果类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// 批量删除{metadata.EntityDescription}结果");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class BatchDelete{metadata.EntityName}Result");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public bool Success { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public string? ErrorMessage { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public int SuccessCount { get; set; }");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine("        public int FailedCount { get; set; }");
-            sb.AppendLine("        [Id(4)]");
-            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchDelete{metadata.EntityName}Result CreateSuccess(int successCount)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchDelete{metadata.EntityName}Result CreateFailed(List<string> errors)");
-            sb.AppendLine($"            => new() {{ Success = false, FailedCount = errors.Count, Errors = errors }};");
-            sb.AppendLine("    }");
-            sb.AppendLine();
-
-            // 统计信息类
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// {metadata.EntityDescription}统计信息");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
-            sb.AppendLine($"    public class {metadata.EntityName}Statistics");
-            sb.AppendLine("    {");
-            sb.AppendLine("        [Id(0)]");
-            sb.AppendLine("        public int TotalCount { get; set; }");
-            sb.AppendLine("        [Id(1)]");
-            sb.AppendLine("        public int ActiveCount { get; set; }");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public int CreatedToday { get; set; }");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine("        public int CreatedThisWeek { get; set; }");
-            sb.AppendLine("        [Id(4)]");
-            sb.AppendLine("        public int CreatedThisMonth { get; set; }");
-            sb.AppendLine("        [Id(5)]");
-            sb.AppendLine("        public DateTime? LastCreated { get; set; }");
-            sb.AppendLine("        [Id(6)]");
-            sb.AppendLine("        public DateTime? LastUpdated { get; set; }");
-            sb.AppendLine();
-            if (metadata.IsSoftDeletable)
-            {
-                sb.AppendLine("        [Id(7)]");
-                sb.AppendLine("        public int DeletedCount { get; set; }");
-            }
-            sb.AppendLine("    }");
-            sb.AppendLine("}");
-
+            
             return sb.ToString();
+        }
+        
+        private static string GetGrainKeyType(string keyType)
+        {
+            return keyType.ToLower() switch
+            {
+                "string" => "String",
+                "guid" => "Guid",
+                "long" => "Long",
+                "int" => "Integer",
+                _ => "String"
+            };
         }
     }
 }

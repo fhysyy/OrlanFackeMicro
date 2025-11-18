@@ -197,10 +197,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <returns>字符串表示</returns>");
             sb.AppendLine("        public override string ToString()");
             sb.AppendLine("        {");
-            sb.AppendLine($"            return $\"{metadata.EntityName}Dto ");
             var propList = metadata.Properties.Select(p => $"{p.Name} = {{{p.Name}}}").ToList();
-            sb.Append(string.Join(", ", propList));
-            sb.AppendLine(" }\";");
+            sb.AppendLine($"            return $\"{metadata.EntityName}Dto {string.Join(",", propList)};");
             sb.AppendLine("        }");
             sb.AppendLine();
 

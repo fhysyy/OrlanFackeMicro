@@ -82,7 +82,7 @@ public class Role :IAuditable, ISoftDeletable
     /// <summary>
     /// 是否删除
     /// </summary>
-    [SqlSugar.SugarColumn(ColumnName = "is_deleted")]
+    [SqlSugar.SugarColumn(ColumnName = "is_deleted",IsNullable = true)]
     [Id(9)]
     public bool is_deleted { get; set; } = false;
 
