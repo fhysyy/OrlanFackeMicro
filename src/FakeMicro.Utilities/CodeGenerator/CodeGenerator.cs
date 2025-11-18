@@ -133,6 +133,16 @@ namespace FakeMicro.Utilities.CodeGenerator
                 await GenerateControllerAsync(entity, overwriteStrategy);
             }
 
+            if (generationType.HasFlag(GenerationType.Repository))
+            {
+                await GenerateRepositoryAsync(entity, overwriteStrategy);
+            }
+
+            if (generationType.HasFlag(GenerationType.RepositoryImplementation))
+            {
+                await GenerateRepositoryImplementationAsync(entity, overwriteStrategy);
+            }
+
             return result;
         }
 
@@ -195,6 +205,24 @@ namespace FakeMicro.Utilities.CodeGenerator
             var content = Templates.ControllerTemplate.Generate(entity);
             var fileName = $"{entity.EntityName}Controller.cs";
             var filePath = Path.Combine(_outputPath, "FakeMicro.Api/Controllers", fileName);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
+
+        private async Task GenerateRepositoryAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        {
+            var content = Templates.RepositoryInterfaceTemplate.Generate(entity);
+            var fileName = $"I{entity.EntityName}Repository.cs";
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Repositories", fileName);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
+
+        private async Task GenerateRepositoryImplementationAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        {
+            var content = Templates.RepositoryImplementationTemplate.Generate(entity);
+            var fileName = $"{entity.EntityName}Repository.cs";
+            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Repositories", fileName);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -317,6 +345,16 @@ namespace FakeMicro.Utilities.CodeGenerator
             if (generationType.HasFlag(GenerationType.Controller))
             {
                 preview[GenerationType.Controller] = Templates.ControllerTemplate.Generate(entity);
+            }
+
+            if (generationType.HasFlag(GenerationType.Repository))
+            {
+                preview[GenerationType.Repository] = Templates.RepositoryInterfaceTemplate.Generate(entity);
+            }
+
+            if (generationType.HasFlag(GenerationType.RepositoryImplementation))
+            {
+                preview[GenerationType.RepositoryImplementation] = Templates.RepositoryImplementationTemplate.Generate(entity);
             }
 
             return preview;

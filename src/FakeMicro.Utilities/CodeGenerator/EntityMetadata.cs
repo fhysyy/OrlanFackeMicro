@@ -60,6 +60,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         public bool IsSoftDeletable { get; set; }
 
+        public bool IsNavigationProperty { get; set; }
+
         /// <summary>
         /// 获取主键属性的元数据
         /// </summary>
@@ -140,6 +142,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// <summary>
         /// 是否自增
         public bool IsAutoIncrement { get; set; }
+
+        public bool IsNavigationProperty { get; set; }
         /// <summary>
         /// 获取驼峰命名的属性名
         /// </summary>

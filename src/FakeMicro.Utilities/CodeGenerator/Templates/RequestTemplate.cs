@@ -30,10 +30,13 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("//------------------------------------------------------------------------------");
             sb.AppendLine();
 
-            // using语句
+            // using语句 - 增强验证和Orleans支持
             sb.AppendLine("using System;");
             sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine("using System.ComponentModel.DataAnnotations;");
+            sb.AppendLine("using System.ComponentModel.DataAnnotations.Schema;");
+            sb.AppendLine("using System.Linq;");
+            sb.AppendLine("using System.Text.RegularExpressions;");
             sb.AppendLine("using Orleans.Concurrency;");
             sb.AppendLine();
 
@@ -66,7 +69,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
         }
 
         /// <summary>
-        /// 生成创建请求类
+        /// 生成创建请求类 - 增强验证支持
         /// </summary>
         private static void GenerateCreateRequestClass(StringBuilder sb, EntityMetadata entity)
         {
@@ -93,25 +96,83 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 // 添加验证特性
                 if (property.IsRequired)
                 {
-                    sb.AppendLine("        [Required]");
+                    sb.AppendLine("        [Required(ErrorMessage = \"{0}是必需的\")]");
                 }
                 
                 if (property.MaxLength.HasValue && property.MaxLength.Value > 0)
                 {
-                    sb.AppendLine($"        [MaxLength({property.MaxLength.Value})]");
+                    sb.AppendLine($"        [MaxLength({property.MaxLength.Value}, ErrorMessage = \"{{0}}长度不能超过{property.MaxLength.Value}个字符\")]");
                 }
 
                 if (property.MinLength.HasValue && property.MinLength.Value > 0)
                 {
-                    sb.AppendLine($"        [MinLength({property.MinLength.Value})]");
+                    sb.AppendLine($"        [MinLength({property.MinLength.Value}, ErrorMessage = \"{{0}}长度不能少于{property.MinLength.Value}个字符\")]");
+                }
+
+                // 特殊字段验证
+                if (property.Name.ToLower().Contains("email") && property.Type == "string")
+                {
+                    sb.AppendLine("        [EmailAddress(ErrorMessage = \"{0}格式不正确\")]");
+                }
+                else if (property.Name.ToLower().Contains("phone") && property.Type == "string")
+                {
+                    sb.AppendLine("        [Phone(ErrorMessage = \"{0}格式不正确\")]");
+                }
+                else if (property.Name.ToLower().Contains("url") && property.Type == "string")
+                {
+                    sb.AppendLine("        [Url(ErrorMessage = \"{0}格式不正确\")]");
                 }
 
                 // 添加Orleans序列化特性
                 sb.AppendLine("        [Id(0)]");
-                sb.AppendLine($"        public {property.Type} {property.Name} {{ get; set; }}");
+                
+                // 处理可空类型
+                string propertyType = property.IsRequired && property.Type != "string" 
+                    ? property.Type 
+                    : property.Type + "?";
+                    
+                sb.AppendLine($"        public {propertyType} {property.Name} {{ get; set; }}");
                 sb.AppendLine();
             }
 
+            // 添加验证方法
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 手动验证请求数据");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <returns>验证结果</returns>");
+            sb.AppendLine("        public (bool IsValid, List<string> Errors) Validate()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var errors = new List<string>();");
+            sb.AppendLine();
+            
+            // 生成验证逻辑
+            foreach (var property in properties)
+            {
+                if (property.IsRequired)
+                {
+                    if (property.Type == "string")
+                    {
+                        sb.AppendLine($"            if (string.IsNullOrWhiteSpace({property.Name}))");
+                        sb.AppendLine($"                errors.Add(\"{property.Name}是必需的\");");
+                    }
+                    else
+                    {
+                        sb.AppendLine($"            if ({property.Name} == null)");
+                        sb.AppendLine($"                errors.Add(\"{property.Name}是必需的\");");
+                    }
+                    sb.AppendLine();
+                }
+                
+                if (property.Type == "string" && property.MaxLength.HasValue)
+                {
+                    sb.AppendLine($"            if ({property.Name}?.Length > {property.MaxLength.Value})");
+                    sb.AppendLine($"                errors.Add(\"{property.Name}长度不能超过{property.MaxLength.Value}个字符\");");
+                    sb.AppendLine();
+                }
+            }
+            
+            sb.AppendLine("            return (errors.Count == 0, errors);");
+            sb.AppendLine("        }");
             sb.AppendLine("    }");
         }
 

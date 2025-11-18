@@ -21,12 +21,15 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"// </auto-generated>");
             sb.AppendLine();
 
-            // Using 语句
+            // Using 语句 - 根据Orleans最佳实践优化
             sb.AppendLine("using System;");
             sb.AppendLine("using System.ComponentModel.DataAnnotations;");
+            sb.AppendLine("using System.ComponentModel.DataAnnotations.Schema;");
+            sb.AppendLine("using System.Text.RegularExpressions;");
             sb.AppendLine("using Orleans.Serialization;");
             sb.AppendLine("using Orleans;");
             sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine("using System.Linq;");
             sb.AppendLine();
 
             // 命名空间
@@ -142,26 +145,45 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 }
             }
 
-            // 特殊验证逻辑
+            // 高级验证逻辑 - 邮箱、手机号、URL等
             foreach (var prop in metadata.Properties)
             {
                 if (prop.Name.ToLower().Contains("email") && prop.Type == "string")
                 {
-                    sb.AppendLine($"            if (!string.IsNullOrEmpty({prop.Name}))");
+                    sb.AppendLine($"            if (!string.IsNullOrWhiteSpace({prop.Name}))");
                     sb.AppendLine("            {");
-                    sb.AppendLine("                var emailRegex = new System.Text.RegularExpressions.Regex(@\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\");");
-                    sb.AppendLine($"                if (!emailRegex.IsMatch({prop.Name}))");
-                    sb.AppendLine($"                    errors.Add(\"{prop.Name} 格式不正确\");");
+                    sb.AppendLine("                var emailRegex = new Regex(@\"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$\", RegexOptions.IgnoreCase);");
+                    sb.AppendLine($"                if (!emailRegex.IsMatch({prop.Name}.Trim()))");
+                    sb.AppendLine($"                    errors.Add(\"{prop.Name} 邮箱格式不正确\");");
                     sb.AppendLine("            }");
                     sb.AppendLine();
                 }
                 else if (prop.Name.ToLower().Contains("phone") && prop.Type == "string")
                 {
-                    sb.AppendLine($"            if (!string.IsNullOrEmpty({prop.Name}))");
+                    sb.AppendLine($"            if (!string.IsNullOrWhiteSpace({prop.Name}))");
                     sb.AppendLine("            {");
-                    sb.AppendLine("                var phoneRegex = new System.Text.RegularExpressions.Regex(@\"^1[3-9]\\d{9}$\");");
-                    sb.AppendLine($"                if (!phoneRegex.IsMatch({prop.Name}))");
-                    sb.AppendLine($"                    errors.Add(\"{prop.Name} 格式不正确\");");
+                    sb.AppendLine("                var phoneRegex = new Regex(@\"^1[3-9]\\d{9}$\");");
+                    sb.AppendLine($"                if (!phoneRegex.IsMatch({prop.Name}.Trim()))");
+                    sb.AppendLine($"                    errors.Add(\"{prop.Name} 手机号码格式不正确\");");
+                    sb.AppendLine("            }");
+                    sb.AppendLine();
+                }
+                else if (prop.Name.ToLower().Contains("url") && prop.Type == "string")
+                {
+                    sb.AppendLine($"            if (!string.IsNullOrWhiteSpace({prop.Name}))");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                if (!Uri.TryCreate({prop.Name}, UriKind.Absolute, out _))");
+                    sb.AppendLine($"                    errors.Add(\"{prop.Name} URL格式不正确\");");
+                    sb.AppendLine("            }");
+                    sb.AppendLine();
+                }
+                else if (prop.Name.ToLower().Contains("code") && prop.Type == "string")
+                {
+                    sb.AppendLine($"            if (!string.IsNullOrWhiteSpace({prop.Name}))");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                var codeRegex = new Regex(@\"^[A-Z0-9_]+$\");");
+                    sb.AppendLine($"                if (!codeRegex.IsMatch({prop.Name}.Trim().ToUpper()))");
+                    sb.AppendLine($"                    errors.Add(\"{prop.Name} 只能包含大写字母、数字和下划线\");");
                     sb.AppendLine("            }");
                     sb.AppendLine();
                 }
@@ -198,7 +220,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        public override string ToString()");
             sb.AppendLine("        {");
             var propList = metadata.Properties.Select(p => $"{p.Name} = {{{p.Name}}}").ToList();
-            sb.AppendLine($"            return $\"{metadata.EntityName}Dto {string.Join(",", propList)};");
+            sb.AppendLine($"            return $\"{metadata.EntityName}Dto {string.Join(",", propList)}\";");
             sb.AppendLine("        }");
             sb.AppendLine();
 

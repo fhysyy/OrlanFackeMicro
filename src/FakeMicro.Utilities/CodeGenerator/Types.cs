@@ -16,7 +16,9 @@ namespace FakeMicro.Utilities.CodeGenerator
         Grain = 16,
         Dto = 32,
         Controller = 64,
-        All = Entity | Interface | Result | Request | Grain | Dto | Controller
+        Repository = 128,           // 仓储接口
+        RepositoryImplementation = 256, // 仓储实现
+        All = Entity | Interface | Result | Request | Grain | Dto | Controller | Repository | RepositoryImplementation
     }
 
     /// <summary>

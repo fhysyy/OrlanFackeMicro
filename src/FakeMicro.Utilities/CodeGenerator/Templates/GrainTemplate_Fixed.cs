@@ -3,9 +3,9 @@ using System.Text;
 namespace FakeMicro.Utilities.CodeGenerator.Templates
 {
     /// <summary>
-    /// Grain实现模板
+    /// Grain实现模板 - 改进版本
     /// </summary>
-    public static class GrainTemplate
+    public static class GrainTemplate_Fixed
     {
         public static string Generate(EntityMetadata entity)
         {
@@ -41,12 +41,12 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 类定义
             sb.AppendLine("    /// <summary>");
-            sb.AppendLine($"    /// {entity.EntityDescription}Grain实现");
+            sb.AppendLine($"    /// {entity.EntityDescription}Grain实现 - 改进版本");
             sb.AppendLine("    /// </summary>");
             sb.AppendLine($"    public class {entity.EntityName}Grain :Grain,I{entity.EntityName}Grain");
             sb.AppendLine("    {");
             
-            // 字段和构造函数 - 采用依赖注入架构
+            // 字段和构造函数 - 使用依赖注入
             sb.AppendLine($"        private readonly ILogger<{entity.EntityName}Grain> _logger;");
             sb.AppendLine($"        private readonly IMapper _mapper;");
             sb.AppendLine($"        private readonly I{entity.EntityName}Repository _repository;");
@@ -54,15 +54,15 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"        public {entity.EntityName}Grain(");
             sb.AppendLine($"            ILogger<{entity.EntityName}Grain> logger,");
             sb.AppendLine($"            IMapper mapper,");
-            sb.AppendLine($"            I{entity.EntityName}Repository repository) // 通过接口注入");
+            sb.AppendLine($"            I{entity.EntityName}Repository repository)"); // 通过接口注入
             sb.AppendLine("        {");
             sb.AppendLine($"            _logger = logger;");
             sb.AppendLine($"            _mapper = mapper;");
-            sb.AppendLine($"            _repository = repository; // 使用注入的仓储");
+            sb.AppendLine($"            _repository = repository;");
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 获取方法 - 改进错误处理和安全检查
+            // 获取方法 - 改进错误处理
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 获取{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
@@ -143,7 +143,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 更新方法 - 改进错误处理和Primary Key验证
+            // 更新方法 - 使用注入的仓储
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 更新{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
@@ -160,7 +160,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                var existingEntity = await _repository.GetByIdAsync(grainId, cancellationToken);");
             sb.AppendLine("                if (existingEntity == null)");
             sb.AppendLine("                {");
-            sb.AppendLine($"                    _logger.LogWarning(\"{entity.EntityDescription}不存在: {{Id}}\", grainId);");
+            sb.AppendLine($"                    _logger.LogInformation(\"{entity.EntityDescription}不存在: {{Id}}\", grainId);");
             sb.AppendLine($"                    return Update{entity.EntityName}Result.NotFound(\"{entity.EntityDescription}不存在\");");
             sb.AppendLine("                }");
             sb.AppendLine();
@@ -174,20 +174,15 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}更新成功: {{Id}}\", existingEntity.Id);");
             sb.AppendLine($"                return Update{entity.EntityName}Result.Success(result);");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateConcurrencyException ex)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"更新{entity.EntityDescription}时发生并发冲突\");");
-            sb.AppendLine($"                return Update{entity.EntityName}Result.ConcurrencyConflict(\"数据已被其他操作修改，请刷新后重试\");");
-            sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"更新{entity.EntityDescription}时发生系统错误: {{Id}}\", this.GetPrimaryKeyString());");
+            sb.AppendLine($"                _logger.LogError(ex, \"更新{entity.EntityDescription}时发生错误: {{Id}}\", this.GetPrimaryKeyString());");
             sb.AppendLine($"                return Update{entity.EntityName}Result.Failure(\"更新失败，请稍后重试\");");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 删除方法 - 改进错误处理和Primary Key验证
+            // 删除方法 - 统一的软删除逻辑
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 删除{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
@@ -204,7 +199,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                var existingEntity = await _repository.GetByIdAsync(grainId, cancellationToken);");
             sb.AppendLine("                if (existingEntity == null)");
             sb.AppendLine("                {");
-            sb.AppendLine($"                    _logger.LogWarning(\"{entity.EntityDescription}不存在: {{Id}}\", grainId);");
+            sb.AppendLine($"                    _logger.LogInformation(\"{entity.EntityDescription}不存在: {{Id}}\", grainId);");
             sb.AppendLine($"                    return Delete{entity.EntityName}Result.NotFound(\"{entity.EntityDescription}不存在\");");
             sb.AppendLine("                }");
             sb.AppendLine();
@@ -225,60 +220,15 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}删除成功: {{Id}}\", grainId);");
             sb.AppendLine($"                return Delete{entity.EntityName}Result.Success();");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"删除{entity.EntityDescription}时发生外键约束错误\");");
-            sb.AppendLine($"                return Delete{entity.EntityName}Result.InvalidReference(\"该{entity.EntityDescription}被其他数据引用，无法删除\");");
-            sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"删除{entity.EntityDescription}时发生系统错误: {{Id}}\", this.GetPrimaryKeyString());");
+            sb.AppendLine($"                _logger.LogError(ex, \"删除{entity.EntityDescription}时发生错误: {{Id}}\", this.GetPrimaryKeyString());");
             sb.AppendLine($"                return Delete{entity.EntityName}Result.Failure(\"删除失败，请稍后重试\");");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 软删除方法 - 改进错误处理和Primary Key验证
-            if (entity.IsSoftDeletable)
-            {
-                sb.AppendLine("        /// <summary>");
-                sb.AppendLine($"        /// 软删除{entity.EntityDescription}");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        public async Task<Delete{entity.EntityName}Result> SoftDeleteAsync(CancellationToken cancellationToken = default)");
-                sb.AppendLine("        {");
-                sb.AppendLine("            try");
-                sb.AppendLine("            {");
-                sb.AppendLine($"                if (!this.GetPrimaryKey(out Guid grainId))");
-                sb.AppendLine("                {");
-                sb.AppendLine($"                    _logger.LogWarning(\"无效的Grain ID: {{GrainId}}\", this.GetPrimaryKeyString());");
-                sb.AppendLine($"                    return Delete{entity.EntityName}Result.InvalidGrainId();");
-                sb.AppendLine("                }");
-                sb.AppendLine();
-                sb.AppendLine($"                var existingEntity = await _repository.GetByIdAsync(grainId, cancellationToken);");
-                sb.AppendLine("                if (existingEntity == null)");
-                sb.AppendLine("                {");
-                sb.AppendLine($"                    _logger.LogWarning(\"{entity.EntityDescription}不存在: {{Id}}\", grainId);");
-                sb.AppendLine($"                    return Delete{entity.EntityName}Result.NotFound(\"{entity.EntityDescription}不存在\");");
-                sb.AppendLine("                }");
-                sb.AppendLine();
-                sb.AppendLine("                // 软删除");
-                sb.AppendLine("                existingEntity.IsDeleted = true;");
-                sb.AppendLine("                existingEntity.UpdatedAt = DateTime.UtcNow;");
-                sb.AppendLine($"                await _repository.UpdateAsync(existingEntity, cancellationToken);");
-                sb.AppendLine();
-                sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}软删除成功: {{Id}}\", grainId);");
-                sb.AppendLine($"                return Delete{entity.EntityName}Result.Success();");
-                sb.AppendLine("            }");
-                sb.AppendLine("            catch (Exception ex)");
-                sb.AppendLine("            {");
-                sb.AppendLine($"                _logger.LogError(ex, \"软删除{entity.EntityDescription}时发生系统错误: {{Id}}\", this.GetPrimaryKeyString());");
-                sb.AppendLine($"                return Delete{entity.EntityName}Result.Failure(\"软删除失败，请稍后重试\");");
-                sb.AppendLine("            }");
-                sb.AppendLine("        }");
-                sb.AppendLine();
-            }
-            
-            // 获取列表方法 - 使用注入的仓储和改进错误处理
+            // 获取列表方法 - 使用仓储
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 获取{entity.EntityDescription}列表");
             sb.AppendLine("        /// </summary>");
@@ -286,31 +236,28 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        {");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var query = _repository.GetQueryable();");
             
             if (entity.IsSoftDeletable)
             {
-                sb.AppendLine("                query = query.Where(x => !x.IsDeleted);");
+                sb.AppendLine($"                var entities = await _repository.GetListAsync(x => !x.IsDeleted, page, pageSize, cancellationToken);");
+            }
+            else
+            {
+                sb.AppendLine($"                var entities = await _repository.GetListAsync(page, pageSize, cancellationToken);");
             }
             
-            sb.AppendLine();
-            sb.AppendLine("                var entities = await query");
-            sb.AppendLine("                    .OrderByDescending(x => x.CreatedAt)");
-            sb.AppendLine("                    .Skip((page - 1) * pageSize)");
-            sb.AppendLine("                    .Take(pageSize)");
-            sb.AppendLine("                    .ToListAsync(cancellationToken);");
             sb.AppendLine();
             sb.AppendLine($"                return _mapper.Map<List<{entity.EntityName}Dto>>(entities);");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"获取{entity.EntityDescription}列表时发生系统错误\");");
-            sb.AppendLine("                throw new InvalidOperationException($\"获取{entity.EntityDescription}列表失败，请稍后重试\");");
+            sb.AppendLine($"                _logger.LogError(ex, \"获取{entity.EntityDescription}列表时发生错误\");");
+            sb.AppendLine("                throw;");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 获取总数方法 - 使用注入的仓储和改进错误处理
+            // 获取总数方法 - 使用仓储
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 获取{entity.EntityDescription}总数");
             sb.AppendLine("        /// </summary>");
@@ -318,25 +265,26 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        {");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var query = _repository.GetQueryable();");
             
             if (entity.IsSoftDeletable)
             {
-                sb.AppendLine("                query = query.Where(x => !x.IsDeleted);");
+                sb.AppendLine($"                return await _repository.CountAsync(x => !x.IsDeleted, cancellationToken);");
+            }
+            else
+            {
+                sb.AppendLine($"                return await _repository.CountAsync(cancellationToken);");
             }
             
-            sb.AppendLine();
-            sb.AppendLine("                return await query.CountAsync(cancellationToken);");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"获取{entity.EntityDescription}总数时发生系统错误\");");
-            sb.AppendLine("                throw new InvalidOperationException($\"获取{entity.EntityDescription}总数失败，请稍后重试\");");
+            sb.AppendLine($"                _logger.LogError(ex, \"获取{entity.EntityDescription}总数时发生错误\");");
+            sb.AppendLine("                throw;");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // 搜索方法 - 使用注入的仓储和改进错误处理
+            // 搜索方法 - 使用仓储
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 搜索{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
@@ -344,142 +292,26 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        {");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var query = _repository.GetQueryable();");
             
             if (entity.IsSoftDeletable)
             {
-                sb.AppendLine("                query = query.Where(x => !x.IsDeleted);");
+                sb.AppendLine($"                var entities = await _repository.SearchAsync(keyword, x => !x.IsDeleted, page, pageSize, cancellationToken);");
             }
-            
-            sb.AppendLine();
-            sb.AppendLine("                // 搜索逻辑 - 根据字符串属性搜索");
-            var searchableProperties = entity.Properties.Where(p => p.Type == "string" && !p.IsPrimaryKey).ToList();
-            if (searchableProperties.Any())
+            else
             {
-                sb.AppendLine("                if (!string.IsNullOrEmpty(keyword))");
-                sb.AppendLine("                {");
-                sb.Append("                    query = query.Where(x => ");
-                var searchConditions = searchableProperties.Select(p => $"x.{p.Name}.Contains(keyword)");
-                sb.AppendLine(string.Join(" || ", searchConditions) + ");");
-                sb.AppendLine("                }");
+                sb.AppendLine($"                var entities = await _repository.SearchAsync(keyword, page, pageSize, cancellationToken);");
             }
             
-            sb.AppendLine();
-            sb.AppendLine("                var entities = await query");
-            sb.AppendLine("                    .OrderByDescending(x => x.CreatedAt)");
-            sb.AppendLine("                    .Skip((page - 1) * pageSize)");
-            sb.AppendLine("                    .Take(pageSize)");
-            sb.AppendLine("                    .ToListAsync(cancellationToken);");
             sb.AppendLine();
             sb.AppendLine($"                return _mapper.Map<List<{entity.EntityName}Dto>>(entities);");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"搜索{entity.EntityDescription}时发生系统错误\");");
-            sb.AppendLine("                throw new InvalidOperationException($\"搜索{entity.EntityDescription}失败，请稍后重试\");");
+            sb.AppendLine($"                _logger.LogError(ex, \"搜索{entity.EntityDescription}时发生错误\");");
+            sb.AppendLine("                throw;");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
-            
-            // 批量删除方法 - 使用注入的仓储和改进错误处理
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 批量删除{entity.EntityDescription}");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        public async Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{entity.PrimaryKeyType}> ids, CancellationToken cancellationToken = default)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            try");
-            sb.AppendLine("            {");
-            sb.AppendLine("                if (ids == null || !ids.Any())");
-            sb.AppendLine("                {");
-            sb.AppendLine($"                    return BatchDelete{entity.EntityName}Result.Failure(\"批量删除ID列表不能为空\");");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            sb.AppendLine("                var query = _repository.GetQueryable().Where(x => ids.Contains(x.Id));");
-            
-            if (entity.IsSoftDeletable)
-            {
-                sb.AppendLine("                query = query.Where(x => !x.IsDeleted);");
-            }
-            
-            sb.AppendLine();
-            sb.AppendLine("                var entities = await query.ToListAsync(cancellationToken);");
-            sb.AppendLine("                if (!entities.Any())");
-            sb.AppendLine("                {");
-            sb.AppendLine($"                    return BatchDelete{entity.EntityName}Result.NotFound(\"未找到要删除的{entity.EntityDescription}\");");
-            sb.AppendLine("                }");
-            sb.AppendLine();
-            
-            if (entity.IsSoftDeletable)
-            {
-                sb.AppendLine("                // 批量软删除");
-                sb.AppendLine("                foreach (var entity in entities)");
-                sb.AppendLine("                {");
-                sb.AppendLine("                    entity.IsDeleted = true;");
-                sb.AppendLine("                    entity.UpdatedAt = DateTime.UtcNow;");
-                sb.AppendLine("                }");
-                sb.AppendLine($"                await _repository.UpdateRangeAsync(entities, cancellationToken);");
-            }
-            else
-            {
-                sb.AppendLine($"                await _repository.DeleteRangeAsync(entities, cancellationToken);");
-            }
-            
-            sb.AppendLine();
-            sb.AppendLine($"                _logger.LogInformation(\"批量删除{entity.EntityDescription}成功，删除数量: {{Count}}\", entities.Count);");
-            sb.AppendLine($"                return BatchDelete{entity.EntityName}Result.Success(entities.Count);");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"批量删除{entity.EntityDescription}时发生外键约束错误\");");
-            sb.AppendLine($"                return BatchDelete{entity.EntityName}Result.InvalidReference(\"部分{entity.EntityDescription}被其他数据引用，无法删除\");");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (Exception ex)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogError(ex, \"批量删除{entity.EntityDescription}时发生系统错误\");");
-            sb.AppendLine($"                return BatchDelete{entity.EntityName}Result.Failure(\"批量删除失败，请稍后重试\");");
-            sb.AppendLine("            }");
-            sb.AppendLine("        }");
-            sb.AppendLine();
-            
-            // 验证方法
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine($"        /// 验证{entity.EntityDescription}数据");
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        public async Task<ValidationResult> ValidateAsync({entity.EntityName}Dto data, CancellationToken cancellationToken = default)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            var errors = new List<string>();");
-            sb.AppendLine();
-            
-            // 添加验证逻辑
-            foreach (var property in entity.Properties)
-            {
-                if (property.IsRequired && property.Type == "string")
-                {
-                    sb.AppendLine($"            if (string.IsNullOrWhiteSpace(data.{property.Name}))");
-                    sb.AppendLine($"                errors.Add(\"{property.Description}不能为空\");");
-                }
-                
-                if (property.MaxLength.HasValue && property.Type == "string")
-                {
-                    sb.AppendLine($"            if (data.{property.Name}?.Length > {property.MaxLength.Value})");
-                    sb.AppendLine($"                errors.Add(\"{property.Description}长度不能超过{property.MaxLength.Value}个字符\");");
-                }
-                
-                if (property.MinLength.HasValue && property.Type == "string")
-                {
-                    sb.AppendLine($"            if (data.{property.Name}?.Length < {property.MinLength.Value})");
-                    sb.AppendLine($"                errors.Add(\"{property.Description}长度不能少于{property.MinLength.Value}个字符\");");
-                }
-            }
-            
-            sb.AppendLine();
-            sb.AppendLine("            if (errors.Any())");
-            sb.AppendLine("            {");
-            sb.AppendLine("                return ValidationResult.Failure(errors);");
-            sb.AppendLine("            }");
-            sb.AppendLine();
-            sb.AppendLine("            return ValidationResult.Success();");
-            sb.AppendLine("        }");
             
             sb.AppendLine("    }");
             sb.AppendLine("}");

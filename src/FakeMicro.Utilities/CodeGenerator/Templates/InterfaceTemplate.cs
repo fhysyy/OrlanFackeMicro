@@ -25,7 +25,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"using {entity.Namespace}.Models;");
             sb.AppendLine($"using {entity.Namespace}.Models.Requests;");
             sb.AppendLine($"using {entity.Namespace}.Models.Results;");
-            sb.AppendLine("using Orleans;");
+            sb.AppendLine("using Orleans;  // Orleans Grain 接口支持");
             sb.AppendLine();
             
             // 命名空间

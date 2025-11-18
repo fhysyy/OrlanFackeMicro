@@ -35,7 +35,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"    /// {entity.EntityDescription}");
             sb.AppendLine("    /// </summary>");
             sb.AppendLine($"    [GenerateSerializer]");
-            sb.AppendLine($"    [SugarTable(\"{entity.TableName}\")]");
+            sb.AppendLine($"    [SugarTable(\"{entity.EntityName.ToLower()}\")]");
             sb.AppendLine($"    public class {entity.EntityName}");
             sb.AppendLine("    {");
             

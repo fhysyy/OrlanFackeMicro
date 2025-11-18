@@ -99,6 +99,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         {
             "Interface",
             "Result",
+            "Request",
             "Grain",
             "ServiceInterface", 
             "ServiceGrain",
@@ -140,7 +141,7 @@ namespace FakeMicro.Utilities.CodeGenerator
             },
             ["Request"] = new TemplateSettings
             {
-                Enabled = false,
+                Enabled = true,
                 FileNamePattern = "{EntityName}Requests.cs",
                 OutputDirectory = "FakeMicro.Interfaces/Models/Requests"
             },
@@ -364,6 +365,21 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// 是否生成异常注释
         /// </summary>
         public bool GenerateExceptionComments { get; set; } = false;
+
+        /// <summary>
+        /// 是否生成验证逻辑
+        /// </summary>
+        public bool GenerateValidationLogic { get; set; } = true;
+
+        /// <summary>
+        /// 是否生成错误处理逻辑
+        /// </summary>
+        public bool GenerateErrorHandling { get; set; } = true;
+
+        /// <summary>
+        /// 是否生成增强日志记录
+        /// </summary>
+        public bool GenerateEnhancedLogging { get; set; } = true;
 
         /// <summary>
         /// 注释语言
