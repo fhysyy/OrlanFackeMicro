@@ -33,7 +33,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 字段和构造函数
             sb.AppendLine($"        private readonly SqlSugarRepository<{metadata.EntityName}, int> _repository;");
-            sb.AppendLine("        private readonly ILogger<{metadata.EntityName}Grain> _logger;");
+            sb.AppendLine($"        private readonly ILogger<{metadata.EntityName}Grain> _logger;");
             sb.AppendLine();
             sb.AppendLine($"        public {metadata.EntityName}Grain(SqlSugarRepository<{metadata.EntityName}, int> repository, ILogger<{metadata.EntityName}Grain> logger)");
             sb.AppendLine("        {");

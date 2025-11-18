@@ -68,6 +68,4 @@ public class Subject : IAuditable
 
     [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
     public string updated_by { get; set; }
-
-
 }

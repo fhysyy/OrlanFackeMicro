@@ -25,6 +25,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using System;");
             sb.AppendLine("using System.ComponentModel.DataAnnotations;");
             sb.AppendLine("using Orleans.Serialization;");
+            sb.AppendLine("using Orleans;");
+            sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine();
 
             // 命名空间
@@ -78,7 +80,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 }
                 else if (prop.Type.EndsWith("?"))
                 {
-                    sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }};");
+                    sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }}");
                 }
                 else if (prop.Type == "string")
                 {
@@ -88,22 +90,22 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 {
                     if (prop.IsRequired)
                     {
-                        sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }};");
+                        sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }}");
                     }
                     else
                     {
-                        sb.AppendLine($"        public {prop.Type}? {prop.Name} {{ get; set; }};");
+                        sb.AppendLine($"        public {prop.Type}? {prop.Name} {{ get; set; }}");
                     }
                 }
                 else
                 {
                     if (prop.IsRequired)
                     {
-                        sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }};");
+                        sb.AppendLine($"        public {prop.Type} {prop.Name} {{ get; set; }}");
                     }
                     else
                     {
-                        sb.AppendLine($"        public {prop.Type}? {prop.Name} {{ get; set; }};");
+                        sb.AppendLine($"        public {prop.Type}? {prop.Name} {{ get; set; }}");
                     }
                 }
                 sb.AppendLine();
@@ -176,7 +178,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"        /// <returns>克隆的{metadata.EntityName}Dto对象</returns>");
             sb.AppendLine($"        public {metadata.EntityName}Dto Clone()");
             sb.AppendLine("        {");
-            sb.AppendLine("            return new {metadata.EntityName}Dto");
+            sb.AppendLine($"            return new {metadata.EntityName}Dto");
             sb.AppendLine("            {");
 
             foreach (var prop in metadata.Properties)
@@ -195,8 +197,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <returns>字符串表示</returns>");
             sb.AppendLine("        public override string ToString()");
             sb.AppendLine("        {");
-            sb.AppendLine($"            return $\"{metadata.EntityName}Dto{{ ");
-
+            sb.AppendLine($"            return $\"{metadata.EntityName}Dto ");
             var propList = metadata.Properties.Select(p => $"{p.Name} = {{{p.Name}}}").ToList();
             sb.Append(string.Join(", ", propList));
             sb.AppendLine(" }\";");

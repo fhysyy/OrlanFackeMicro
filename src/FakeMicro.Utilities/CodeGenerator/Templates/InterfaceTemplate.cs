@@ -39,7 +39,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// {metadata.EntityDescription} Grain接口");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine($"    public interface I{metadata.EntityName}Grain : IGrainWith{metadata.PrimaryKeyType}Key");
+            //sb.AppendLine($"    public interface I{metadata.EntityName}Grain : IGrainWith{metadata.PrimaryKeyType}Key");
+            sb.AppendLine($"    public interface I{metadata.EntityName}Grain : IGrainWithStringKey");
             sb.AppendLine("    {");
 
             // 基础CRUD方法
