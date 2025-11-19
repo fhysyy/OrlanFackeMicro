@@ -41,7 +41,7 @@ public class DatabaseInitializerHostedService : IHostedService
                 typeof(FakeMicro.Entities.Message),
                 typeof(FakeMicro.Entities.DictionaryType),
                 typeof(FakeMicro.Entities.DictionaryItem),
-                typeof(FakeMicro.Entities.FakeClass)
+              
             };
 
             // 创建数据库（如果不存在）

@@ -52,7 +52,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private static readonly Dictionary<GenerationType, string> _fileSuffixMappings = new()
         {
             { GenerationType.Entity, ".cs" },
-            { GenerationType.Interface, ".cs" },
+            { GenerationType.Interface, "Grain.cs" },
             { GenerationType.Result, "Result.cs" },
             { GenerationType.Request, "Request.cs" },
             { GenerationType.Grain, "Grain.cs" },
@@ -92,12 +92,7 @@ namespace FakeMicro.Utilities.CodeGenerator
                 throw new ArgumentException($"不支持的生成类型: {type}", nameof(type));
             }
 
-            if (!_fileSuffixMappings.TryGetValue(type, out var suffix))
-            {
-                suffix = ".cs";
-            }
-
-            var fileName = GetFileName(type, entityName, suffix);
+            var fileName = GetFileName(type, entityName);
             var relativePath = Path.Combine(pathTemplate, fileName);
             return Path.Combine(basePath, relativePath);
         }
@@ -107,9 +102,24 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         /// <param name="type">生成类型</param>
         /// <param name="entityName">实体名称</param>
+        /// <returns>文件名</returns>
+        public static string GetFileName(GenerationType type, string entityName)
+        {
+            if (!_fileSuffixMappings.TryGetValue(type, out var suffix))
+            {
+                suffix = ".cs";
+            }
+            return GetFileNameWithSuffix(type, entityName, suffix);
+        }
+
+        /// <summary>
+        /// 获取文件名（带自定义后缀）
+        /// </summary>
+        /// <param name="type">生成类型</param>
+        /// <param name="entityName">实体名称</param>
         /// <param name="suffix">文件后缀</param>
         /// <returns>文件名</returns>
-        private static string GetFileName(GenerationType type, string entityName, string suffix)
+        private static string GetFileNameWithSuffix(GenerationType type, string entityName, string suffix)
         {
             return type switch
             {

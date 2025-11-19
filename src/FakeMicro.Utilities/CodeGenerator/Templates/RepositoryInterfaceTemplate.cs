@@ -112,48 +112,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        #endregion");
             sb.AppendLine();
             
-            // 业务特定查询操作
-            sb.AppendLine("        #region 业务特定查询操作");
-            sb.AppendLine();
-            
-            // GetWithIncludesAsync - 包含导航属性的查询（重写基方法以提供更具体的导航属性）
-            var navigationProperties = entity.Properties.Where(p => p.IsNavigationProperty).ToList();
-            if (navigationProperties.Any())
-            {
-                sb.AppendLine($"        /// <summary>");
-                sb.AppendLine($"        /// 获取{entity.EntityDescription}实体，包含所有导航属性");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        /// <param name=\"cancellationToken\">取消令牌</param>");
-                sb.AppendLine($"        /// <returns>包含导航属性的实体对象</returns>");
-                sb.AppendLine($"        new Task<{entity.EntityName}?> GetByIdWithIncludesAsync({primaryKeyType} id, CancellationToken cancellationToken = default);");
-                sb.AppendLine();
-            }
-            
-            // 根据实体的特定属性生成查询方法
-            var searchableProperties = entity.Properties.Where(p => 
-                !p.IsPrimaryKey && 
-                (p.Type.ToLower().Contains("string") || p.Type.ToLower().Contains("int") || p.Type.ToLower().Contains("guid")))
-                .Take(3) // 限制生成3个常用查询方法
-                .ToList();
-                
-            foreach (var prop in searchableProperties)
-            {
-                var methodName = $"GetBy{prop.Name}Async";
-                var returnType = prop.Type.ToLower().Contains("list") || prop.Type.ToLower().Contains("collection") 
-                    ? $"IEnumerable<{entity.EntityName}>" 
-                    : $"{entity.EntityName}?";
-                    
-                sb.AppendLine($"        /// <summary>");
-                sb.AppendLine($"        /// 根据{prop.Name}获取{entity.EntityDescription}");
-                sb.AppendLine("        /// </summary>");
-                sb.AppendLine($"        /// <param name=\"{prop.Name.ToLower()}\">{prop.Name}值</param>");
-                sb.AppendLine($"        /// <param name=\"cancellationToken\">取消令牌</param>");
-                sb.AppendLine($"        /// <returns>{(returnType.Contains("IEnumerable") ? "符合条件的实体集合" : "实体对象，如果不存在则返回null")}</returns>");
-                sb.AppendLine($"        Task<{returnType}> {methodName}({prop.Type} {prop.Name.ToLower()}, CancellationToken cancellationToken = default);");
-                sb.AppendLine();
-            }
-            
-            sb.AppendLine("        #endregion");
+          
             sb.AppendLine();
             
             // 批量业务操作
@@ -173,7 +132,34 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        #endregion");
             sb.AppendLine();
             
-            // 软删除支持
+            // 基于属性的查询接口方法 - 参考DictionaryTypeRepository模式
+            foreach (var prop in entity.Properties.Where(p => !p.IsPrimaryKey && !p.IsNavigationProperty))
+            {
+                if (prop.Type.ToLower().Contains("string"))
+                {
+                    sb.AppendLine("        /// <summary>");
+                    sb.AppendLine("        /// 根据" + prop.Name + "获取" + entity.EntityDescription);
+                    sb.AppendLine("        /// </summary>");
+                    sb.AppendLine("        /// <param name=\"" + prop.Name.ToLower() + "\">" + prop.Name + "</param>");
+                    sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+                    sb.AppendLine("        /// <returns>" + entity.EntityDescription + "实体</returns>");
+                    sb.AppendLine("        Task<" + entity.EntityName + "?> GetBy" + prop.Name + "Async(string " + prop.Name.ToLower() + ", CancellationToken cancellationToken = default);");
+                    sb.AppendLine();
+                    
+                    sb.AppendLine("        /// <summary>");
+                    sb.AppendLine("        /// 检查" + prop.Name + "是否存在");
+                    sb.AppendLine("        /// </summary>");
+                    sb.AppendLine("        /// <param name=\"" + prop.Name.ToLower() + "\">" + prop.Name + "</param>");
+                    sb.AppendLine("        /// <param name=\"excludeId\">排除的ID（用于更新时验证）</param>");
+                    sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+                    sb.AppendLine("        /// <returns>是否存在</returns>");
+                    sb.AppendLine("        Task<bool> " + prop.Name + "ExistsAsync(string " + prop.Name.ToLower() + ", " + primaryKeyType + " excludeId = default, CancellationToken cancellationToken = default);");
+                    sb.AppendLine();
+                }
+            }
+            sb.AppendLine();
+            
+            // 批量业务操作软删除支持
             if (entity.IsSoftDeletable)
             {
                 sb.AppendLine("        #region 软删除操作");

@@ -5,8 +5,7 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
-using SqlSugar;
+
 using FakeMicro.Utilities.CodeGenerator.Entities;
 using FakeMicro.Utilities.CodeGenerator;
 
@@ -16,6 +15,14 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
     /// 仓储实现模板
     /// 生成符合Orleans最佳实践的仓储实现类
     /// 继承SqlSugarRepository并实现相应的仓储接口
+    /// 
+    /// 优化特性：
+    /// 1. 同步方法包装，兼容旧接口
+    /// 2. 改进的分页查询方法
+    /// 3. 字段存在性检查方法
+    /// 4. 基于业务字段的查询方法
+    /// 5. Orleans特定的Grain操作方法
+    /// 6. 完善的异常处理和日志记录
     /// </summary>
     public static class RepositoryImplementationTemplate
     {
@@ -74,7 +81,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 "string" => "string",
                 _ => "Guid"
             };
-            
+
             // 正确的继承声明：继承SqlSugarRepository并实现接口
             sb.AppendLine("    public class " + entity.EntityName + "Repository : SqlSugarRepository<" + entity.EntityName + ", " + primaryKeyType + ">, I" + entity.EntityName + "Repository");
             sb.AppendLine("    {");
@@ -132,7 +139,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <param name=\"entity\">" + entity.EntityDescription + "实体</param>");
             sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
             sb.AppendLine("        /// <returns>创建后的" + entity.EntityDescription + "实体</returns>");
-            sb.AppendLine("        public async virtual Task<" + entity.EntityName + "> CreateAndReturnAsync(" + entity.EntityName + " entity, CancellationToken cancellationToken = default)");
+            sb.AppendLine("        public async virtual Task<" + entity.EntityName + "?> CreateAndReturnAsync(" + entity.EntityName + " entity, CancellationToken cancellationToken = default)");
             sb.AppendLine("        {");
             sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
             sb.AppendLine("            if (entity == null) throw new ArgumentNullException(nameof(entity));");
@@ -140,13 +147,67 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            try");
             sb.AppendLine("            {");
             sb.AppendLine("                var result = await GetSqlSugarClient().Insertable(entity).ExecuteReturnEntityAsync(cancellationToken);");
-            sb.AppendLine("                _logger.LogInformation(\"成功创建" + entity.EntityName + ": {Id}\", typeof(" + entity.EntityName + ").Name, entity." + entity.PrimaryKeyProperty + ");");
+            sb.AppendLine("                _logger.LogInformation(\"成功创建" + entity.EntityName + ": {Id}\", typeof(" + entity.EntityName + ").Name, result." + entity.PrimaryKeyProperty + ");");
             sb.AppendLine("                return result;");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (SqlSugarException ex)");
             sb.AppendLine("            {");
             sb.AppendLine("                _logger.LogError(ex, \"创建" + entity.EntityDescription + "失败\");");
             sb.AppendLine("                throw new DataAccessException(\"创建" + entity.EntityDescription + "失败\", ex);");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            // UpdateAndReturnAsync方法 - 更新实体并返回更新后的实体
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 更新" + entity.EntityDescription + "并返回更新后的实体");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <param name=\"entity\">" + entity.EntityDescription + "实体</param>");
+            sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+            sb.AppendLine("        /// <returns>更新后的" + entity.EntityDescription + "实体</returns>");
+            sb.AppendLine("        public async virtual Task<" + entity.EntityName + "?> UpdateAndReturnAsync(" + entity.EntityName + " entity, CancellationToken cancellationToken = default)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            sb.AppendLine("            if (entity == null) throw new ArgumentNullException(nameof(entity));");
+            sb.AppendLine("            ");
+            sb.AppendLine("            try");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var result = await GetSqlSugarClient().Updateable(entity).ExecuteReturnEntityAsync(cancellationToken);");
+            sb.AppendLine("                _logger.LogInformation(\"成功更新" + entity.EntityName + ": {Id}\", typeof(" + entity.EntityName + ").Name, entity." + entity.PrimaryKeyProperty + ");");
+            sb.AppendLine("                return result;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            catch (SqlSugarException ex)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                _logger.LogError(ex, \"更新" + entity.EntityDescription + "失败\");");
+            sb.AppendLine("                throw new DataAccessException(\"更新" + entity.EntityDescription + "失败\", ex);");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            // CreateRangeAndReturnAsync方法 - 批量创建实体并返回结果列表
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 批量创建" + entity.EntityDescription + "并返回创建后的实体列表");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <param name=\"entities\">" + entity.EntityDescription + "实体集合</param>");
+            sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+            sb.AppendLine("        /// <returns>创建后的" + entity.EntityDescription + "实体列表</returns>");
+            sb.AppendLine("        public async virtual Task<IEnumerable<" + entity.EntityName + ">?> CreateRangeAndReturnAsync(IEnumerable<" + entity.EntityName + "> entities, CancellationToken cancellationToken = default)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            sb.AppendLine("            if (entities == null) throw new ArgumentNullException(nameof(entities));");
+            sb.AppendLine("            var entityList = entities.ToList();");
+            sb.AppendLine("            if (!entityList.Any()) return Enumerable.Empty<" + entity.EntityName + ">();");
+            sb.AppendLine("            ");
+            sb.AppendLine("            try");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var result = await GetSqlSugarClient().Insertable(entityList).ExecuteReturnListAsync(cancellationToken);");
+            sb.AppendLine("                _logger.LogInformation(\"成功批量创建" + entity.EntityName + "，数量: {Count}\", result.Count);");
+            sb.AppendLine("                return result;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            catch (SqlSugarException ex)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                _logger.LogError(ex, \"批量创建" + entity.EntityDescription + "失败，数量: {Count}\", entityList.Count);");
+            sb.AppendLine("                throw new DataAccessException(\"批量创建" + entity.EntityDescription + "失败\", ex);");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -224,94 +285,224 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        #endregion");
             sb.AppendLine();
             
-            // 业务查询方法
-            sb.AppendLine("        #region 业务查询方法");
+            // 同步方法包装（兼容旧接口）
+            sb.AppendLine("        #region 同步方法包装");
             sb.AppendLine();
             
-            // 基于属性的查询方法
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 同步更新方法（包装异步方法）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public void Update(" + entity.EntityName + " entity)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            UpdateAsync(entity).GetAwaiter().GetResult();");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 同步批量更新方法（包装异步方法）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public void UpdateRange(IEnumerable<" + entity.EntityName + "> entities)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            UpdateRangeAsync(entities).GetAwaiter().GetResult();");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 同步删除方法（包装异步方法）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public void Delete(" + entity.EntityName + " entity)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            DeleteAsync(entity).GetAwaiter().GetResult();");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 同步批量删除方法（包装异步方法）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public void DeleteRange(IEnumerable<" + entity.EntityName + "> entities)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            DeleteRangeAsync(entities).GetAwaiter().GetResult();");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 同步部分更新方法（包装异步方法）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public void UpdatePartial(" + entity.EntityName + " entity, params Expression<Func<" + entity.EntityName + ", object>>[] properties)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            UpdatePartialAsync(entity, properties).GetAwaiter().GetResult();");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            // 添加基于属性的同步方法 - 参考DictionaryTypeRepository模式
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 基于属性的同步方法适配器");
+            sb.AppendLine("        /// </summary>");
             foreach (var prop in entity.Properties.Where(p => !p.IsPrimaryKey && !p.IsNavigationProperty))
             {
                 if (prop.Type.ToLower().Contains("string"))
                 {
                     sb.AppendLine("        /// <summary>");
+                    sb.AppendLine("        /// 同步获取" + entity.EntityDescription + "（根据" + prop.Name + "）");
+                    sb.AppendLine("        /// </summary>");
+                    sb.AppendLine("        public " + entity.EntityName + "? GetBy" + prop.Name + "(string " + prop.Name.ToLower() + ")");
+                    sb.AppendLine("        {");
+                    sb.AppendLine("            return GetBy" + prop.Name + "Async(" + prop.Name.ToLower() + ").GetAwaiter().GetResult();");
+                    sb.AppendLine("        }");
+                    sb.AppendLine();
+                    
+                    sb.AppendLine("        /// <summary>");
+                    sb.AppendLine("        /// 同步检查" + prop.Name + "是否存在");
+                    sb.AppendLine("        /// </summary>");
+                    sb.AppendLine("        public bool " + prop.Name + "Exists(string " + prop.Name.ToLower() + ", " + primaryKeyType + " excludeId = default)");
+                    sb.AppendLine("        {");
+                    sb.AppendLine("            return " + prop.Name + "ExistsAsync(" + prop.Name.ToLower() + ", excludeId).GetAwaiter().GetResult();");
+                    sb.AppendLine("        }");
+                    sb.AppendLine();
+                }
+            }
+            
+            sb.AppendLine("        #endregion");
+            sb.AppendLine();
+            
+            // 改进的分页查询方法
+            sb.AppendLine("        #region 分页查询方法");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 分页查询" + entity.EntityDescription + "（Orleans接口兼容）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <param name=\"pageNumber\">页码（从1开始）</param>");
+            sb.AppendLine("        /// <param name=\"pageSize\">页大小</param>");
+            sb.AppendLine("        /// <param name=\"orderBy\">排序表达式（可选）</param>");
+            sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+            sb.AppendLine("        /// <returns>分页结果</returns>");
+            sb.AppendLine("        public async virtual Task<PagedResult<" + entity.EntityName + ">> GetPagedAsync(int pageNumber, int pageSize, ");
+            sb.AppendLine("            Expression<Func<" + entity.EntityName + ", object>>? orderBy = null, CancellationToken cancellationToken = default)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            sb.AppendLine("            if (pageNumber < 1) pageNumber = 1;");
+            sb.AppendLine("            if (pageSize < 1) pageSize = 20;");
+            sb.AppendLine("            ");
+            sb.AppendLine("            try");
+            sb.AppendLine("            {");
+            sb.AppendLine("                // 使用基类的分页方法");
+            sb.AppendLine("                var orderByExpression = orderBy ?? (x => x." + entity.PrimaryKeyProperty + ");");
+            sb.AppendLine("                var result = await base.GetPagedAsync(pageNumber, pageSize, orderByExpression, false, cancellationToken);");
+            sb.AppendLine("                _logger.LogInformation(\"成功获取" + entity.EntityDescription + "分页数据，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
+            sb.AppendLine("                return result;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            catch (SqlSugarException ex)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                _logger.LogError(ex, \"获取" + entity.EntityDescription + "分页数据失败，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
+            sb.AppendLine("                throw new DataAccessException(\"获取\" + entity.EntityDescription + \"分页数据失败\", ex);");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 条件分页查询" + entity.EntityDescription + "（Orleans接口兼容）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        /// <param name=\"predicate\">查询条件</param>");
+            sb.AppendLine("        /// <param name=\"pageNumber\">页码（从1开始）</param>");
+            sb.AppendLine("        /// <param name=\"pageSize\">页大小</param>");
+            sb.AppendLine("        /// <param name=\"orderBy\">排序表达式（可选）</param>");
+            sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+            sb.AppendLine("        /// <returns>分页结果</returns>");
+            sb.AppendLine("        public async virtual Task<PagedResult<" + entity.EntityName + ">> GetPagedByConditionAsync(");
+            sb.AppendLine("            Expression<Func<" + entity.EntityName + ", bool>> predicate, int pageNumber, int pageSize,");
+            sb.AppendLine("            Expression<Func<" + entity.EntityName + ", object>>? orderBy = null, CancellationToken cancellationToken = default)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+            sb.AppendLine("            if (pageNumber < 1) pageNumber = 1;");
+            sb.AppendLine("            if (pageSize < 1) pageSize = 20;");
+            sb.AppendLine("            if (predicate == null) throw new ArgumentNullException(nameof(predicate));");
+            sb.AppendLine("            ");
+            sb.AppendLine("            try");
+            sb.AppendLine("            {");
+            sb.AppendLine("                // 使用基类的条件分页方法");
+            sb.AppendLine("                var orderByExpression = orderBy ?? (x => x." + entity.PrimaryKeyProperty + ");");
+            sb.AppendLine("                var result = await base.GetPagedByConditionAsync(predicate, pageNumber, pageSize, orderByExpression, false, cancellationToken);");
+            sb.AppendLine("                _logger.LogInformation(\"成功获取" + entity.EntityDescription + "条件分页数据，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
+            sb.AppendLine("                return result;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            catch (SqlSugarException ex)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                _logger.LogError(ex, \"获取\" + entity.EntityDescription + \"条件分页数据失败，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
+            sb.AppendLine("                throw new DataAccessException(\"获取\" + entity.EntityDescription + \"条件分页数据失败\", ex);");
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            
+            sb.AppendLine("        #endregion");
+            sb.AppendLine();
+            
+            // 业务查询方法
+            sb.AppendLine("        #region 业务查询方法");
+            sb.AppendLine();
+            
+            // 基于属性的查询方法 - 参考DictionaryTypeRepository模式
+            foreach (var prop in entity.Properties.Where(p => !p.IsPrimaryKey && !p.IsNavigationProperty))
+            {
+                if (prop.Type.ToLower().Contains("string"))
+                {
+                    // GetByPropertyAsync方法 - 简洁实现
+                    sb.AppendLine("        /// <summary>");
                     sb.AppendLine("        /// 根据" + prop.Name + "查询" + entity.EntityDescription);
                     sb.AppendLine("        /// </summary>");
                     sb.AppendLine("        /// <param name=\"" + prop.Name.ToLower() + "\">" + prop.Name + "</param>");
                     sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
-                    sb.AppendLine("        /// <returns>" + entity.EntityDescription + "实体列表</returns>");
-                    sb.AppendLine("        public async virtual Task<List<" + entity.EntityName + ">> GetBy" + prop.Name + "Async(string " + prop.Name.ToLower() + ", CancellationToken cancellationToken = default)");
+                    sb.AppendLine("        /// <returns>" + entity.EntityDescription + "实体</returns>");
+                    sb.AppendLine("        public async Task<" + entity.EntityName + "?> GetBy" + prop.Name + "Async(string " + prop.Name.ToLower() + ", CancellationToken cancellationToken = default)");
                     sb.AppendLine("        {");
                     sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
-                    sb.AppendLine("            if (string.IsNullOrEmpty(" + prop.Name.ToLower() + ")) throw new ArgumentException(\"Value cannot be null or empty\", nameof(" + prop.Name.ToLower() + "));");
                     sb.AppendLine("            try");
                     sb.AppendLine("            {");
                     sb.AppendLine("                return await GetSqlSugarClient().Queryable<" + entity.EntityName + ">()");
-                    sb.AppendLine("                    .With(SqlWith.NoLock)");
                     sb.AppendLine("                    .Where(entity => entity." + prop.Name + " == " + prop.Name.ToLower() + ")");
-                    sb.AppendLine("                    .ToListAsync(cancellationToken);");
+                    sb.AppendLine("                    .FirstAsync();");
                     sb.AppendLine("            }");
                     sb.AppendLine("            catch (SqlSugarException ex)");
                     sb.AppendLine("            {");
-                    sb.AppendLine("                _logger.LogError(ex, \"根据" + prop.Name + "查询" + entity.EntityDescription + "失败: {" + prop.Name.ToLower() + "}\", " + prop.Name.ToLower() + ");");
-                    sb.AppendLine("                throw new DataAccessException(\"根据" + prop.Name + "查询" + entity.EntityDescription + "失败: \" + " + prop.Name.ToLower() + ", ex);");
+                    sb.AppendLine("                throw new Exception($\"根据" + prop.Name + "获取" + entity.EntityDescription + "失败: {ex.Message}\", ex);");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("        }");
+                    sb.AppendLine();
+                    
+                    // PropertyExistsAsync方法 - 改进的Exists检查
+                    sb.AppendLine("        /// <summary>");
+                    sb.AppendLine("        /// 检查" + prop.Name + "是否存在");
+                    sb.AppendLine("        /// </summary>");
+                    sb.AppendLine("        /// <param name=\"" + prop.Name.ToLower() + "\">" + prop.Name + "</param>");
+                    sb.AppendLine("        /// <param name=\"excludeId\">排除的ID（用于更新时验证）</param>");
+                    sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
+                    sb.AppendLine("        /// <returns>是否存在</returns>");
+                    sb.AppendLine("        public async Task<bool> " + prop.Name + "ExistsAsync(string " + prop.Name.ToLower() + ", " + primaryKeyType + " excludeId = default, CancellationToken cancellationToken = default)");
+                    sb.AppendLine("        {");
+                    sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
+                    sb.AppendLine("            try");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                var query = GetSqlSugarClient().Queryable<" + entity.EntityName + ">()");
+                    sb.AppendLine("                    .Where(entity => entity." + prop.Name + " == " + prop.Name.ToLower() + ");");
+                    sb.AppendLine("                ");
+                    sb.AppendLine("                if (!excludeId.Equals(default(" + primaryKeyType + ")))");
+                    sb.AppendLine("                {");
+                    sb.AppendLine("                    query = query.Where(entity => entity." + entity.PrimaryKeyProperty + " != excludeId);");
+                    sb.AppendLine("                }");
+                    sb.AppendLine("                ");
+                    sb.AppendLine("                var count = await query.CountAsync();");
+                    sb.AppendLine("                return count > 0;");
+                    sb.AppendLine("            }");
+                    sb.AppendLine("            catch (SqlSugarException ex)");
+                    sb.AppendLine("            {");
+                    sb.AppendLine("                throw new Exception($\"检查" + entity.EntityDescription + prop.Name + "是否存在失败: {ex.Message}\", ex);");
                     sb.AppendLine("            }");
                     sb.AppendLine("        }");
                     sb.AppendLine();
                 }
             }
             
-            // 分页查询方法
-            sb.AppendLine("        /// <summary>");
-            sb.AppendLine("        /// 分页查询" + entity.EntityDescription);
-            sb.AppendLine("        /// </summary>");
-            sb.AppendLine("        /// <param name=\"pageNumber\">页码</param>");
-            sb.AppendLine("        /// <param name=\"pageSize\">页大小</param>");
-            sb.AppendLine("        /// <param name=\"orderBy\">排序表达式</param>");
-            sb.AppendLine("        /// <param name=\"isDescending\">是否降序</param>");
-            sb.AppendLine("        /// <param name=\"cancellationToken\">取消令牌</param>");
-            sb.AppendLine("        /// <returns>分页结果</returns>");
-            sb.AppendLine("        public async virtual Task<PaginatedResult<" + entity.EntityName + ">> GetPagedAsync(int pageNumber, int pageSize, ");
-            sb.AppendLine("            Expression<Func<" + entity.EntityName + ", object>>? orderBy = null, bool isDescending = false, CancellationToken cancellationToken = default)");
-            sb.AppendLine("        {");
-            sb.AppendLine("            cancellationToken.ThrowIfCancellationRequested();");
-            sb.AppendLine("            if (pageNumber < 1) throw new ArgumentException(\"Page number must be greater than 0\", nameof(pageNumber));");
-            sb.AppendLine("            if (pageSize < 1) throw new ArgumentException(\"Page size must be greater than 0\", nameof(pageSize));");
-            sb.AppendLine("            ");
-            sb.AppendLine("            try");
-            sb.AppendLine("            {");
-            sb.AppendLine("                var query = GetSqlSugarClient().Queryable<" + entity.EntityName + ">()");
-            sb.AppendLine("                    .With(SqlWith.NoLock);");
-            sb.AppendLine("                ");
-            sb.AppendLine("                // 添加排序");
-            sb.AppendLine("                if (orderBy != null)");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    query = isDescending ? query.OrderBy(orderBy, OrderByType.Desc) : query.OrderBy(orderBy, OrderByType.Asc);");
-            sb.AppendLine("                }");
-            sb.AppendLine("                else");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    query = query.OrderBy(entity => entity." + entity.PrimaryKeyProperty + ", OrderByType.Desc);");
-            sb.AppendLine("                }");
-            sb.AppendLine("                ");
-            sb.AppendLine("                // 执行分页查询");
-            sb.AppendLine("                var totalCount = await query.CountAsync(cancellationToken);");
-            sb.AppendLine("                var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync(cancellationToken);");
-            sb.AppendLine("                ");
-            sb.AppendLine("                return new PaginatedResult<" + entity.EntityName + ">");
-            sb.AppendLine("                {");
-            sb.AppendLine("                    Items = items,");
-            sb.AppendLine("                    TotalCount = totalCount,");
-            sb.AppendLine("                    PageNumber = pageNumber,");
-            sb.AppendLine("                    PageSize = pageSize,");
-            sb.AppendLine("                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)");
-            sb.AppendLine("                };");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (SqlSugarException ex)");
-            sb.AppendLine("            {");
-            sb.AppendLine("                _logger.LogError(ex, \"分页查询" + entity.EntityDescription + "失败\");");
-            sb.AppendLine("                throw new DataAccessException(\"分页查询" + entity.EntityDescription + "失败\", ex);");
-            sb.AppendLine("            }");
-            sb.AppendLine("        }");
-            sb.AppendLine();
+            // 注：PagedResult类型的分页方法已在上面实现
             
             sb.AppendLine("        #endregion");
             sb.AppendLine();

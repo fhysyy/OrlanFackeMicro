@@ -89,6 +89,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 .Where(p => !p.IsPrimaryKey)
                 .ToList();
 
+            int idCounter = 0;
             foreach (var property in properties)
             {
                 sb.AppendLine("        /// <summary>");
@@ -126,7 +127,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 }
 
                 // 添加Orleans序列化特性
-                sb.AppendLine("        [Id(0)]");
+                sb.AppendLine($"        [Id({idCounter})]");
                 
                 // 处理可空类型
                 string propertyType = property.IsRequired && property.Type != "string" 
@@ -135,6 +136,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                     
                 sb.AppendLine($"        public {propertyType} {property.Name} {{ get; set; }}");
                 sb.AppendLine();
+                idCounter++;
             }
 
             // 添加验证方法
