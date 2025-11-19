@@ -3,7 +3,6 @@ using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using FakeMicro.Utilities;
 
 namespace FakeMicro.DatabaseAccess.Interfaces;
 

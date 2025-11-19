@@ -20,25 +20,26 @@ namespace FakeMicro.Utilities.Configuration.Extensions
         public override void Load()
         {
             // 从其他配置提供程序获取数据
-            var data = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var data = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
             ProcessConfiguration(_root, data);
             Data = data;
         }
 
-        private void ProcessConfiguration(IConfiguration config, Dictionary<string, string> result)
+        private void ProcessConfiguration(IConfiguration config, Dictionary<string, string?> result, string parentKey = "")
         {
             foreach (var child in config.GetChildren())
             {
+                var fullKey = string.IsNullOrEmpty(parentKey) ? child.Key : $"{parentKey}:{child.Key}";
                 var value = child.Value;
                 if (!string.IsNullOrEmpty(value))
                 {
                     // 替换占位符
                     var processedValue = ReplacePlaceholders(value);
-                    result[child.Key] = processedValue;
+                    result[fullKey] = processedValue;
                 }
                 
                 // 递归处理子配置
-                ProcessConfiguration(child, result);
+                ProcessConfiguration(child, result, fullKey);
             }
         }
 

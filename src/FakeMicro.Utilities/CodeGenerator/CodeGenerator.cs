@@ -24,17 +24,22 @@ namespace FakeMicro.Utilities.CodeGenerator
             OverwriteStrategy overwriteStrategy = OverwriteStrategy.Backup)
         {
             _configuration = configuration ?? new CodeGeneratorConfiguration();
-            _outputPath = outputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
+            // 如果没有指定输出路径，使用当前目录作为解决方案根目录
+            _outputPath = outputPath ?? Directory.GetCurrentDirectory();
             _overwriteStrategy = overwriteStrategy;
             
-            EnsureOutputDirectoryExists();
+            EnsureOutputDirectoriesExist();
         }
 
-        private void EnsureOutputDirectoryExists()
+        private void EnsureOutputDirectoriesExist()
         {
-            if (!Directory.Exists(_outputPath))
+            var directories = ProjectStructureMapping.GetAllDirectories(_outputPath);
+            foreach (var directory in directories)
             {
-                Directory.CreateDirectory(_outputPath);
+                if (!Directory.Exists(directory))
+                {
+                    Directory.CreateDirectory(directory);
+                }
             }
         }
 
@@ -149,8 +154,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateEntityAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.EntityTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Entities", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Entity, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -158,8 +162,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateInterfaceAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.InterfaceTemplate.Generate(entity);
-            var fileName = $"I{entity.EntityName}Grain.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Interface, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -167,8 +170,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.ResultTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Results.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models/Results", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Result, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -176,8 +178,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateRequestAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.RequestTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Requests.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models/Requests", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Request, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -185,8 +186,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateGrainAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.GrainTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Grain.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Grains", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Grain, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -194,8 +194,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateDtoAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.DtoTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Dto.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Interfaces/Models", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Dto, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -203,8 +202,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateControllerAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.ControllerTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Controller.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Api/Controllers", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Controller, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -212,8 +210,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateRepositoryAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.RepositoryInterfaceTemplate.Generate(entity);
-            var fileName = $"I{entity.EntityName}Repository.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Repositories", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Repository, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
@@ -221,8 +218,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task GenerateRepositoryImplementationAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
         {
             var content = Templates.RepositoryImplementationTemplate.Generate(entity);
-            var fileName = $"{entity.EntityName}Repository.cs";
-            var filePath = Path.Combine(_outputPath, "FakeMicro.Domain/Repositories", fileName);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.RepositoryImplementation, entity.EntityName, _outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }

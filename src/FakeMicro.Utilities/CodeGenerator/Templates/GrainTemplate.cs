@@ -385,7 +385,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 批量删除{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        public async Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{entity.PrimaryKeyType}> ids, CancellationToken cancellationToken = default)");
+            sb.AppendLine($"        public async Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{entity.PrimaryKeyType.ToLower()}> ids, CancellationToken cancellationToken = default)");
             sb.AppendLine("        {");
             sb.AppendLine("            try");
             sb.AppendLine("            {");

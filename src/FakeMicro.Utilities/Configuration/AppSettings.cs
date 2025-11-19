@@ -48,7 +48,7 @@ public class DatabaseConfig
         // 使用环境变量优先级高于配置文件
         var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? Password;
         var server = Environment.GetEnvironmentVariable("DB_HOST") ?? Environment.GetEnvironmentVariable("DB_SERVER") ?? Server; // 兼容两种命名
-        var port = Environment.GetEnvironmentVariable("DB_PORT") != null ? int.Parse(Environment.GetEnvironmentVariable("DB_PORT")) : Port;
+        var port = Environment.GetEnvironmentVariable("DB_PORT") != null ? int.Parse(Environment.GetEnvironmentVariable("DB_PORT")!) : Port;
         var database = Environment.GetEnvironmentVariable("DB_NAME") ?? Database;
         var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username; // 兼容两种命名
         

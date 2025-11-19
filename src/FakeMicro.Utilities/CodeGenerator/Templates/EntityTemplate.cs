@@ -26,8 +26,9 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using Orleans;");
             sb.AppendLine();
             
-            // 命名空间
-            sb.AppendLine($"namespace {entity.Namespace}.Models");
+            // 命名空间 - 使用ProjectStructureMapping获取正确的命名空间
+            var entityNamespace = ProjectStructureMapping.GetNamespace(GenerationType.Entity, entity.EntityName);
+            sb.AppendLine($"namespace {entityNamespace}");
             sb.AppendLine("{");
             
             // 类定义

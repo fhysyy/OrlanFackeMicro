@@ -22,14 +22,21 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using System.Threading;");
             sb.AppendLine("using System.Threading.Tasks;");
             sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine($"using {entity.Namespace}.Models;");
-            sb.AppendLine($"using {entity.Namespace}.Models.Requests;");
-            sb.AppendLine($"using {entity.Namespace}.Models.Results;");
             sb.AppendLine("using Orleans;  // Orleans Grain 接口支持");
+            
+            // 使用ProjectStructureMapping获取相关命名空间
+            var entityNamespace = ProjectStructureMapping.GetNamespace(GenerationType.Entity, entity.EntityName);
+            var requestNamespace = ProjectStructureMapping.GetNamespace(GenerationType.Request, entity.EntityName);
+            var resultNamespace = ProjectStructureMapping.GetNamespace(GenerationType.Result, entity.EntityName);
+            
+            sb.AppendLine($"using {entityNamespace};");
+            sb.AppendLine($"using {requestNamespace};");
+            sb.AppendLine($"using {resultNamespace};");
             sb.AppendLine();
             
-            // 命名空间
-            sb.AppendLine($"namespace {entity.Namespace}.Interfaces");
+            // 命名空间 - 使用ProjectStructureMapping获取正确的命名空间
+            var interfaceNamespace = ProjectStructureMapping.GetNamespace(GenerationType.Interface, entity.EntityName);
+            sb.AppendLine($"namespace {interfaceNamespace}");
             sb.AppendLine("{");
             
             // 接口定义
@@ -98,7 +105,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <summary>");
             sb.AppendLine($"        /// 批量删除{entity.EntityDescription}");
             sb.AppendLine("        /// </summary>");
-            sb.AppendLine($"        Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{GetGrainKeyType(entity.PrimaryKeyType)}> ids, CancellationToken cancellationToken = default);");
+            sb.AppendLine($"        Task<BatchDelete{entity.EntityName}Result> BatchDeleteAsync(List<{GetGrainKeyType(entity.PrimaryKeyType).ToLower()}> ids, CancellationToken cancellationToken = default);");
             sb.AppendLine();
             
             // 验证方法

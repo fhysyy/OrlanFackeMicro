@@ -61,20 +61,20 @@ public class CloudStorageConfig
     /// <summary>
     /// 存储桶/容器名称
     /// </summary>
-    public string BucketName { get; set; }
+    public string? BucketName { get; set; }
     
     /// <summary>
     /// 访问密钥
     /// </summary>
-    public string AccessKey { get; set; }
+    public string? AccessKey { get; set; }
     
     /// <summary>
     /// 秘密密钥
     /// </summary>
-    public string SecretKey { get; set; }
+    public string? SecretKey { get; set; }
     
     /// <summary>
     /// 区域
     /// </summary>
-    public string Region { get; set; }
+    public string? Region { get; set; }
 }
