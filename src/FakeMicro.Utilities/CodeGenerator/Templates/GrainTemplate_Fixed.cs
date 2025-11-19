@@ -1,4 +1,5 @@
 using System.Text;
+using FakeMicro.Utilities.CodeGenerator.Entities;
 
 namespace FakeMicro.Utilities.CodeGenerator.Templates
 {

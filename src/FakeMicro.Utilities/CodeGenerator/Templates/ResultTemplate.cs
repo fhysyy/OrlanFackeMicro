@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using FakeMicro.Utilities.CodeGenerator.Entities;
+using FakeMicro.Utilities.CodeGenerator;
 
 namespace FakeMicro.Utilities.CodeGenerator.Templates
 {

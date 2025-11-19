@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="TestRepositoryImplementationTemplate.cs" />
+    <Compile Include="EntityMetadata.cs" />
+    <Compile Include="Entities\EntityMetadata.cs" />
+    <Compile Include="ProjectStructureMapping.cs" />
+    <Compile Include="Templates\RepositoryImplementationTemplate.cs" />
+    <Compile Include="Types.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.0" />
+    <PackageReference Include="SqlSugar" Version="5.1.4.156" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Collections.Generic" />
+    <Using Include="System.Linq" />
+    <Using Include="System.Threading.Tasks" />
+  </ItemGroup>
+
+</Project>

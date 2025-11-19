@@ -1,4 +1,5 @@
 using FakeMicro.Utilities.CodeGenerator;
+using FakeMicro.Utilities.CodeGenerator.Entities;
 using FakeMicro.Utilities.CodeGenerator.Requests;
 using FakeMicro.Utilities.CodeGenerator.Templates;
 using Microsoft.AspNetCore.Mvc;

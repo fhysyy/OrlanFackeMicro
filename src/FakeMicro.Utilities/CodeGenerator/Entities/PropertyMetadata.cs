@@ -11,9 +11,19 @@ namespace FakeMicro.Utilities.CodeGenerator.Entities
         public string Name { get; set; } = string.Empty;
 
         /// <summary>
+        /// 数据库列名（如果不指定则使用属性名）
+        /// </summary>
+        public string? ColumnName { get; set; }
+
+        /// <summary>
         /// 属性类型
         /// </summary>
         public string Type { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 属性描述
+        /// </summary>
+        public string Description { get; set; } = string.Empty;
 
         /// <summary>
         /// 是否可为空
@@ -24,6 +34,16 @@ namespace FakeMicro.Utilities.CodeGenerator.Entities
         /// 是否为主键
         /// </summary>
         public bool IsPrimaryKey { get; set; } = false;
+
+        /// <summary>
+        /// 是否为自增标识
+        /// </summary>
+        public bool IsIdentity { get; set; } = false;
+
+        /// <summary>
+        /// 是否为只读属性
+        /// </summary>
+        public bool IsReadOnly { get; set; } = false;
 
         /// <summary>
         /// 是否为外键
@@ -54,5 +74,10 @@ namespace FakeMicro.Utilities.CodeGenerator.Entities
         /// 最大长度（用于字符串类型）
         /// </summary>
         public int? MaxLength { get; set; }
+
+        /// <summary>
+        /// 最小长度（用于字符串类型）
+        /// </summary>
+        public int? MinLength { get; set; }
     }
 }

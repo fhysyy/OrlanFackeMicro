@@ -3,6 +3,7 @@ using System.Text;
 using System.Collections.Generic;
 using System.Linq;
 using FakeMicro.Utilities.CodeGenerator;
+using FakeMicro.Utilities.CodeGenerator.Entities;
 
 namespace FakeMicro.Utilities.CodeGenerator.Templates
 {

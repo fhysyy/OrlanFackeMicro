@@ -33,9 +33,24 @@ namespace FakeMicro.Utilities.CodeGenerator.Entities
         public string PrimaryKeyType { get; set; } = "int";
 
         /// <summary>
+        /// 主键属性元数据
+        /// </summary>
+        public PropertyMetadata? PrimaryKeyPropertyMetadata { get; set; }
+
+        /// <summary>
         /// 属性列表
         /// </summary>
         public List<PropertyMetadata>? Properties { get; set; }
+
+        /// <summary>
+        /// 表名
+        /// </summary>
+        public string TableName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 是否可审计
+        /// </summary>
+        public bool IsAuditable { get; set; } = false;
 
         /// <summary>
         /// 是否支持软删除
