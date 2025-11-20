@@ -50,25 +50,30 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// <param name="entities">实体列表</param>
         /// <param name="generationType">生成类型</param>
         /// <param name="overwriteStrategy">覆盖策略</param>
+        /// <param name="outputPath">输出路径，如果为null则使用默认路径</param>
         /// <returns>生成结果</returns>
         public async Task<CodeGenerationResult> GenerateCodeAsync(
             List<EntityMetadata> entities, 
             GenerationType generationType = GenerationType.All,
-            OverwriteStrategy? overwriteStrategy = null)
+            OverwriteStrategy? overwriteStrategy = null,
+            string? outputPath = null)
         {
             var result = new CodeGenerationResult
             {
                 IsSuccess = true,
-                StartTime = DateTime.UtcNow
+                StartTime = DateTime.UtcNow,
+                OutputPath = outputPath
             };
 
             var strategy = overwriteStrategy ?? _overwriteStrategy;
+            // 使用传入的outputPath，如果为null则使用默认路径
+            var targetOutputPath = outputPath ?? _outputPath;
 
             try
             {
                 foreach (var entity in entities)
                 {
-                    var entityResult = await GenerateEntityCodeAsync(entity, generationType, strategy);
+                    var entityResult = await GenerateEntityCodeAsync(entity, generationType, strategy, targetOutputPath);
                     if (!entityResult.IsSuccess)
                     {
                         result.IsSuccess = false;
@@ -97,129 +102,129 @@ namespace FakeMicro.Utilities.CodeGenerator
         private async Task<CodeGenerationResult> GenerateEntityCodeAsync(
             EntityMetadata entity, 
             GenerationType generationType, 
-            OverwriteStrategy overwriteStrategy)
+            OverwriteStrategy overwriteStrategy,
+            string outputPath)
         {
             var result = new CodeGenerationResult { IsSuccess = true };
 
             // 生成接口文件
             if (generationType.HasFlag(GenerationType.Entity))
             {
-                await GenerateEntityAsync(entity, overwriteStrategy);
+                await GenerateEntityAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.Interface))
             {
-                await GenerateInterfaceAsync(entity, overwriteStrategy);
+                await GenerateInterfaceAsync(entity, overwriteStrategy, outputPath);
             }
 
             // 生成结果类文件
             if (generationType.HasFlag(GenerationType.Result))
             {
-                await GenerateResultAsync(entity, overwriteStrategy);
+                await GenerateResultAsync(entity, overwriteStrategy, outputPath);
             }
 
             // 生成请求类文件
             if (generationType.HasFlag(GenerationType.Request))
             {
-                await GenerateRequestAsync(entity, overwriteStrategy);
+                await GenerateRequestAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.Grain))
             {
-                await GenerateGrainAsync(entity, overwriteStrategy);
+                await GenerateGrainAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.Dto))
             {
-                await GenerateDtoAsync(entity, overwriteStrategy);
+                await GenerateDtoAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.Controller))
             {
-                await GenerateControllerAsync(entity, overwriteStrategy);
+                await GenerateControllerAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.Repository))
             {
-                await GenerateRepositoryAsync(entity, overwriteStrategy);
+                await GenerateRepositoryAsync(entity, overwriteStrategy, outputPath);
             }
 
             if (generationType.HasFlag(GenerationType.RepositoryImplementation))
             {
-                await GenerateRepositoryImplementationAsync(entity, overwriteStrategy);
+                await GenerateRepositoryImplementationAsync(entity, overwriteStrategy, outputPath);
             }
 
             return result;
         }
 
-        private async Task GenerateEntityAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateEntityAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.EntityTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Entity, entity.EntityName, _outputPath);
-
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Entity, entity.EntityName, outputPath);
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateInterfaceAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateInterfaceAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.InterfaceTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Interface, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Interface, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.ResultTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Result, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Result, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateRequestAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateRequestAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.RequestTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Request, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Request, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateGrainAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateGrainAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.GrainTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Grain, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Grain, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateDtoAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateDtoAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.DtoTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Dto, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Dto, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateControllerAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateControllerAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.ControllerTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Controller, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Controller, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateRepositoryAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateRepositoryAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.RepositoryInterfaceTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Repository, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Repository, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateRepositoryImplementationAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy)
+        private async Task GenerateRepositoryImplementationAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.RepositoryImplementationTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.RepositoryImplementation, entity.EntityName, _outputPath);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.RepositoryImplementation, entity.EntityName, outputPath);
 
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }

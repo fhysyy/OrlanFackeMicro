@@ -90,7 +90,8 @@ namespace FakeMicro.Api.Controllers
                 var result = await _codeGenerator.GenerateCodeAsync(
                     new List<EntityMetadata> { entityMetadata },
                     request.GenerationType,
-                    request.OverwriteStrategy);
+                    request.OverwriteStrategy,
+                    request.OutputPath);
 
                 if (result.IsSuccess)
                 {
@@ -102,7 +103,7 @@ namespace FakeMicro.Api.Controllers
                         {
                             entityName = entityMetadata.EntityName,
                             generationType = request.GenerationType.ToString(),
-                            outputPath = request.OutputPath ?? "默认路径"
+                            outputPath = result.OutputPath ?? request.OutputPath ?? "默认路径"
                         }
                     });
                 }
@@ -196,7 +197,8 @@ namespace FakeMicro.Api.Controllers
                         var result = await _codeGenerator.GenerateCodeAsync(
                             new List<EntityMetadata> { entityMetadata },
                             entityRequest.GenerationType,
-                            entityRequest.OverwriteStrategy);
+                            entityRequest.OverwriteStrategy,
+                            entityRequest.OutputPath);
 
                         results.Add(new
                         {

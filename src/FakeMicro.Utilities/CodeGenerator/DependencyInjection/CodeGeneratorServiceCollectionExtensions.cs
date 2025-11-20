@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.IO;
+using FakeMicro.Utilities.CodeGenerator;
 
 namespace FakeMicro.Utilities.CodeGenerator.DependencyInjection
 {
@@ -29,7 +30,10 @@ namespace FakeMicro.Utilities.CodeGenerator.DependencyInjection
             }
 
             // 注册代码生成器
-            services.AddScoped<global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            services.AddScoped<ICodeGenerator, global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            
+            // 注册代码生成器验证器
+            services.AddScoped<ICodeGeneratorValidator, global::FakeMicro.Utilities.CodeGenerator.CodeGeneratorValidator>();
 
             return services;
         }
@@ -40,7 +44,10 @@ namespace FakeMicro.Utilities.CodeGenerator.DependencyInjection
         public static IServiceCollection AddCodeGenerator(this IServiceCollection services, CodeGeneratorConfiguration configuration)
         {
             services.AddSingleton(configuration);
-            services.AddScoped<global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            services.AddScoped<ICodeGenerator, global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            
+            // 注册代码生成器验证器
+            services.AddScoped<ICodeGeneratorValidator, global::FakeMicro.Utilities.CodeGenerator.CodeGeneratorValidator>();
 
             return services;
         }
@@ -59,7 +66,10 @@ namespace FakeMicro.Utilities.CodeGenerator.DependencyInjection
             configureOptions(config);
             
             services.AddSingleton(config);
-            services.AddScoped<global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            services.AddScoped<ICodeGenerator, global::FakeMicro.Utilities.CodeGenerator.CodeGenerator>();
+            
+            // 注册代码生成器验证器
+            services.AddScoped<ICodeGeneratorValidator, global::FakeMicro.Utilities.CodeGenerator.CodeGeneratorValidator>();
 
             return services;
         }

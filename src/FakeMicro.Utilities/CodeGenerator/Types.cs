@@ -47,5 +47,9 @@ namespace FakeMicro.Utilities.CodeGenerator
         public DateTime StartTime { get; set; }
         public DateTime EndTime { get; set; }
         public TimeSpan Duration => EndTime - StartTime;
+        /// <summary>
+        /// 实际使用的输出路径
+        /// </summary>
+        public string? OutputPath { get; set; }
     }
 }

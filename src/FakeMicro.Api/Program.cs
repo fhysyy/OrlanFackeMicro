@@ -20,6 +20,7 @@ using System.Threading.Tasks;
 // 添加代码生成器相关的using语句
 using FakeMicro.Utilities.CodeGenerator;
 using FakeMicro.Utilities.CodeGenerator.Templates;
+using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
 
 
 namespace FakeMicro.Api
@@ -315,14 +316,8 @@ namespace FakeMicro.Api
         /// <param name="builder">Web应用程序构建器</param>
         private static void RegisterCodeGeneratorServices(WebApplicationBuilder builder)
         {
-            // 注册代码生成器配置
-            builder.Services.Configure<CodeGeneratorConfiguration>(builder.Configuration.GetSection("CodeGenerator"));
-            
-            // 注册代码生成主服务
-            builder.Services.AddScoped<ICodeGenerator, CodeGenerator>();
-            
-            // 注册代码生成请求验证服务
-            builder.Services.AddScoped<ICodeGeneratorValidator, CodeGeneratorValidator>();
+            // 使用扩展方法注册代码生成器服务，支持动态OutputPath参数
+            builder.Services.AddCodeGenerator(builder.Configuration);
         }
     } 
 }

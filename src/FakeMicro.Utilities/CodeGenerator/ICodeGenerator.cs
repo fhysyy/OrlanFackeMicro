@@ -17,11 +17,13 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// <param name="entities">实体列表</param>
         /// <param name="generationType">生成类型</param>
         /// <param name="overwriteStrategy">覆盖策略</param>
+        /// <param name="outputPath">输出路径，如果为null则使用默认路径</param>
         /// <returns>生成结果</returns>
         Task<CodeGenerationResult> GenerateCodeAsync(
             List<EntityMetadata> entities, 
             GenerationType generationType = GenerationType.All,
-            OverwriteStrategy? overwriteStrategy = null);
+            OverwriteStrategy? overwriteStrategy = null,
+            string? outputPath = null);
 
         /// <summary>
         /// 获取所有可用的实体类型
