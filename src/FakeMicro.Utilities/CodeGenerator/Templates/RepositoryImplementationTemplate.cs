@@ -146,7 +146,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            ");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var result = await GetSqlSugarClient().Insertable(entity).ExecuteReturnEntityAsync(cancellationToken);");
+            sb.AppendLine("                var result = await GetSqlSugarClient().Insertable(entity).ExecuteReturnEntityAsync();");
             sb.AppendLine("                _logger.LogInformation(\"成功创建" + entity.EntityName + ": {Id}\", typeof(" + entity.EntityName + ").Name, result." + entity.PrimaryKeyProperty + ");");
             sb.AppendLine("                return result;");
             sb.AppendLine("            }");
@@ -172,7 +172,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            ");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var result = await GetSqlSugarClient().Updateable(entity).ExecuteReturnEntityAsync(cancellationToken);");
+            sb.AppendLine("                var result = await GetSqlSugarClient().Updateable(entity).ExecuteReturnEntityAsync();");
             sb.AppendLine("                _logger.LogInformation(\"成功更新" + entity.EntityName + ": {Id}\", typeof(" + entity.EntityName + ").Name, entity." + entity.PrimaryKeyProperty + ");");
             sb.AppendLine("                return result;");
             sb.AppendLine("            }");
@@ -200,8 +200,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            ");
             sb.AppendLine("            try");
             sb.AppendLine("            {");
-            sb.AppendLine("                var result = await GetSqlSugarClient().Insertable(entityList).ExecuteReturnListAsync(cancellationToken);");
-            sb.AppendLine("                _logger.LogInformation(\"成功批量创建" + entity.EntityName + "，数量: {Count}\", result.Count);");
+            sb.AppendLine("                var affectedRows = await GetSqlSugarClient().Insertable(entityList).ExecuteCommandAsync(cancellationToken);");
+            sb.AppendLine("                _logger.LogInformation(\"成功批量创建" + entity.EntityName + "，数量: {Count}\", affectedRows);");
             sb.AppendLine("                return result;");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (SqlSugarException ex)");
@@ -211,7 +211,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
-            
+   
             // 软删除方法（如果实体支持软删除）
             if (entity.IsSoftDeletable)
             {
@@ -428,8 +428,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            }");
             sb.AppendLine("            catch (SqlSugarException ex)");
             sb.AppendLine("            {");
-            sb.AppendLine("                _logger.LogError(ex, \"获取\" + entity.EntityDescription + \"条件分页数据失败，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
-            sb.AppendLine("                throw new DataAccessException(\"获取\" + entity.EntityDescription + \"条件分页数据失败\", ex);");
+            sb.AppendLine("                _logger.LogError(ex, \"获取" + entity.EntityDescription + "条件分页数据失败，页码: {0}, 页大小: {1}\", pageNumber, pageSize);");
+            sb.AppendLine("                throw new DataAccessException(\"获取" +entity.EntityDescription  + "条件分页数据失败\", ex);");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();

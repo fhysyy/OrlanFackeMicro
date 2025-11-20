@@ -34,7 +34,6 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using Orleans;");
             sb.AppendLine("using System.ComponentModel.DataAnnotations;");
             sb.AppendLine($"using {entity.Namespace};");
-            sb.AppendLine("using Orleans;");
             sb.AppendLine();
 
             // 命名空间
@@ -77,17 +76,17 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 创建{entity.EntityDescription}结果");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("     [GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class Create{entity.EntityName}Result : BaseResult");
             sb.AppendLine("    {");
-            sb.AppendLine("        [Id(2)]");
+            sb.AppendLine("        [Id(5)]");
             sb.AppendLine($"        public {entity.EntityName}Dto? Created{entity.EntityName} {{ get; set; }}");
-            sb.AppendLine("        [Id(3)]");
+            sb.AppendLine("        [Id(6)]");
             sb.AppendLine($"        public {entity.PrimaryKeyType}? {entity.PrimaryKeyProperty} {{ get; set; }}");
             sb.AppendLine();
             
             // 成功方法
-            sb.AppendLine($"        public static Create{entity.EntityName}Result Success({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
+            sb.AppendLine($"        public static Create{entity.EntityName}Result CreateSuccess({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
             sb.AppendLine($"            => new() {{ Success = true, Created{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};");
             sb.AppendLine();
             
@@ -120,17 +119,17 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 更新{entity.EntityDescription}结果");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class Update{entity.EntityName}Result : BaseResult");
             sb.AppendLine("    {");
-            sb.AppendLine("        [Id(2)]");
+            sb.AppendLine("        [Id(5)]");
             sb.AppendLine($"        public {entity.EntityName}Dto? Updated{entity.EntityName} {{ get; set; }}");
-            sb.AppendLine("        [Id(3)]");
+            sb.AppendLine("        [Id(6)]");
             sb.AppendLine($"        public {entity.PrimaryKeyType}? {entity.PrimaryKeyProperty} {{ get; set; }}");
             sb.AppendLine();
             
             // 成功方法
-            sb.AppendLine($"        public static Update{entity.EntityName}Result Success({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
+            sb.AppendLine($"        public static Update{entity.EntityName}Result CreateSuccess({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
             sb.AppendLine($"            => new() {{ Success = true, Updated{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};");
             sb.AppendLine();
             
@@ -166,17 +165,17 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 删除{entity.EntityDescription}结果");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class Delete{entity.EntityName}Result : BaseResult");
             sb.AppendLine("    {");
-            sb.AppendLine("        [Id(2)]");
+            sb.AppendLine("        [Id(5)]");
             sb.AppendLine("        public bool IsSoftDeleted { get; set; }");
-            sb.AppendLine("        [Id(3)]");
+            sb.AppendLine("        [Id(6)]");
             sb.AppendLine($"        public {entity.PrimaryKeyType}? {entity.PrimaryKeyProperty} {{ get; set; }}");
             sb.AppendLine();
             
             // 成功方法
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result Success(bool isSoftDeleted = false, {entity.PrimaryKeyType}? id = null)");
+            sb.AppendLine($"        public static Delete{entity.EntityName}Result CreateSuccess(bool isSoftDeleted = false, {entity.PrimaryKeyType}? id = null)");
             sb.AppendLine($"            => new() {{ Success = true, IsSoftDeleted = isSoftDeleted, {entity.PrimaryKeyProperty} = id }};");
             sb.AppendLine();
             
@@ -206,20 +205,20 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 批量更新{entity.EntityDescription}结果");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class BatchUpdate{entity.EntityName}Result : BaseResult");
             sb.AppendLine("    {");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public int SuccessCount { get; set; }");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine("        public int FailedCount { get; set; }");
-            sb.AppendLine("        [Id(4)]");
-            sb.AppendLine("        public int TotalCount { get; set; }");
             sb.AppendLine("        [Id(5)]");
-            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
+            sb.AppendLine("        public int SuccessCount { get; set; }");
             sb.AppendLine("        [Id(6)]");
-            sb.AppendLine("        public List<string> ValidationErrors { get; set; } = new();");
+            sb.AppendLine("        public int FailedCount { get; set; }");
             sb.AppendLine("        [Id(7)]");
+            sb.AppendLine("        public int TotalCount { get; set; }");
+            sb.AppendLine("        [Id(8)]");
+            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
+            sb.AppendLine("        [Id(9)]");
+            sb.AppendLine("        public List<string> ValidationErrors { get; set; } = new();");
+            sb.AppendLine("        [Id(10)]");
             sb.AppendLine("        public List<string> ConflictErrors { get; set; } = new();");
             sb.AppendLine();
             
@@ -228,7 +227,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine();
             
             // 成功方法
-            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result Success(int successCount, int totalCount)");
+            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result CreateSuccess(int successCount, int totalCount)");
             sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, FailedCount = totalCount - successCount }};");
             sb.AppendLine();
             
@@ -255,24 +254,24 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 批量删除{entity.EntityDescription}结果");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class BatchDelete{entity.EntityName}Result : BaseResult");
             sb.AppendLine("    {");
-            sb.AppendLine("        [Id(2)]");
-            sb.AppendLine("        public int SuccessCount { get; set; }");
-            sb.AppendLine("        [Id(3)]");
-            sb.AppendLine("        public int FailedCount { get; set; }");
-            sb.AppendLine("        [Id(4)]");
-            sb.AppendLine("        public int TotalCount { get; set; }");
             sb.AppendLine("        [Id(5)]");
-            sb.AppendLine("        public int SoftDeletedCount { get; set; }");
+            sb.AppendLine("        public int SuccessCount { get; set; }");
             sb.AppendLine("        [Id(6)]");
-            sb.AppendLine("        public int HardDeletedCount { get; set; }");
+            sb.AppendLine("        public int FailedCount { get; set; }");
             sb.AppendLine("        [Id(7)]");
-            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
+            sb.AppendLine("        public int TotalCount { get; set; }");
             sb.AppendLine("        [Id(8)]");
-            sb.AppendLine("        public List<string> CannotDeleteReferencedErrors { get; set; } = new();");
+            sb.AppendLine("        public int SoftDeletedCount { get; set; }");
             sb.AppendLine("        [Id(9)]");
+            sb.AppendLine("        public int HardDeletedCount { get; set; }");
+            sb.AppendLine("        [Id(10)]");
+            sb.AppendLine("        public List<string> Errors { get; set; } = new();");
+            sb.AppendLine("        [Id(11)]");
+            sb.AppendLine("        public List<string> CannotDeleteReferencedErrors { get; set; } = new();");
+            sb.AppendLine("        [Id(12)]");
             sb.AppendLine("        public List<string> NotFoundErrors { get; set; } = new();");
             sb.AppendLine();
             
@@ -281,7 +280,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine();
             
             // 成功方法
-            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result Success(int successCount, int totalCount, int softDeletedCount = 0, int hardDeletedCount = 0)");
+            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result CreateSuccess(int successCount, int totalCount, int softDeletedCount = 0, int hardDeletedCount = 0)");
             sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, SoftDeletedCount = softDeletedCount, HardDeletedCount = hardDeletedCount, FailedCount = totalCount - successCount }};");
             sb.AppendLine();
             
@@ -308,7 +307,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// {entity.EntityDescription}统计信息");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("     [GenerateSerializer]");
             sb.AppendLine($"    public class {entity.EntityName}Statistics");
             sb.AppendLine("    {");
             sb.AppendLine("        [Id(0)]");

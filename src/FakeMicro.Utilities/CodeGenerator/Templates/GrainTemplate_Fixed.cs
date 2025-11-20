@@ -131,12 +131,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                _logger.LogWarning(ex, \"创建{entity.EntityDescription}时发生唯一键冲突\");");
             sb.AppendLine($"                return Create{entity.EntityName}Result.Conflict(\"该{entity.EntityDescription}已存在\");");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"创建{entity.EntityDescription}时发生外键约束错误\");");
-            sb.AppendLine($"                return Create{entity.EntityName}Result.InvalidReference(\"引用的数据不存在\");");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (Exception ex)");
+             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"创建{entity.EntityDescription}时发生系统错误\");");
             sb.AppendLine($"                return Create{entity.EntityName}Result.Failure(\"创建失败，请稍后重试\");");

@@ -34,7 +34,8 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             sb.AppendLine($"using {entityNamespace};");
             sb.AppendLine($"using {requestNamespace};");
-            sb.AppendLine($"using {resultNamespace};");
+            sb.AppendLine("using FakeMicro.Interfaces.Models.Results;");
+            sb.AppendLine("using FakeMicro.Utilities.CodeGenerator;");
             sb.AppendLine();
             
             // 命名空间 - 使用ProjectStructureMapping获取正确的命名空间

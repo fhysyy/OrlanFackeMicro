@@ -40,6 +40,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using System.Linq;");
             sb.AppendLine("using System.Text.RegularExpressions;");
             sb.AppendLine("using Orleans.Concurrency;");
+            sb.AppendLine("using Orleans;");
             sb.AppendLine();
 
             // 命名空间
@@ -379,11 +380,6 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine("    /// 排序方向");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("    public enum SortDirection");
-            sb.AppendLine("    {");
-            sb.AppendLine("        Ascending,");
-            sb.AppendLine("        Descending");
-            sb.AppendLine("    }");
         }
     }
 }

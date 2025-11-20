@@ -18,8 +18,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         private static readonly Dictionary<GenerationType, string> _namespaceMappings = new()
         {
             { GenerationType.Entity, "FakeMicro.Entities" },
-            { GenerationType.Interface, "FakeMicro.Interfaces.Models" },
-            { GenerationType.Result, "FakeMicro.Interfaces.Models.Results" },
+            { GenerationType.Interface, "FakeMicro.Interfaces" },
+            { GenerationType.Result, "FakeMicro.Interfaces.Models" },
             { GenerationType.Request, "FakeMicro.Interfaces.Models" },
             { GenerationType.Grain, "FakeMicro.Grains" },
             { GenerationType.Dto, "FakeMicro.Interfaces.Models" },
@@ -35,8 +35,8 @@ namespace FakeMicro.Utilities.CodeGenerator
         private static readonly Dictionary<GenerationType, string> _pathMappings = new()
         {
             { GenerationType.Entity, "FakeMicro.Entities" },
-            { GenerationType.Interface, "FakeMicro.Interfaces\\Models" },
-            { GenerationType.Result, "FakeMicro.Interfaces\\Models\\Results" },
+            { GenerationType.Interface, "FakeMicro.Interfaces" },
+            { GenerationType.Result, "FakeMicro.Interfaces\\Models" },
             { GenerationType.Request, "FakeMicro.Interfaces\\Models" },
             { GenerationType.Grain, "FakeMicro.Grains" },
             { GenerationType.Dto, "FakeMicro.Interfaces\\Models" },

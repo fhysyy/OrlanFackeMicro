@@ -23,20 +23,19 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             // Using语句
             sb.AppendLine("using Microsoft.AspNetCore.Mvc;");
             sb.AppendLine("using Microsoft.AspNetCore.Authorization;");
-            sb.AppendLine("using FluentValidation;");
+            sb.AppendLine(" using FakeMicro.Interfaces;");
             sb.AppendLine("using System.Threading;");
             sb.AppendLine("using System.Threading.Tasks;");
             sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine("using System.Linq;");
             sb.AppendLine("using System;");
-            sb.AppendLine("using System.ComponentModel.DataAnnotations;");
-            sb.AppendLine($"using {entity.Namespace}.Interfaces;");
-            sb.AppendLine($"using {entity.Namespace}.Models;");
-            sb.AppendLine($"using {entity.Namespace}.Models.Results;");
+            sb.AppendLine("using FakeMicro.Interfaces.Models;");
+            sb.AppendLine("using FakeMicro.DatabaseAccess;");
             sb.AppendLine("using Microsoft.Extensions.Logging;");
             sb.AppendLine("using Orleans;");
             sb.AppendLine("using Orleans.Runtime;");
-            sb.AppendLine("using Microsoft.EntityFrameworkCore;");
+            sb.AppendLine("using FakeMicro.Interfaces.Models.Results;");
+
             sb.AppendLine();
             
             // 命名空间
@@ -124,7 +123,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("                {");
             sb.AppendLine("                    Items = items,");
             sb.AppendLine("                    TotalCount = totalCount,");
-            sb.AppendLine("                    Page = page,");
+            sb.AppendLine("                    PageIndex = page,");
             sb.AppendLine("                    PageSize = pageSize,");
             sb.AppendLine("                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)");
             sb.AppendLine("                };");
@@ -164,24 +163,10 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                var grain = _clusterClient.GetGrain<I{entity.EntityName}Grain>(\"{Guid.NewGuid()}\"); // 使用新ID创建");
             sb.AppendLine($"                var result = await grain.CreateAsync(request, cancellationToken);");
             sb.AppendLine("                if (result.Success)");
-            sb.AppendLine($"                    return CreatedAtAction(nameof(Get{entity.EntityName}), new {{ {entity.PrimaryKeyProperty} = result.Data?.Id }}, result);");
+            sb.AppendLine($"                    return CreatedAtAction(nameof(Get{entity.EntityName}), new {{ {entity.PrimaryKeyProperty} = result?.Id }}, result);");
             sb.AppendLine($"                return BadRequest(result);");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"PK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"创建{entity.EntityDescription}时主键冲突错误\");");
-            sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}已存在\" }});");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"UQ_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"创建{entity.EntityDescription}时唯一约束冲突错误\");");
-            sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}数据重复\" }});");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"创建{entity.EntityDescription}时外键约束错误\");");
-            sb.AppendLine($"                return BadRequest(new {{ Error = \"关联数据不存在或已被删除\" }});");
-            sb.AppendLine("            }");
+     
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"创建{entity.EntityDescription}时发生系统错误\");");
@@ -225,21 +210,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("                    return Ok(result);");
             sb.AppendLine("                return NotFound(result);");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"PK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"更新{entity.EntityDescription}时主键冲突错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
-            sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}已存在\" }});");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"UQ_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"更新{entity.EntityDescription}时唯一约束冲突错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
-            sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}数据重复\" }});");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"更新{entity.EntityDescription}时外键约束错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
-            sb.AppendLine($"                return BadRequest(new {{ Error = \"关联数据不存在或已被删除\" }});");
-            sb.AppendLine("            }");
+
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"更新{entity.EntityDescription}时发生系统错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
@@ -269,12 +240,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("                    return NoContent();");
             sb.AppendLine("                return NotFound(result);");
             sb.AppendLine("            }");
-            sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-            sb.AppendLine("            {");
-            sb.AppendLine($"                _logger.LogWarning(ex, \"删除{entity.EntityDescription}时外键约束错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
-            sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}无法删除，因为存在关联数据\" }});");
-            sb.AppendLine("            }");
-            sb.AppendLine("            catch (Exception ex)");
+           sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"删除{entity.EntityDescription}时发生系统错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
             sb.AppendLine("                return StatusCode(500, new { Error = \"系统内部错误，请稍后重试\" });");
@@ -305,11 +271,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 sb.AppendLine("                    return NoContent();");
                 sb.AppendLine("                return NotFound(result);");
                 sb.AppendLine("            }");
-                sb.AppendLine("            catch (DbUpdateException ex) when (ex.InnerException?.Message.Contains(\"FK_\") == true)");
-                sb.AppendLine("            {");
-                sb.AppendLine($"                _logger.LogWarning(ex, \"软删除{entity.EntityDescription}时外键约束错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");
-                sb.AppendLine($"                return Conflict(new {{ Error = \"{entity.EntityDescription}无法软删除，因为存在关联数据\" }});");
-                sb.AppendLine("            }");
+
                 sb.AppendLine("            catch (Exception ex)");
                 sb.AppendLine("            {");
                 sb.AppendLine($"                _logger.LogError(ex, \"软删除{entity.EntityDescription}时发生系统错误: {{{entity.PrimaryKeyProperty}}}\", {entity.PrimaryKeyProperty});");

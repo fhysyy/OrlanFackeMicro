@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
+    <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
   </ItemGroup>
 
 </Project>
