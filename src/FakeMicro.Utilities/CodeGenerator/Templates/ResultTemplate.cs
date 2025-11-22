@@ -87,27 +87,19 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 成功方法
             sb.AppendLine($"        public static Create{entity.EntityName}Result CreateSuccess({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
-            sb.AppendLine($"            => new() {{ Success = true, Created{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};");
+            sb.AppendLine($"            => new Create{entity.EntityName}Result() {{ Success = true, Created{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};" );
             sb.AppendLine();
             
-            // 失败方法 - 分类错误处理
-            sb.AppendLine($"        public static Create{entity.EntityName}Result Failed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
+            // 失败方法 - 统一错误处理
+            sb.AppendLine($"        public static Create{entity.EntityName}Result Failed(string errorMessage, string errorCode = null)");
+            sb.AppendLine($"            => new Create{entity.EntityName}Result() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = errorCode }};" );
+            // 简化错误处理，使用通用Failed方法配合错误码
             sb.AppendLine();
-            sb.AppendLine($"        public static Create{entity.EntityName}Result NotFound(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"NOT_FOUND\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{entity.EntityName}Result Conflict(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"CONFLICT\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{entity.EntityName}Result InvalidReference(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"INVALID_REFERENCE\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{entity.EntityName}Result ValidationFailed(List<string> errors)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = string.Join(\"; \", errors), ErrorCode = \"VALIDATION_FAILED\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Create{entity.EntityName}Result InvalidGrainId()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"无效的Grain ID\", ErrorCode = \"INVALID_GRAIN_ID\" }};");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"记录未找到\", \"NOT_FOUND\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"资源冲突\", \"CONFLICT\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无效引用\", \"INVALID_REFERENCE\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(string.Join(\"；\", errors), \"VALIDATION_FAILED\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无效的Grain ID\", \"INVALID_GRAIN_ID\")");
             sb.AppendLine("    }");
         }
 
@@ -130,30 +122,20 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 成功方法
             sb.AppendLine($"        public static Update{entity.EntityName}Result CreateSuccess({entity.EntityName}Dto entity, {entity.PrimaryKeyType} id)");
-            sb.AppendLine($"            => new() {{ Success = true, Updated{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};");
+            sb.AppendLine($"            => new Update{entity.EntityName}Result() {{ Success = true, Updated{entity.EntityName} = entity, {entity.PrimaryKeyProperty} = id }};");
             sb.AppendLine();
             
-            // 失败方法 - 分类错误处理
-            sb.AppendLine($"        public static Update{entity.EntityName}Result Failed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
+            // 失败方法 - 统一错误处理
+            sb.AppendLine($"        public static Update{entity.EntityName}Result Failed(string errorMessage, string errorCode = null)");
+            sb.AppendLine($"            => new Update{entity.EntityName}Result() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = errorCode }};");
+            // 简化错误处理，使用通用Failed方法配合错误码
             sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result NotFound(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"NOT_FOUND\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result Conflict(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"CONFLICT\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result InvalidReference(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"INVALID_REFERENCE\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result ValidationFailed(List<string> errors)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = string.Join(\"; \", errors), ErrorCode = \"VALIDATION_FAILED\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result OptimisticConcurrency(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"OPTIMISTIC_CONCURRENCY\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Update{entity.EntityName}Result InvalidGrainId()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"无效的Grain ID\", ErrorCode = \"INVALID_GRAIN_ID\" }};");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"记录未找到\", \"NOT_FOUND\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"资源冲突\", \"CONFLICT\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无效引用\", \"INVALID_REFERENCE\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(string.Join(\"；\", errors), \"VALIDATION_FAILED\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"乐观并发错误\", \"OPTIMISTIC_CONCURRENCY\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无效的Grain ID\", \"INVALID_GRAIN_ID\")");
             sb.AppendLine("    }");
         }
 
@@ -176,24 +158,18 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 成功方法
             sb.AppendLine($"        public static Delete{entity.EntityName}Result CreateSuccess(bool isSoftDeleted = false, {entity.PrimaryKeyType}? id = null)");
-            sb.AppendLine($"            => new() {{ Success = true, IsSoftDeleted = isSoftDeleted, {entity.PrimaryKeyProperty} = id }};");
+            sb.AppendLine($"            => new Delete{entity.EntityName}Result() {{ Success = true, IsSoftDeleted = isSoftDeleted, {entity.PrimaryKeyProperty} = id }};");
             sb.AppendLine();
             
-            // 失败方法 - 分类错误处理
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result Failed(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage }};");
+            // 失败方法 - 统一错误处理
+            sb.AppendLine($"        public static Delete{entity.EntityName}Result Failed(string errorMessage, string errorCode = null)");
+            sb.AppendLine($"            => new Delete{entity.EntityName}Result() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = errorCode }};");
+            // 简化错误处理，使用通用Failed方法配合错误码
             sb.AppendLine();
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result NotFound(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"NOT_FOUND\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result CannotDeleteReferenced(string errorMessage)");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = errorMessage, ErrorCode = \"CANNOT_DELETE_REFERENCED\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result InvalidGrainId()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"无效的Grain ID\", ErrorCode = \"INVALID_GRAIN_ID\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static Delete{entity.EntityName}Result AlreadyDeleted()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"项目已经被删除\", ErrorCode = \"ALREADY_DELETED\" }};");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"记录未找到\", \"NOT_FOUND\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无法删除，存在引用关系\", \"CANNOT_DELETE_REFERENCED\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"无效的Grain ID\", \"INVALID_GRAIN_ID\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(\"项目已经被删除\", \"ALREADY_DELETED\")");
             sb.AppendLine("    }");
         }
 
@@ -228,21 +204,19 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 成功方法
             sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result CreateSuccess(int successCount, int totalCount)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, FailedCount = totalCount - successCount }};");
+            sb.AppendLine($"            => new BatchUpdate{entity.EntityName}Result() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, FailedCount = totalCount - successCount }};");
             sb.AppendLine();
             
-            // 失败方法 - 分类错误处理
-            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result Failed(List<string> errors, List<string> validationErrors = null, List<string> conflictErrors = null)");
-            sb.AppendLine($"            => new() {{ Success = false, FailedCount = errors?.Count ?? 0, TotalCount = (errors?.Count ?? 0) + (validationErrors?.Count ?? 0) + (conflictErrors?.Count ?? 0), Errors = errors ?? new(), ValidationErrors = validationErrors ?? new(), ConflictErrors = conflictErrors ?? new() }};");
+            // 失败方法 - 统一错误处理
+            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result Failed(List<string> errors, string errorCode = null, List<string> validationErrors = null, List<string> conflictErrors = null)");
+            sb.AppendLine($"            => new BatchUpdate{entity.EntityName}Result() {{ Success = false, ErrorCode = errorCode, FailedCount = errors?.Count ?? 0, TotalCount = (errors?.Count ?? 0) + (validationErrors?.Count ?? 0) + (conflictErrors?.Count ?? 0), Errors = errors ?? new(), ValidationErrors = validationErrors ?? new(), ConflictErrors = conflictErrors ?? new() }};");
             sb.AppendLine();
             sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result PartialSuccess(int successCount, int totalCount, List<string> errors)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, FailedCount = errors?.Count ?? 0, Errors = errors ?? new() }};");
+            sb.AppendLine($"            => new BatchUpdate{entity.EntityName}Result() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, FailedCount = errors?.Count ?? 0, Errors = errors ?? new() }};");
+            // 简化批量操作错误处理，使用通用Failed方法
             sb.AppendLine();
-            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result InvalidGrainId()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"无效的Grain ID\", ErrorCode = \"INVALID_GRAIN_ID\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchUpdate{entity.EntityName}Result EmptyRequest()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"批量更新请求为空\", ErrorCode = \"EMPTY_REQUEST\" }};");
+            sb.AppendLine($"        // 推荐使用示例：Failed(new List<string>{{\"无效的Grain ID\"}}, \"INVALID_GRAIN_ID\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(new List<string>{{\"批量更新请求为空\"}}, \"EMPTY_REQUEST\")");
             sb.AppendLine("    }");
         }
 
@@ -281,21 +255,19 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             // 成功方法
             sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result CreateSuccess(int successCount, int totalCount, int softDeletedCount = 0, int hardDeletedCount = 0)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, SoftDeletedCount = softDeletedCount, HardDeletedCount = hardDeletedCount, FailedCount = totalCount - successCount }};");
+            sb.AppendLine($"            => new BatchDelete{entity.EntityName}Result() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, SoftDeletedCount = softDeletedCount, HardDeletedCount = hardDeletedCount, FailedCount = totalCount - successCount }};");
             sb.AppendLine();
             
-            // 失败方法 - 分类错误处理
-            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result Failed(List<string> errors, List<string> cannotDeleteErrors = null, List<string> notFoundErrors = null)");
-            sb.AppendLine($"            => new() {{ Success = false, FailedCount = errors?.Count ?? 0, TotalCount = (errors?.Count ?? 0) + (cannotDeleteErrors?.Count ?? 0) + (notFoundErrors?.Count ?? 0), Errors = errors ?? new(), CannotDeleteReferencedErrors = cannotDeleteErrors ?? new(), NotFoundErrors = notFoundErrors ?? new() }};");
+            // 失败方法 - 统一错误处理
+            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result Failed(List<string> errors, string errorCode = null, List<string> cannotDeleteErrors = null, List<string> notFoundErrors = null)");
+            sb.AppendLine($"            => new BatchDelete{entity.EntityName}Result() {{ Success = false, ErrorCode = errorCode, FailedCount = errors?.Count ?? 0, TotalCount = (errors?.Count ?? 0) + (cannotDeleteErrors?.Count ?? 0) + (notFoundErrors?.Count ?? 0), Errors = errors ?? new(), CannotDeleteReferencedErrors = cannotDeleteErrors ?? new(), NotFoundErrors = notFoundErrors ?? new() }};" );
             sb.AppendLine();
             sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result PartialSuccess(int successCount, int totalCount, int softDeletedCount, int hardDeletedCount, List<string> errors, List<string> cannotDeleteErrors = null, List<string> notFoundErrors = null)");
-            sb.AppendLine($"            => new() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, SoftDeletedCount = softDeletedCount, HardDeletedCount = hardDeletedCount, FailedCount = (errors?.Count ?? 0) + (cannotDeleteErrors?.Count ?? 0) + (notFoundErrors?.Count ?? 0), Errors = errors ?? new(), CannotDeleteReferencedErrors = cannotDeleteErrors ?? new(), NotFoundErrors = notFoundErrors ?? new() }};");
+            sb.AppendLine($"            => new BatchDelete{entity.EntityName}Result() {{ Success = true, SuccessCount = successCount, TotalCount = totalCount, SoftDeletedCount = softDeletedCount, HardDeletedCount = hardDeletedCount, FailedCount = (errors?.Count ?? 0) + (cannotDeleteErrors?.Count ?? 0) + (notFoundErrors?.Count ?? 0), Errors = errors ?? new(), CannotDeleteReferencedErrors = cannotDeleteErrors ?? new(), NotFoundErrors = notFoundErrors ?? new() }};");
+            // 简化批量操作错误处理，使用通用Failed方法
             sb.AppendLine();
-            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result InvalidGrainId()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"无效的Grain ID\", ErrorCode = \"INVALID_GRAIN_ID\" }};");
-            sb.AppendLine();
-            sb.AppendLine($"        public static BatchDelete{entity.EntityName}Result EmptyRequest()");
-            sb.AppendLine($"            => new() {{ Success = false, ErrorMessage = \"批量删除请求为空\", ErrorCode = \"EMPTY_REQUEST\" }};");
+            sb.AppendLine($"        // 推荐使用示例：Failed(new List<string>{{\"无效的Grain ID\"}}, \"INVALID_GRAIN_ID\")");
+            sb.AppendLine($"        // 推荐使用示例：Failed(new List<string>{{\"批量删除请求为空\"}}, \"EMPTY_REQUEST\")");
             sb.AppendLine("    }");
         }
 
@@ -307,30 +279,63 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// {entity.EntityDescription}统计信息");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("     [GenerateSerializer]");
+            sb.AppendLine("    [GenerateSerializer]");
             sb.AppendLine($"    public class {entity.EntityName}Statistics");
             sb.AppendLine("    {");
+            // 基础统计属性
             sb.AppendLine("        [Id(0)]");
             sb.AppendLine("        public int TotalCount { get; set; }");
             sb.AppendLine("        [Id(1)]");
             sb.AppendLine("        public int ActiveCount { get; set; }");
+            
+            // 创建相关统计
             sb.AppendLine("        [Id(2)]");
             sb.AppendLine("        public int CreatedToday { get; set; }");
             sb.AppendLine("        [Id(3)]");
             sb.AppendLine("        public int CreatedThisWeek { get; set; }");
             sb.AppendLine("        [Id(4)]");
             sb.AppendLine("        public int CreatedThisMonth { get; set; }");
+            
+            // 更新相关统计
             sb.AppendLine("        [Id(5)]");
-            sb.AppendLine("        public DateTime? LastCreated { get; set; }");
+            sb.AppendLine("        public int UpdatedToday { get; set; }");
             sb.AppendLine("        [Id(6)]");
+            sb.AppendLine("        public int UpdatedThisWeek { get; set; }");
+            sb.AppendLine("        [Id(7)]");
+            sb.AppendLine("        public int UpdatedThisMonth { get; set; }");
+            
+            // 时间戳信息
+            sb.AppendLine("        [Id(8)]");
+            sb.AppendLine("        public DateTime? LastCreated { get; set; }");
+            sb.AppendLine("        [Id(9)]");
             sb.AppendLine("        public DateTime? LastUpdated { get; set; }");
             
+            // 软删除相关统计
             if (entity.IsSoftDeletable)
             {
                 sb.AppendLine();
-                sb.AppendLine("        [Id(7)]");
+                sb.AppendLine("        [Id(10)]");
                 sb.AppendLine("        public int DeletedCount { get; set; }");
+                sb.AppendLine("        [Id(11)]");
+                sb.AppendLine("        public int DeletedToday { get; set; }");
             }
+            
+            // 计算属性
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 活跃率（百分比）");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        public double ActiveRatio => TotalCount > 0 ? (double)ActiveCount / TotalCount * 100 : 0;");
+            
+            // 默认构造函数
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// 默认构造函数");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine($"        public {entity.EntityName}Statistics()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            // 初始化所有属性");
+            sb.AppendLine("        }");
             
             sb.AppendLine("    }");
         }
