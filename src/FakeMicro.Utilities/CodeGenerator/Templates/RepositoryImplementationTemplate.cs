@@ -184,7 +184,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        }");
             sb.AppendLine();
             
-            // CreateRangeAndReturnAsync方法 - 批量创建实体并返回结果列表
+            //                    CreateRangeAndReturnAsync方法 - 批量创建实体并返回结果列表
             sb.AppendLine("        /// <summary>");
             sb.AppendLine("        /// 批量创建" + entity.EntityDescription + "并返回创建后的实体列表");
             sb.AppendLine("        /// </summary>");
@@ -202,7 +202,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            {");
             sb.AppendLine("                var affectedRows = await GetSqlSugarClient().Insertable(entityList).ExecuteCommandAsync(cancellationToken);");
             sb.AppendLine("                _logger.LogInformation(\"成功批量创建" + entity.EntityName + "，数量: {Count}\", affectedRows);");
-            sb.AppendLine("                return result;");
+            sb.AppendLine("                return entityList;");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (SqlSugarException ex)");
             sb.AppendLine("            {");
@@ -263,9 +263,9 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("        /// <returns>" + entity.EntityDescription + "实体</returns>");
             sb.AppendLine("        public async virtual Task<" + entity.EntityName + "?> GetByGrainIdAsync(CancellationToken cancellationToken = default)");
             sb.AppendLine("        {");
-            sb.AppendLine("            // 注意：此方法需要在Grain上下文中调用，通过Grain的ID获取实体");
-            sb.AppendLine("            // 具体实现取决于Grain的ID策略");
-            sb.AppendLine("            throw new NotImplementedException(\"需要在Grain上下文中实现GetByGrainIdAsync方法\");");
+            sb.AppendLine("            // 注意：此方法在Grain实现中会被重写，用于通过Grain的ID获取实体");
+            sb.AppendLine("            // 默认实现返回null，实际使用时应在Grain上下文中根据具体ID策略实现");
+            sb.AppendLine("            return null;");
             sb.AppendLine("        }");
             sb.AppendLine();
             
@@ -395,7 +395,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            catch (SqlSugarException ex)");
             sb.AppendLine("            {");
             sb.AppendLine("                _logger.LogError(ex, \"获取" + entity.EntityDescription + "分页数据失败，页码: {PageNumber}, 页大小: {PageSize}\", pageNumber, pageSize);");
-            sb.AppendLine("                throw new DataAccessException(\"获取\" + entity.EntityDescription + \"分页数据失败\", ex);");
+            sb.AppendLine("                throw new DataAccessException(\"获取" + entity.EntityDescription + "分页数据失败\", ex);");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();

@@ -227,16 +227,16 @@ namespace FakeMicro.Interfaces.Models.Requests
 
     }
 
-    /// <summary>
-    /// 批量操作类型
-    /// </summary>
-    public enum BatchOperationType
-    {
-        Delete,
-        SoftDelete,
-        Restore,
-        Archive
-    }
+    ///// <summary>
+    ///// 批量操作类型
+    ///// </summary>
+    //public enum BatchOperationType
+    //{
+    //    Delete,
+    //    SoftDelete,
+    //    Restore,
+    //    Archive
+    //}
 
     /// <summary>
     /// 查询FakeStudent请求
@@ -309,4 +309,10 @@ namespace FakeMicro.Interfaces.Models.Requests
     /// <summary>
     /// 排序方向
     /// </summary>
+    /// 
+    public enum SortDirection
+    {
+        Ascending,
+        Descending
+    }
 }

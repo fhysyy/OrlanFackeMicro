@@ -41,6 +41,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using System.Text.RegularExpressions;");
             sb.AppendLine("using Orleans.Concurrency;");
             sb.AppendLine("using Orleans;");
+            sb.AppendLine("using FakeMicro.Entities.Enums;");
             sb.AppendLine();
 
             // 命名空间
@@ -262,18 +263,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
 
             sb.AppendLine("    }");
 
-            // 批量操作类型枚举
-            sb.AppendLine();
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine("    /// 批量操作类型");
-            sb.AppendLine("    /// </summary>");
-            sb.AppendLine("    public enum BatchOperationType");
-            sb.AppendLine("    {");
-            sb.AppendLine("        Delete,");
-            sb.AppendLine("        SoftDelete,");
-            sb.AppendLine("        Restore,");
-            sb.AppendLine("        Archive");
-            sb.AppendLine("    }");
+            // 批量操作类型枚举 - 注意：使用共享的枚举定义，避免重复
         }
 
         /// <summary>
@@ -375,11 +365,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
 
             sb.AppendLine("    }");
 
-            // 排序方向枚举
-            sb.AppendLine();
-            sb.AppendLine("    /// <summary>");
-            sb.AppendLine("    /// 排序方向");
-            sb.AppendLine("    /// </summary>");
+      
         }
     }
 }

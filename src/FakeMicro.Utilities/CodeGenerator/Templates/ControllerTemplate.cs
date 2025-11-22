@@ -160,7 +160,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("                //     return BadRequest(validationResult.Errors);");
             sb.AppendLine("                // }");
             sb.AppendLine();
-            sb.AppendLine($"                var grain = _clusterClient.GetGrain<I{entity.EntityName}Grain>(\"{Guid.NewGuid()}\"); // 使用新ID创建");
+            sb.AppendLine($"                var grain = _clusterClient.GetGrain<I{entity.EntityName}Grain>(\"Guid.NewGuid()\"); // 使用新ID创建");
             sb.AppendLine($"                var result = await grain.CreateAsync(request, cancellationToken);");
             sb.AppendLine("                if (result.Success)");
             sb.AppendLine($"                    return CreatedAtAction(nameof(Get{entity.EntityName}), new {{ {entity.PrimaryKeyProperty} = result?.Id }}, result);");

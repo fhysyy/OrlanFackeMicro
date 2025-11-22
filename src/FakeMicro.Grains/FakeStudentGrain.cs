@@ -22,7 +22,7 @@ using FakeMicro.Interfaces.Models.Results;
 using FakeMicro.DatabaseAccess;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Utilities.CodeGenerator;
-using CodeGeneratorValidationResult = FakeMicro.Utilities.CodeGenerator.ValidationResult;
+using CodeGeneratorValidationResult = FakeMicro.Utilities.CodeGenerator;
 using InterfacesValidationResult = FakeMicro.Interfaces.Models.ValidationResult;
 
 namespace FakeMicro.Entities.Grains
@@ -72,6 +72,35 @@ namespace FakeMicro.Entities.Grains
             {
                 _logger.LogError(ex, "获取FakeStudent时发生错误: {Id}", this.GetPrimaryKeyString());
                 throw; // 对于查询操作，抛出异常更合适
+            }
+        }
+        
+        /// <summary>
+        /// 通过Grain ID获取FakeStudent实体
+        /// </summary>
+        public async Task<FakeStudent?> GetByGrainIdAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                var grainIdStr = this.GetPrimaryKeyString();
+                if (!long.TryParse(grainIdStr, out long grainId))
+                {
+                    _logger.LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
+                    return null;
+                }
+
+                var entity = await _repository.GetByIdAsync(grainId, cancellationToken);
+                if (entity == null)
+                {
+                    _logger.LogInformation("FakeStudent实体不存在: {Id}", grainId);
+                    return null;
+                }
+                return entity;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "通过Grain ID获取FakeStudent实体时发生错误: {Id}", this.GetPrimaryKeyString());
+                throw;
             }
         }
 
@@ -215,7 +244,7 @@ namespace FakeMicro.Entities.Grains
             try
             {
                 var pagedResult = await _repository.GetPagedAsync(page, pageSize, x => x.CreatedAt, true, cancellationToken);
-            return _mapper.Map<List<FakeStudentDto>>(pagedResult.Items);
+                return _mapper.Map<List<FakeStudentDto>>(pagedResult.Items);
             }
             catch (Exception ex)
             {
@@ -231,8 +260,7 @@ namespace FakeMicro.Entities.Grains
         {
             try
             {
-                var entities = await _repository.GetAllAsync(cancellationToken);
-                return entities.Count();
+                return await _repository.CountAsync(null, cancellationToken);
             }
             catch (Exception ex)
             {

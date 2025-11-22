@@ -15,7 +15,7 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         /// <param name="request">代码生成请求</param>
         /// <returns>验证结果</returns>
-        public async Task<ValidationResult> ValidateAsync(CodeGenerationRequest request)
+        public async Task<CodeValidationResult> ValidateAsync(CodeGenerationRequest request)
         {
             var errors = new List<string>();
 
@@ -68,7 +68,7 @@ namespace FakeMicro.Utilities.CodeGenerator
                 }
             }
 
-            return new ValidationResult
+            return new CodeValidationResult
             {
                 IsValid = !errors.Any(),
                 Errors = errors
@@ -220,7 +220,7 @@ namespace FakeMicro.Utilities.CodeGenerator
     /// <summary>
     /// 验证结果
     /// </summary>
-    public class ValidationResult
+    public class CodeValidationResult
     {
         /// <summary>
         /// 是否验证通过
@@ -243,6 +243,6 @@ namespace FakeMicro.Utilities.CodeGenerator
         /// </summary>
         /// <param name="request">代码生成请求</param>
         /// <returns>验证结果</returns>
-        Task<ValidationResult> ValidateAsync(CodeGenerationRequest request);
+        Task<CodeValidationResult> ValidateAsync(CodeGenerationRequest request);
     }
 }

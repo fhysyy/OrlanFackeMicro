@@ -11,7 +11,6 @@ using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Interfaces.Models.Results;
 using FakeMicro.Utilities.CodeGenerator;
-using CodeGeneratorValidationResult = FakeMicro.Utilities.CodeGenerator.ValidationResult;
 using InterfacesValidationResult = FakeMicro.Interfaces.Models.ValidationResult;
 
 namespace FakeMicro.Interfaces
@@ -25,6 +24,11 @@ namespace FakeMicro.Interfaces
         /// 获取FakeStudent
         /// </summary>
         Task<FakeStudentDto?> GetAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// 通过Grain ID获取FakeStudent实体
+        /// </summary>
+        Task<FakeStudent?> GetByGrainIdAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 创建FakeStudent

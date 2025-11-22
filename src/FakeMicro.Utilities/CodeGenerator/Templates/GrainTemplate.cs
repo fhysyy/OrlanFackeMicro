@@ -36,6 +36,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("using FakeMicro.Interfaces.Models.Results;");
             sb.AppendLine("using FakeMicro.Utilities.CodeGenerator;");
             sb.AppendLine("using FakeMicro.DatabaseAccess.Interfaces;");
+            sb.AppendLine("using AutoMapper;");
             sb.AppendLine();
             
             // 命名空间
@@ -130,22 +131,20 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"                var result = _mapper.Map<{entity.EntityName}Dto>(entity);");
             sb.AppendLine();
             sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}创建成功: {{Id}}\", entity.Id);");
-            sb.AppendLine($"                return Create{entity.EntityName}Result.Success(result);");
+            sb.AppendLine($"                return Create{entity.EntityName}Result.CreateSuccess(result);");
             sb.AppendLine("            }");
             sb.AppendLine("            catch (SqlSugarException ex) // 唯一键冲突");
             sb.AppendLine("            {");
 
 
-            sb.AppendLine(" var msg = ex.InnerException?.Message ?? ex.Message; ");
-            sb.AppendLine("if(msg.Contains(\"FK_\"))"); 
-            sb.AppendLine("{");
+            sb.AppendLine("               var msg = ex.InnerException?.Message ?? ex.Message; ");
+            sb.AppendLine("              if(msg.Contains(\"FK_\"))"); 
+            sb.AppendLine("{ ");
             sb.AppendLine($"                _logger.LogError(ex, \"创建{entity.EntityDescription}创建FakeStudent时发生外键约束错误\");");
-          
-              
-            sb.AppendLine($" return Create{entity.EntityName}Result.InvalidReference(\"引用的数据不存在\");");
+            sb.AppendLine($"               return Create{entity.EntityName}Result.InvalidReference(\"引用的数据不存在\");");
             sb.AppendLine("}");
-            sb.AppendLine($"  _logger.LogWarning(ex, \"{entity.EntityName}时发生唯一键冲突或数据库错误\");");
-            sb.AppendLine($"   return CreateFakeNewsResult.Conflict(\"{entity.EntityName}已存在\")");
+            sb.AppendLine($"             _logger.LogWarning(ex, \"{entity.EntityName}时发生唯一键冲突或数据库错误\");");
+            sb.AppendLine($"              return CreateFakeNewsResult.Conflict(\"{entity.EntityName}已存在\");");
          
 
             sb.AppendLine("            }");
@@ -153,7 +152,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"创建{entity.EntityDescription}时发生系统错误\");");
-            sb.AppendLine($"                return Create{entity.EntityName}Result.Failure(\"创建失败，请稍后重试\");");
+            sb.AppendLine($"                return Create{entity.EntityName}Result.Failed(\"创建失败，请稍后重试\");");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -238,13 +237,13 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             
             sb.AppendLine();
             sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}删除成功: {{Id}}\", grainId);");
-            sb.AppendLine($"                return Delete{entity.EntityName}Result.Success();");
+            sb.AppendLine($"                return Delete{entity.EntityName}Result.CreateSuccess();");
             sb.AppendLine("            }");
      
             sb.AppendLine("            catch (Exception ex)");
             sb.AppendLine("            {");
             sb.AppendLine($"                _logger.LogError(ex, \"删除{entity.EntityDescription}时发生系统错误: {{Id}}\", this.GetPrimaryKeyString());");
-            sb.AppendLine($"                return Delete{entity.EntityName}Result.Failure(\"删除失败，请稍后重试\");");
+            sb.AppendLine($"                return Delete{entity.EntityName}Result.Failed(\"删除失败，请稍后重试\");");
             sb.AppendLine("            }");
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -280,12 +279,12 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
                 sb.AppendLine($"                await _repository.UpdateAsync(existingEntity, cancellationToken);");
                 sb.AppendLine();
                 sb.AppendLine($"                _logger.LogInformation(\"{entity.EntityDescription}软删除成功: {{Id}}\", grainId);");
-                sb.AppendLine($"                return Delete{entity.EntityName}Result.Success();");
+            sb.AppendLine($"                return Delete{entity.EntityName}Result.CreateSuccess();");
                 sb.AppendLine("            }");
                 sb.AppendLine("            catch (Exception ex)");
                 sb.AppendLine("            {");
                 sb.AppendLine($"                _logger.LogError(ex, \"软删除{entity.EntityDescription}时发生系统错误: {{Id}}\", this.GetPrimaryKeyString());");
-                sb.AppendLine($"                return Delete{entity.EntityName}Result.Failure(\"软删除失败，请稍后重试\");");
+            sb.AppendLine($"                return Delete{entity.EntityName}Result.Failed(\"软删除失败，请稍后重试\");");
                 sb.AppendLine("            }");
                 sb.AppendLine("        }");
                 sb.AppendLine();
@@ -483,10 +482,10 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine();
             sb.AppendLine("            if (errors.Any())");
             sb.AppendLine("            {");
-            sb.AppendLine("                return ValidationResult.Failure(errors);");
+            sb.AppendLine("                return ValidationResult.CreateFailed(errors);");
             sb.AppendLine("            }");
             sb.AppendLine();
-            sb.AppendLine("            return ValidationResult.Success();");
+            sb.AppendLine("            return ValidationResult.CreateSuccess();");
             sb.AppendLine("        }");
             
             sb.AppendLine("    }");

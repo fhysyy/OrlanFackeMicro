@@ -165,6 +165,13 @@ namespace FakeMicro.Utilities.CodeGenerator
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
+        private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
+        {
+            var content = Templates.ResultTemplate.Generate(entity);
+            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Result, entity.EntityName, outputPath);
+
+            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
+        }
         private async Task GenerateInterfaceAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {
             var content = Templates.InterfaceTemplate.Generate(entity);
@@ -173,13 +180,7 @@ namespace FakeMicro.Utilities.CodeGenerator
             await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
         }
 
-        private async Task GenerateResultAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
-        {
-            var content = Templates.ResultTemplate.Generate(entity);
-            var filePath = ProjectStructureMapping.GetFilePath(GenerationType.Result, entity.EntityName, outputPath);
-
-            await WriteFileWithStrategyAsync(filePath, content, overwriteStrategy);
-        }
+  
 
         private async Task GenerateRequestAsync(EntityMetadata entity, OverwriteStrategy overwriteStrategy, string outputPath)
         {

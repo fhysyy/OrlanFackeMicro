@@ -78,7 +78,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             try
             {
                 var result = await GetSqlSugarClient().Insertable(entity).ExecuteReturnEntityAsync();
-                _logger.LogInformation("成功创建FakeStudent: {Id}", typeof(FakeStudent).Name, result.Id);
+                _logger.LogInformation("成功创建{EntityName}: {Id}", typeof(FakeStudent).Name, result.Id);
                 return result;
             }
             catch (SqlSugarException ex)
@@ -102,7 +102,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             try
             {
                 var result = await GetSqlSugarClient().Updateable(entity).ExecuteReturnEntityAsync();
-                _logger.LogInformation("成功更新FakeStudent: {Id}", typeof(FakeStudent).Name, entity.Id);
+                _logger.LogInformation("成功更新{EntityName}: {Id}", typeof(FakeStudent).Name, entity.Id);
                 return result;
             }
             catch (SqlSugarException ex)

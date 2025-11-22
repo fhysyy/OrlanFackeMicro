@@ -263,7 +263,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 创建{metadata.EntityDescription}请求");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("     [GenerateSerializer] ");
             sb.AppendLine($"    public class Create{metadata.EntityName}Request");
             sb.AppendLine("    {");
 
