@@ -14,18 +14,18 @@ namespace FakeMicro.Api.Services
     public class EventPublisherService : IEventPublisher
     {
         private readonly ILogger<EventPublisherService> _logger;
-        private readonly ICapPublisher _capPublisher;
+        private readonly IExtendedCapPublisher _capPublisher;
         private readonly IHttpClientFactory _httpClientFactory;
 
         /// <summary>
         /// 事件发布服务构造函数
         /// </summary>
         /// <param name="logger">日志记录器</param>
-        /// <param name="capPublisher">CAP事件发布器</param>
+        /// <param name="capPublisher">扩展的CAP事件发布器</param>
         /// <param name="httpClientFactory">HTTP客户端工厂</param>
         public EventPublisherService(
             ILogger<EventPublisherService> logger,
-            ICapPublisher capPublisher = null,
+            IExtendedCapPublisher capPublisher = null,
             IHttpClientFactory httpClientFactory = null)
         {
             _logger = logger;
@@ -49,8 +49,23 @@ namespace FakeMicro.Api.Services
                 CreatedAt = DateTime.UtcNow
             };
 
-            await PublishEventAsync("user.created", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.created", @event, "user", "create", "notification");
             _logger.LogInformation("用户创建事件发布成功: UserId={UserId}, Username={Username}", userId, username);
+        }
+        
+        /// <summary>
+        /// 发布带标签的事件，支持外部订阅
+        /// </summary>
+        /// <typeparam name="T">事件数据类型</typeparam>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="eventData">事件数据</param>
+        /// <param name="tags">事件标签</param>
+        public async Task PublishEventWithTagsAsync<T>(string eventName, T eventData, params string[] tags) where T : class
+        {
+            await PublishEventAsync(eventName, eventData, tags);
+            _logger.LogInformation("带标签事件发布成功: EventName={EventName}, Tags={Tags}", 
+                eventName, string.Join(",", tags));
         }
 
         /// <summary>
@@ -69,7 +84,8 @@ namespace FakeMicro.Api.Services
                 UpdatedAt = DateTime.UtcNow
             };
 
-            await PublishEventAsync("user.updated", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.updated", @event, "user", "update", "notification");
             _logger.LogInformation("用户更新事件发布成功: UserId={UserId}, Username={Username}", userId, username);
         }
 
@@ -85,7 +101,8 @@ namespace FakeMicro.Api.Services
                 DeletedAt = DateTime.UtcNow
             };
 
-            await PublishEventAsync("user.deleted", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.deleted", @event, "user", "delete", "notification");
             _logger.LogInformation("用户删除事件发布成功: UserId={UserId}", userId);
         }
 
@@ -139,8 +156,9 @@ namespace FakeMicro.Api.Services
         /// <typeparam name="T">事件数据类型</typeparam>
         /// <param name="eventName">事件名称</param>
         /// <param name="eventData">事件数据</param>
+        /// <param name="tags">事件标签（可选）</param>
         /// <param name="retryCount">重试次数</param>
-        private async Task PublishEventAsync<T>(string eventName, T eventData, int retryCount = 2) where T : class
+        private async Task PublishEventAsync<T>(string eventName, T eventData, string[] tags = null, int retryCount = 2) where T : class
         {
             int attempt = 0;
             bool published = false;
@@ -154,7 +172,15 @@ namespace FakeMicro.Api.Services
                     // 如果CAP已配置，使用CAP发布事件
                     if (_capPublisher != null)
                     {
-                        await _capPublisher.PublishAsync(eventName, eventData);
+                        // 如果提供了标签，使用带标签的发布方法
+                        if (tags != null && tags.Length > 0)
+                        {
+                            await _capPublisher.PublishWithTagsAsync(eventName, eventData, tags);
+                        }
+                        else
+                        {
+                            await _capPublisher.PublishAsync(eventName, eventData);
+                        }
                         published = true;
                         _logger.LogDebug("事件发布成功 (尝试 {Attempt}/{RetryCount}): {EventName}", 
                             attempt, retryCount + 1, eventName);

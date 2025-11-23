@@ -81,5 +81,14 @@ namespace FakeMicro.Interfaces.Events
         /// 发布自定义事件
         /// </summary>
         Task PublishCustomEventAsync<T>(string eventName, T eventData) where T : class;
+        
+        /// <summary>
+        /// 发布带标签的事件，支持外部订阅
+        /// </summary>
+        /// <typeparam name="T">事件数据类型</typeparam>
+        /// <param name="eventName">事件名称</param>
+        /// <param name="eventData">事件数据</param>
+        /// <param name="tags">事件标签</param>
+        Task PublishEventWithTagsAsync<T>(string eventName, T eventData, params string[] tags) where T : class;
     }
 }

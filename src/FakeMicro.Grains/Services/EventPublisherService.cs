@@ -1,6 +1,8 @@
 using DotNetCore.CAP;
 using FakeMicro.Interfaces.Events;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace FakeMicro.Grains.Services
 {
@@ -30,7 +32,8 @@ namespace FakeMicro.Grains.Services
                 Email = email
             };
 
-            await _capPublisher.PublishAsync("user.created", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.created", @event, "user", "create", "notification");
             _logger.LogInformation("已发布用户创建事件: UserId={UserId}", userId);
         }
 
@@ -46,7 +49,8 @@ namespace FakeMicro.Grains.Services
                 Email = email
             };
 
-            await _capPublisher.PublishAsync("user.updated", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.updated", @event, "user", "update", "notification");
             _logger.LogInformation("已发布用户更新事件: UserId={UserId}", userId);
         }
 
@@ -60,7 +64,8 @@ namespace FakeMicro.Grains.Services
                 UserId = userId
             };
 
-            await _capPublisher.PublishAsync("user.deleted", @event);
+            // 为事件添加标签，便于外部系统订阅
+            await PublishEventWithTagsAsync("user.deleted", @event, "user", "delete", "notification");
             _logger.LogInformation("已发布用户删除事件: UserId={UserId}", userId);
         }
 
@@ -71,6 +76,22 @@ namespace FakeMicro.Grains.Services
         {
             await _capPublisher.PublishAsync(eventName, eventData);
             _logger.LogInformation("已发布自定义事件: EventName={EventName}", eventName);
+        }
+
+        /// <summary>
+        /// 发布带标签的事件，支持外部订阅
+        /// </summary>
+        public async Task PublishEventWithTagsAsync<T>(string eventName, T eventData, params string[] tags) where T : class
+        {
+            // 在元数据中添加标签信息
+            var headers = new Dictionary<string, string>
+            {
+                { "Event-Tags", string.Join(",", tags) }
+            };
+
+            await _capPublisher.PublishAsync(eventName, eventData, headers);
+            _logger.LogInformation("已发布带标签事件: EventName={EventName}, Tags={Tags}", 
+                eventName, string.Join(",", tags));
         }
     }
 }

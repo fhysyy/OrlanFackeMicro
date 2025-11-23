@@ -154,6 +154,9 @@ namespace FakeMicro.Api
             // 添加认证和授权策略
             builder.Services.AddAuthorizationPolicies();
             
+            // 添加CAP事件总线服务
+            builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
+            
             // 构建应用
             var app = builder.Build();
             
@@ -175,6 +178,9 @@ namespace FakeMicro.Api
             // 添加认证和授权中间件
             app.UseAuthentication();
             app.UseAuthorization();
+            
+            // 使用CAP中间件
+            app.UseCap();
 
             // 使用HangFire Dashboard（仅限管理员访问）
             app.UseHangfireDashboard("/hangfire"); 
