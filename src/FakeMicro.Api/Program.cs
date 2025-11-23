@@ -127,6 +127,18 @@ namespace FakeMicro.Api
                 options.ResponseTimeout = TimeSpan.FromSeconds(45);
                 options.MaxMessageBodySize = 50 * 1024 * 1024; // 50MB
             });
+            builder.Services.AddCap(x =>
+            {
+                x.UsePostgreSql("Host=localhost;Database=capdb;Username=postgres;Password=123456"); // 持久化
+                x.UseRabbitMQ(opt =>
+                {
+                    opt.HostName = "localhost";
+                    opt.UserName = "guest";
+                    opt.Password = "guest";
+                });
+                x.FailedRetryCount = 5;
+                x.SucceedMessageExpiredAfter = 24 * 60 * 60;
+            });
 
             // 添加模拟的ILogger服务以解决依赖问题
             builder.Services.AddLogging();

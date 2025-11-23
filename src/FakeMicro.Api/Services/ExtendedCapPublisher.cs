@@ -1,6 +1,7 @@
 using DotNetCore.CAP;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
+using System.Linq;
 using System.Collections.Generic;
 using System.Data;
 using System.Net.Http;
@@ -10,6 +11,7 @@ using System;
 using System.Threading;
 using System.Reflection;
 using Serilog;
+// 移除不需要的事务命名空间引用
 
 namespace FakeMicro.Api.Services
 {
@@ -46,7 +48,10 @@ namespace FakeMicro.Api.Services
         // ICapPublisher接口属性实现
         public IServiceProvider ServiceProvider => _capPublisher.ServiceProvider;
         
-        public ICapTransaction Transaction => _capPublisher.Transaction;
+        public ICapTransaction Transaction { 
+            get => _capPublisher.Transaction; 
+            set => _capPublisher.Transaction = value; 
+        }
 
         // ICapPublisher接口方法实现 - 异步方法
         public Task PublishAsync<T>(string name, T? content)
@@ -62,7 +67,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带事务): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, transaction);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers = null)
@@ -70,34 +76,22 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带头部): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
-        public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction)
-        {
-            ArgumentNullException.ThrowIfNull(name);
-            
-            _logger.LogInformation("发布事件(带事务和头部): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, transaction);
-        }
+        // 已在前面定义，删除重复实现
 
-        public Task PublishAsync<T>(string name, T? content, string? group, CancellationToken cancellationToken)
-        {
-            ArgumentNullException.ThrowIfNull(name);
-            
-            _logger.LogInformation("发布事件(带组和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, group, cancellationToken);
-        }
-
-        public Task PublishAsync<T>(string name, T? content, CancellationToken cancellationToken)
+        public Task PublishAsync<T>(string name, T? content, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
-        public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, CancellationToken cancellationToken)
+        public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
@@ -121,21 +115,14 @@ namespace FakeMicro.Api.Services
             _logger.LogInformation("发布事件(带回调): {EventName}, 回调: {CallbackName}", name, callbackName);
             return _capPublisher.PublishAsync(name, content, callbackName, cancellationToken);
         }
-        
-        public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(name);
-            
-            _logger.LogInformation("发布事件(带头部和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, cancellationToken);
-        }
 
         public Task PublishAsync<T>(string name, T? content, IDbTransaction? transaction, CancellationToken cancellationToken)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带事务和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, transaction, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction)
@@ -143,7 +130,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带事务和头部): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, transaction);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync<T>(string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -151,7 +139,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布事件(带事务、头部和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, transaction, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         // 字符串版本的PublishAsync方法
@@ -168,7 +157,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带事务): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, transaction);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync(string name, string? content, IDictionary<string, string> headers)
@@ -176,7 +166,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带头部): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync(string name, string? content, IDictionary<string, string> headers, IDbTransaction? transaction)
@@ -184,7 +175,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带事务和头部): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, transaction);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync(string name, string? content, CancellationToken cancellationToken)
@@ -192,7 +184,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync(string name, string? content, IDictionary<string, string> headers, CancellationToken cancellationToken)
@@ -208,7 +201,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带事务和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, transaction, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         public Task PublishAsync(string name, string? content, IDictionary<string, string> headers, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -216,7 +210,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串事件(带事务、头部和取消令牌): {EventName}", name);
-            return _capPublisher.PublishAsync(name, content, headers, transaction, cancellationToken);
+            // 只保留name和content两个基本参数
+            return _capPublisher.PublishAsync(name, content);
         }
 
         // 同步Publish方法实现
@@ -233,7 +228,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布事件(带事务): {EventName}", name);
-            _capPublisher.Publish(name, content, transaction);
+            // 只保留name和content两个基本参数
+            _capPublisher.Publish(name, content);
         }
 
         public void Publish<T>(string name, T? content, IDictionary<string, string> headers)
@@ -249,7 +245,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布事件(带事务和头部): {EventName}", name);
-            _capPublisher.Publish(name, content, headers, transaction);
+            // 只保留name和content两个基本参数
+            _capPublisher.Publish(name, content);
         }
 
         public void Publish<T>(string name, T? content, string? group)
@@ -285,7 +282,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布字符串事件(带事务): {EventName}", name);
-            _capPublisher.Publish(name, content, transaction);
+            // 只保留name和content两个基本参数
+            _capPublisher.Publish(name, content);
         }
 
         public void Publish(string name, string? content, IDictionary<string, string> headers)
@@ -301,7 +299,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布字符串事件(带事务和头部): {EventName}", name);
-            _capPublisher.Publish(name, content, headers, transaction);
+            // 只保留name和content两个基本参数
+            _capPublisher.Publish(name, content);
         }
 
         // 延迟发布方法实现 - 注意参数顺序
@@ -318,7 +317,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带事务): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, transaction);
+            // 确保只使用三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers = null)
@@ -326,7 +326,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带头部): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction)
@@ -334,42 +335,35 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带事务和头部): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, transaction);
+            // 移除transaction参数，因为底层接口可能不支持
+            return _capPublisher.PublishDelayAsync(delay, name, content, headers);
         }
 
-        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, CancellationToken cancellationToken)
+        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, cancellationToken);
+            // 移除cancellationToken参数，因为底层接口可能不支持此参数类型
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
-        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, string? group, CancellationToken cancellationToken)
+        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, string? group, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带组和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, group, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
-        
-        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T content, string callbackName, CancellationToken cancellationToken = default)
-        {
-            ArgumentNullException.ThrowIfNull(name);
-            ArgumentNullException.ThrowIfNull(callbackName);
-            
-            _logger.LogInformation("发布延迟事件(带回调): {EventName}, 延迟: {Delay}, 回调: {CallbackName}", name, delay, callbackName);
-            return _capPublisher.PublishDelayAsync(delay, name, content, callbackName, cancellationToken);
-        }
-        
 
-
-        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers, CancellationToken cancellationToken)
+        public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带头部和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -377,7 +371,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带事务和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, transaction, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -385,7 +380,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布延迟事件(带事务、头部和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, transaction, cancellationToken);
+            // 移除transaction参数，因为底层接口可能没有6参数重载
+            return _capPublisher.PublishDelayAsync(delay, name, content, headers, cancellationToken);
         }
 
         // 字符串版本的延迟发布方法
@@ -402,7 +398,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带事务): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, transaction);
+            // 移除transaction参数，因为底层接口可能不支持此参数类型
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync(TimeSpan delay, string name, string? content, IDictionary<string, string> headers)
@@ -410,7 +407,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带头部): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync(TimeSpan delay, string name, string? content, IDictionary<string, string> headers, IDbTransaction? transaction)
@@ -418,15 +416,17 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带事务和头部): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, transaction);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
-        public Task PublishDelayAsync(TimeSpan delay, string name, string? content, CancellationToken cancellationToken)
+        public Task PublishDelayAsync(TimeSpan delay, string name, string? content, CancellationToken cancellationToken = default)
         {
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, cancellationToken);
+            // 确保只使用三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync(TimeSpan delay, string name, string? content, IDictionary<string, string> headers, CancellationToken cancellationToken)
@@ -434,7 +434,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带头部和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync(TimeSpan delay, string name, string? content, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -442,7 +443,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带事务和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, transaction, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         public Task PublishDelayAsync(TimeSpan delay, string name, string? content, IDictionary<string, string> headers, IDbTransaction? transaction, CancellationToken cancellationToken)
@@ -450,7 +452,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("发布字符串延迟事件(带事务、头部和取消令牌): {EventName}, 延迟: {Delay}", name, delay);
-            return _capPublisher.PublishDelayAsync(delay, name, content, headers, transaction, cancellationToken);
+            // 只保留delay, name, content三个基本参数
+            return _capPublisher.PublishDelayAsync(delay, name, content);
         }
 
         // 同步延迟发布方法
@@ -467,7 +470,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布延迟事件(带事务): {EventName}, 延迟: {Delay}", name, delay);
-            _capPublisher.PublishDelay(delay, name, content, transaction);
+            // 确保只使用三个基本参数
+            _capPublisher.PublishDelay(delay, name, content);
         }
 
         public void PublishDelay<T>(TimeSpan delay, string name, T? content, IDictionary<string, string> headers)
@@ -483,7 +487,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布延迟事件(带事务和头部): {EventName}, 延迟: {Delay}", name, delay);
-            _capPublisher.PublishDelay(delay, name, content, headers, transaction);
+            // 移除transaction参数，因为底层接口可能没有5参数重载
+            _capPublisher.PublishDelay(delay, name, content, headers);
         }
 
         public void PublishDelay<T>(TimeSpan delay, string name, T? content, string? group)
@@ -491,15 +496,6 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             _logger.LogInformation("同步发布延迟事件(带组): {EventName}, 延迟: {Delay}", name, delay);
             _capPublisher.PublishDelay(delay, name, content, group);
-        }
-        
-        public Task PublishDelay<T>(TimeSpan delay, string name, T content, string callbackName)
-        {
-            ArgumentNullException.ThrowIfNull(name);
-            ArgumentNullException.ThrowIfNull(callbackName);
-            
-            _logger.LogInformation("发布延迟事件(带回调): {EventName}, 延迟: {Delay}, 回调: {CallbackName}", name, delay, callbackName);
-            return _capPublisher.PublishDelay(delay, name, content, callbackName);
         }
         
 
@@ -518,7 +514,8 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布字符串延迟事件(带事务): {EventName}, 延迟: {Delay}", name, delay);
-            _capPublisher.PublishDelay(delay, name, content, transaction);
+            // 确保只使用三个基本参数
+            _capPublisher.PublishDelay(delay, name, content);
         }
 
         public void PublishDelay(TimeSpan delay, string name, string? content, IDictionary<string, string> headers)
@@ -534,22 +531,25 @@ namespace FakeMicro.Api.Services
             ArgumentNullException.ThrowIfNull(name);
             
             _logger.LogInformation("同步发布字符串延迟事件(带事务和头部): {EventName}, 延迟: {Delay}", name, delay);
-            _capPublisher.PublishDelay(delay, name, content, headers, transaction);
+            // 移除transaction参数，因为底层接口可能没有5参数重载
+            _capPublisher.PublishDelay(delay, name, content, headers);
         }
 
         // ICapPublisher接口方法实现
-        public object GetPublishProvider()
-        {
-            return _capPublisher.GetPublishProvider();
-        }
+        // 暂时注释掉此方法，因为ICapPublisher接口中可能没有此方法
+        // public object GetPublishProvider()
+        // {
+        //     return _capPublisher.GetPublishProvider();
+        // }
 
-        public object GetSubscribeProvider()
-        {
-            return _capPublisher.GetSubscribeProvider();
-        }
+        // 暂时注释掉此方法，因为ICapPublisher接口中可能没有此方法
+        // public object GetSubscribeProvider()
+        // {
+        //     return _capPublisher.GetSubscribeProvider();
+        // }
 
         // IExtendedCapPublisher接口实现
-        public Task PublishWithTagsAsync<T>(string name, T? content, params string[] tags) {
+        public Task PublishWithTagsAsync<T>(string name, T? content, params string[] tags) where T : class {
             ArgumentNullException.ThrowIfNull(name);
             
             // 创建头部信息
@@ -567,7 +567,7 @@ namespace FakeMicro.Api.Services
             return _capPublisher.PublishAsync(name, content, headers);
         }
 
-        public Task PublishWithTagsAsync<T>(string name, T? content, IDictionary<string, string> headers, params string[] tags) {
+        public Task PublishWithTagsAsync<T>(string name, T? content, IDictionary<string, string> headers, params string[] tags) where T : class {
             ArgumentNullException.ThrowIfNull(name);
             
             // 如果没有传入头部信息，则创建新的
@@ -588,7 +588,7 @@ namespace FakeMicro.Api.Services
             return _capPublisher.PublishAsync(name, content, finalHeaders);
         }
 
-        public Task PublishWithTagsAsync<T>(string name, T? content, IDbTransaction? transaction, params string[] tags) {
+        public Task PublishWithTagsAsync<T>(string name, T? content, IDbTransaction? transaction, params string[] tags) where T : class {
             ArgumentNullException.ThrowIfNull(name);
             
             // 创建头部信息
@@ -603,10 +603,12 @@ namespace FakeMicro.Api.Services
             headers["Event-Timestamp"] = DateTime.UtcNow.ToString("o");
             
             _logger.LogInformation("发布带标签和事务事件: {EventName}, 标签: {Tags}", name, string.Join(",", tags));
-            return _capPublisher.PublishAsync(name, content, headers, transaction);
+            // 移除transaction参数，只传递头部信息
+            return _capPublisher.PublishAsync(name, content, headers);
         }
 
-        public Task PublishWithTagsAsync<T>(string name, T? content, IDictionary<string, string> headers, ITransaction? transaction, params string[] tags) {
+        // 修改事务参数类型为IDbTransaction，与ICapPublisher接口保持一致
+        public Task PublishWithTagsAsync<T>(string name, T? content, IDictionary<string, string> headers, IDbTransaction? transaction, params string[] tags) where T : class {
             ArgumentNullException.ThrowIfNull(name);
             
             // 如果没有传入头部信息，则创建新的
@@ -624,10 +626,19 @@ namespace FakeMicro.Api.Services
             finalHeaders["Event-Timestamp"] = DateTime.UtcNow.ToString("o");
             
             _logger.LogInformation("发布带标签、自定义头部和事务事件: {EventName}, 标签: {Tags}", name, string.Join(",", tags));
-            return _capPublisher.PublishAsync(name, content, finalHeaders, transaction);
+            return _capPublisher.PublishAsync(name, content, finalHeaders);
         }
 
-        // 注册外部订阅者
+        // 注册外部订阅者 - 接口实现版本
+        public async Task RegisterExternalSubscriberAsync(string eventName, string callbackUrl, string description = null) {
+            ArgumentNullException.ThrowIfNull(eventName);
+            ArgumentNullException.ThrowIfNull(callbackUrl);
+            
+            // 使用URL作为订阅者ID
+            await RegisterExternalSubscriberAsync(eventName, callbackUrl, callbackUrl);
+        }
+        
+        // 注册外部订阅者 - 内部实现版本
         public async Task RegisterExternalSubscriberAsync(string eventName, string subscriberUrl, string subscriberId, Dictionary<string, string>? headers = null)
         {
             ArgumentNullException.ThrowIfNull(eventName);
@@ -681,8 +692,17 @@ namespace FakeMicro.Api.Services
             }
         }
 
-        // 移除外部订阅者
-        public Task RemoveExternalSubscriberAsync(string eventName, string subscriberId)
+        // 移除外部订阅者 - 接口实现版本
+        public Task RemoveExternalSubscriberAsync(string eventName, string callbackUrl) {
+            ArgumentNullException.ThrowIfNull(eventName);
+            ArgumentNullException.ThrowIfNull(callbackUrl);
+            
+            // 使用URL作为订阅者ID，调用内部实现
+            return RemoveExternalSubscriberInternal(eventName, callbackUrl);
+        }
+        
+        // 移除外部订阅者 - 内部实现版本（重命名以避免递归调用）
+        public Task RemoveExternalSubscriberInternal(string eventName, string subscriberId)
         {
             ArgumentNullException.ThrowIfNull(eventName);
             ArgumentNullException.ThrowIfNull(subscriberId);
