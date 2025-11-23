@@ -105,14 +105,7 @@ namespace FakeMicro.Api
                 });
                 // 配置本地集群连接
                 clientBuilder.UseLocalhostClustering(30000, "FakeMicroService", "FakeMicroCluster");
-                //.AddAdoNetGrainStorage(
-                //name: "PostgreSQLStore",
-                //configureOptions: options =>
-                //{
-                //    options.Invariant = "Npgsql";  // PostgreSQL 的 invariant 名称
-                //    options.ConnectionString = "Host=localhost;Database=OrleansStorage;Username=postgres;Password=your_password;";
-                //    options.UseJsonFormat = true; // 可选：使用 JSON 格式存储而不是二进制
-                //});
+               
             });
 
 
@@ -182,13 +175,14 @@ namespace FakeMicro.Api
             // 添加认证和授权中间件
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             // 使用HangFire Dashboard（仅限管理员访问）
-            app.UseHangfireDashboard("/hangfire", new DashboardOptions
-            {
-                Authorization = new[] { new HangfireAuthorizationFilter() },
-                DashboardTitle = "FakeMicro任务调度中心"
-            });
+            app.UseHangfireDashboard("/hangfire"); 
+            //    new DashboardOptions
+            //{
+            //    Authorization = new[] { new HangfireAuthorizationFilter() },
+            //    DashboardTitle = "FakeMicro任务调度中心"
+            //});
             
             // 配置默认的定时任务
             ConfigureDefaultJobs();
@@ -213,24 +207,24 @@ namespace FakeMicro.Api
         private static void ConfigureDefaultJobs()
         {
             // 添加系统健康检查任务 - 每小时执行一次
-            //RecurringJob.AddOrUpdate<SystemHealthService>(
-            //    "system-health-check",
-            //    service => service.PerformHealthCheck(),
-            //    "0 * * * *");
-            
-            //// 添加简单的日志记录任务 - 每分钟执行一次
-            //RecurringJob.AddOrUpdate(
-            //    "sample-log-task",
-            //    () => Console.WriteLine($"[{DateTime.Now}] 定时任务执行示例"),
-            //    "* * * * *");
-            
+            RecurringJob.AddOrUpdate<SystemHealthService>(
+                "system-health-check",
+                service => service.PerformHealthCheck(),
+                "0 * * * *");
+
+            // 添加简单的日志记录任务 - 每分钟执行一次
+            RecurringJob.AddOrUpdate(
+                "sample-log-task",
+                () => Console.WriteLine($"[{DateTime.Now}] 定时任务执行示例"),
+                "* * * * *");
+
             //// 添加Orleans HelloGrain定时任务 - 每5分钟执行一次
             //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
             //    "orleans-hello-task",
             //    executor => executor.ExecuteGrainOperationAsync("hello", "sayhello", 
             //        new System.Collections.Generic.Dictionary<string, object> { { "greeting", "Hello from Hangfire scheduled task" } }),
             //    "*/5 * * * *");
-            
+
             //// 添加Orleans CounterGrain定时任务 - 每10分钟执行一次
             //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
             //    "orleans-counter-task",
