@@ -127,18 +127,7 @@ namespace FakeMicro.Api
                 options.ResponseTimeout = TimeSpan.FromSeconds(45);
                 options.MaxMessageBodySize = 50 * 1024 * 1024; // 50MB
             });
-            builder.Services.AddCap(x =>
-            {
-                x.UsePostgreSql("Host=localhost;Database=capdb;Username=postgres;Password=123456"); // 持久化
-                x.UseRabbitMQ(opt =>
-                {
-                    opt.HostName = "localhost";
-                    opt.UserName = "guest";
-                    opt.Password = "guest";
-                });
-                x.FailedRetryCount = 5;
-                x.SucceedMessageExpiredAfter = 24 * 60 * 60;
-            });
+          
 
             // 添加模拟的ILogger服务以解决依赖问题
             builder.Services.AddLogging();
@@ -168,8 +157,8 @@ namespace FakeMicro.Api
             
             // 添加CAP事件总线服务
             builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
-            
-            // 构建应用
+             
+            // 构建应用，添加异常处理以获取详细错误信息
             var app = builder.Build();
             
             // 配置中间件
@@ -204,12 +193,14 @@ namespace FakeMicro.Api
             
             // 配置默认的定时任务
             ConfigureDefaultJobs();
+           
             
             // 映射控制器路由
             app.MapControllers();
             
             // 添加健康检查端点
             app.MapGet("/health", () => "Healthy");
+            
             
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");

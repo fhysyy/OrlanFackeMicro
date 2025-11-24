@@ -24,8 +24,8 @@ namespace FakeMicro.Api.Extensions
         public static IServiceCollection AddCapEventBus(this IServiceCollection services, 
             IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
-            // 从配置中获取CAP相关配置
-            string connectionString = configuration.GetConnectionString("CAPConnection");
+            // 从配置中获取CAP相关配置，提供默认值以防配置中不存在
+            string connectionString = configuration.GetConnectionString("CAPConnection") ?? "Host=localhost;Database=capdb;Username=postgres;Password=123456";
             int failedRetryCount = configuration.GetValue<int>("CAP:FailedRetryCount", 3);
             int failedRetryInterval = configuration.GetValue<int>("CAP:FailedRetryInterval", 30);
             int succeedMessageExpiredAfter = configuration.GetValue<int>("CAP:SucceedMessageExpiredAfter", 3600);
@@ -36,8 +36,21 @@ namespace FakeMicro.Api.Extensions
                 // 使用PostgreSQL作为存储
                 options.UsePostgreSql(connectionString);
                 
-                // 启用Dashboard
-                options.UseDashboard();
+                // 配置RabbitMQ
+                options.UseRabbitMQ(opt =>
+                {
+                    opt.HostName = "47.100.93.119";
+                    opt.UserName = "admin";
+                    opt.Password = "public";
+                });
+                
+                // 启用Dashboard并配置路径
+                options.UseDashboard(d =>
+                {
+                    d.AllowAnonymousExplicit = true;
+                    d.PathMatch = "/cap";
+                   
+                });
                 
                 // 配置重试策略
                 options.FailedRetryCount = failedRetryCount;

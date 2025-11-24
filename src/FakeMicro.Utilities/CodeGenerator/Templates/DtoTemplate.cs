@@ -320,7 +320,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine("    /// <summary>");
             sb.AppendLine($"    /// 更新{metadata.EntityDescription}请求");
             sb.AppendLine("    /// </summary>");
-            sb.AppendLine("[GenerateSerializer]");
+            sb.AppendLine("     [GenerateSerializer]");
             sb.AppendLine($"    public class Update{metadata.EntityName}Request");
             sb.AppendLine("    {");
 
