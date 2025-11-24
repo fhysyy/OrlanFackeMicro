@@ -93,7 +93,7 @@ namespace FakeMicro.Utilities.CodeGenerator
             }
 
             var fileName = GetFileName(type, entityName);
-            var relativePath = Path.Combine(pathTemplate, fileName);
+            var relativePath = Path.Combine(pathTemplate, entityName,fileName);
             return Path.Combine(basePath, relativePath);
         }
 

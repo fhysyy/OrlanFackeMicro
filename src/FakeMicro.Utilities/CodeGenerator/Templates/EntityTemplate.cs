@@ -44,7 +44,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Templates
             sb.AppendLine($"    [SugarTable(\"{entity.EntityName.ToLower()}\")]");
             sb.AppendLine($"    public class {entity.EntityName}");
             sb.AppendLine("    {");
-            
+           
             // 属性定义
             foreach (var property in entity.Properties)
             {
