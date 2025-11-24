@@ -1,6 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { performanceService } from './performanceService'
-import { notificationService } from '../components/NotificationSystem.vue'
+import { notificationService } from './notificationService';
 import { PageConfig } from '@/types/page'
 import type { ComponentConfig } from '@/types/component'
 import { versionControlService } from './versionControlService'
@@ -161,7 +161,7 @@ export const advancedVersionControlService = {
   },
   
   // 执行深度差异比较
-  private performDeepDiff(oldConfig: PageConfig, newConfig: PageConfig): Omit<AdvancedVersionDiff, 'changeTimeline' | 'changePaths'> {
+  performDeepDiff(oldConfig: PageConfig, newConfig: PageConfig): Omit<AdvancedVersionDiff, 'changeTimeline' | 'changePaths'> {
     const result: Omit<AdvancedVersionDiff, 'changeTimeline' | 'changePaths'> = {
       stats: {
         addedComponents: 0,
@@ -197,7 +197,7 @@ export const advancedVersionControlService = {
   },
   
   // 比较页面属性
-  private comparePageProperties(oldConfig: PageConfig, newConfig: PageConfig): PropertyDiff[] {
+  comparePageProperties(oldConfig: PageConfig, newConfig: PageConfig): PropertyDiff[] {
     const diffs: PropertyDiff[] = []
     
     const compareProps = ['name', 'description', 'layout', 'settings', 'metadata']
@@ -276,7 +276,7 @@ export const advancedVersionControlService = {
   },
   
   // 比较组件数组
-  private compareComponents(
+  compareComponents(
     oldComponents: ComponentConfig[],
     newComponents: ComponentConfig[],
     stats: AdvancedVersionDiff['stats']
@@ -423,7 +423,7 @@ export const advancedVersionControlService = {
   },
   
   // 比较组件属性
-  private compareComponentProperties(oldComp: ComponentConfig, newComp: ComponentConfig): PropertyDiff[] {
+  compareComponentProperties(oldComp: ComponentConfig, newComp: ComponentConfig): PropertyDiff[] {
     const diffs: PropertyDiff[] = []
     
     // 比较基本属性
@@ -464,7 +464,7 @@ export const advancedVersionControlService = {
   },
   
   // 比较组件样式
-  private compareComponentStyles(oldComp: ComponentConfig, newComp: ComponentConfig): PropertyDiff[] {
+  compareComponentStyles(oldComp: ComponentConfig, newComp: ComponentConfig): PropertyDiff[] {
     const diffs: PropertyDiff[] = []
     
     const oldStyles = oldComp.style || {}
@@ -511,7 +511,7 @@ export const advancedVersionControlService = {
   },
   
   // 比较组件事件
-  private compareComponentEvents(oldComp: ComponentConfig, newComp: ComponentConfig): EventsDiff | null {
+  compareComponentEvents(oldComp: ComponentConfig, newComp: ComponentConfig): EventsDiff | null {
     const oldEvents = oldComp.events || []
     const newEvents = newComp.events || []
     
@@ -586,7 +586,7 @@ export const advancedVersionControlService = {
   },
   
   // 生成变更时间线
-  private generateChangeTimeline(
+  generateChangeTimeline(
     pageId: string,
     startVersion: any,
     endVersion: any
@@ -628,7 +628,7 @@ export const advancedVersionControlService = {
   },
   
   // 生成变更路径
-  private generateChangePaths(diff: Omit<AdvancedVersionDiff, 'changeTimeline' | 'changePaths'>): string[] {
+  generateChangePaths(diff: Omit<AdvancedVersionDiff, 'changeTimeline' | 'changePaths'>): string[] {
     const paths: string[] = []
     
     // 生成组件路径
@@ -661,7 +661,7 @@ export const advancedVersionControlService = {
   },
   
   // 递归添加子组件路径
-  private addChildPaths(childDiffs: ComponentDiff[], basePath: string, paths: string[]): void {
+  addChildPaths(childDiffs: ComponentDiff[], basePath: string, paths: string[]): void {
     childDiffs.forEach(childDiff => {
       const childPath = `${basePath}.children.${childDiff.id}`
       paths.push(childPath)
@@ -773,7 +773,7 @@ export const advancedVersionControlService = {
   },
   
   // 生成HTML报告
-  private generateHtmlReport(reportData: any, diff: AdvancedVersionDiff): string {
+  generateHtmlReport(reportData: any, diff: AdvancedVersionDiff): string {
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -813,7 +813,7 @@ export const advancedVersionControlService = {
   },
   
   // 生成文本报告
-  private generateTextReport(reportData: any, diff: AdvancedVersionDiff): string {
+  generateTextReport(reportData: any, diff: AdvancedVersionDiff): string {
     return `=== ${reportData.title} ===
 生成时间: ${new Date(reportData.generatedAt).toLocaleString()}
 页面ID: ${reportData.pageId}

@@ -21,7 +21,7 @@ import { versionControlService } from './services/versionControlService'
 import { advancedVersionControlService } from './services/advancedVersionControlService'
 
 // 导入事件总线服务
-import { eventBus } from './services/eventBus'
+import { eventBusService } from './services/eventBusService'
 
 const app = createApp(App)
 
@@ -35,14 +35,14 @@ app.use(router)
 app.use(ElementPlus)
 
 // 全局注册服务
-app.config.globalProperties.$eventBus = eventBus
+app.config.globalProperties.$eventBus = eventBusService
 app.config.globalProperties.$performance = performanceService
 app.config.globalProperties.$preferences = userPreferenceService
 app.config.globalProperties.$versionControl = versionControlService
 app.config.globalProperties.$advancedVersionControl = advancedVersionControlService
 
 // 提供服务（Composition API方式）
-app.provide('eventBus', eventBus)
+app.provide('eventBus', eventBusService)
 app.provide('performanceService', performanceService)
 app.provide('userPreferenceService', userPreferenceService)
 app.provide('versionControlService', versionControlService)
@@ -51,15 +51,15 @@ app.provide('advancedVersionControlService', advancedVersionControlService)
 // 初始化应用
 const initApp = async () => {
   try {
-    // 开始性能监控
-    performanceService.initialize()
+    // 性能服务已在创建时初始化
+    
     
     // 初始化认证状态（必须在挂载前进行）
     const authStore = useAuthStore()
     await authStore.initialize()
     
-    // 加载用户偏好设置
-    await userPreferenceService.loadPreferences()
+    // 初始化用户偏好设置
+    await userPreferenceService.initialize()
     
     // 初始化版本控制服务
     await versionControlService.initialize()
@@ -71,6 +71,9 @@ const initApp = async () => {
     app.mount('#app')
     
     console.log('✅ 项目启动成功')
+    
+    // 发出初始化完成事件
+    eventBusService.emit('app:init', { status: 'completed' })
     
     // 记录应用启动性能
     performanceService.recordMetric({
@@ -100,6 +103,9 @@ const initApp = async () => {
       errorElement.textContent = '应用启动失败，请刷新页面重试'
       document.body.appendChild(errorElement)
     }
+    
+    // 发出错误事件
+    eventBusService.emit('app:error', error)
   }
 }
 

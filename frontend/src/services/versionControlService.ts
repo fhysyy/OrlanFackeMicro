@@ -1,6 +1,6 @@
 import { ref, reactive, computed } from 'vue'
 import { performanceService } from '@/services/performanceService'
-import { notificationService } from '@/components/NotificationSystem.vue'
+import { notificationService } from './notificationService';
 import { PageConfig } from '@/types/page'
 
 // 版本类型定义
