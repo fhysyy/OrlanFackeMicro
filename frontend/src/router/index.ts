@@ -2,6 +2,8 @@ import { createRouter, createWebHistory, RouteRecordRaw, NavigationGuardNext, Ro
 import { useAuthStore } from '@/stores/auth'
 import { ElMessage } from 'element-plus'
 import { UserRole } from '@/types/api'
+import type { DynamicRouteConfig } from '@/types/router'
+import dynamicRouteService from '@/services/dynamicRouteService'
 
 // 定义路由元数据类型
 declare module 'vue-router' {
@@ -12,12 +14,124 @@ declare module 'vue-router' {
       permissions?: string[]
     }
     title?: string
+    icon?: string
+  }
+}
+
+// 静态路由
+const staticRoutes: Array<RouteRecordRaw> = [
+  {
+    path: '/login',
+    name: 'Login',
+    component: () => import('@/views/Login.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/404',
+    name: 'NotFound',
+    component: () => import('@/views/NotFound.vue'),
+    meta: { requiresAuth: false }
+  },
+  {
+    path: '/:pathMatch(.*)*',
+    redirect: '/404'
+  }
+]
+
+// 主布局路由（作为动态路由的容器）
+const mainLayoutRoute: RouteRecordRaw = {
+  path: '/',
+  name: 'Main',
+  component: () => import('@/layouts/MainLayout.vue'),
+  meta: { requiresAuth: true },
+  children: [
+    {
+      path: 'dashboard',
+      name: 'Dashboard',
+      component: () => import('@/views/Dashboard.vue'),
+      meta: {
+        requiresAuth: true,
+        permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
+        title: '仪表板',
+        icon: 'el-icon-data-line'
+      }
+    }
+  ]
+}
+
+// 创建路由实例
+const router = createRouter({
+  history: createWebHistory(),
+  routes: [...staticRoutes, mainLayoutRoute]
+})
+
+// 动态路由加载状态
+let dynamicRoutesLoaded = false
+
+/**
+ * 将动态路由配置转换为Vue Router格式
+ */
+function convertToRouteRecord(route: DynamicRouteConfig): RouteRecordRaw {
+  const routeRecord: RouteRecordRaw = {
+    path: route.path,
+    name: route.name,
+    meta: route.meta || {},
+    redirect: route.redirect
+  }
+
+  // 处理组件加载
+  if (route.componentPath) {
+    if (route.isDynamicComponent) {
+      // 动态组件路径加载
+      routeRecord.component = () => import(`@/views/${route.componentPath}`)
+    } else {
+      // 静态组件引用
+      routeRecord.component = route.component
+    }
+  }
+
+  // 处理子路由
+  if (route.children && route.children.length > 0) {
+    routeRecord.children = route.children.map(child => convertToRouteRecord(child))
+  }
+
+  return routeRecord
+}
+
+/**
+ * 加载动态路由
+ */
+async function loadDynamicRoutes() {
+  try {
+    const authStoreInstance = useAuthStore()
+    if (!authStoreInstance.token || !authStoreInstance.user) {
+      return false
+    }
+
+    // 从后端获取路由配置
+    const response = await dynamicRouteService.getRoutes()
+    const dynamicRoutes = response.data || []
+
+    // 转换并添加动态路由
+    const mainRoute = router.getRoute('Main')
+    if (mainRoute) {
+      dynamicRoutes.forEach(route => {
+        const routeRecord = convertToRouteRecord(route)
+        // 将动态路由添加为主布局的子路由
+        router.addRoute('Main', routeRecord)
+      })
+    }
+
+    dynamicRoutesLoaded = true
+    return true
+  } catch (error) {
+    console.error('Failed to load dynamic routes:', error)
+    return false
   }
 }
 
 // 检查用户是否有权限访问路由
 function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolean {
-  return true;
   // 如果没有定义权限要求，默认允许访问
   if (!route.meta?.permission) {
     return true
@@ -34,178 +148,8 @@ function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolea
   return roles.length === 0 || (userRole && roles.includes(userRole))
 }
 
-const routes: RouteRecordRaw[] = [
-  {
-    path: '/login',
-    name: 'Login',
-    component: () => import('@/views/Login.vue'),
-    meta: { requiresAuth: false }
-  },
-
-  {
-    path: '/',
-    component: () => import('@/layouts/MainLayout.vue'),
-    redirect: '/dashboard',
-    meta: { requiresAuth: true },
-    children: [
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: () => import('@/views/Dashboard.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '仪表板'
-        }
-      },
-      {
-        path: 'users',
-        name: 'Users',
-        component: () => import('@/views/Users.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-          title: '用户管理'
-        }
-      },
-      {
-        path: 'roles',
-        name: 'Roles',
-        component: () => import('@/views/Roles.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.SystemAdmin] },
-          title: '角色管理'
-        }
-      },
-      {
-        path: 'permissions',
-        name: 'Permissions',
-        component: () => import('@/views/Permissions.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.SystemAdmin] },
-          title: '权限管理'
-        }
-      },
-      {
-        path: 'messages',
-        name: 'Messages',
-        component: () => import('@/views/Messages.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '消息管理'
-        }
-      },
-      {
-        path: 'files',
-        name: 'Files',
-        component: () => import('@/views/Files.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '文件管理'
-        }
-      },
-      {
-        path: 'system',
-        name: 'System',
-        component: () => import('@/views/System.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.SystemAdmin] },
-          title: '系统监控'
-        }
-      },
-      {
-        path: 'dictionary-types',
-        name: 'DictionaryTypes',
-        component: () => import('@/pages/dictionary/DictionaryTypeList.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-          title: '字典类型管理'
-        }
-      },
-      {
-        path: 'dictionary-items',
-        name: 'DictionaryItems',
-        component: () => import('@/pages/dictionary/DictionaryItemList.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-          title: '字典项管理'
-        }
-      },
-      // 班级学生成绩管理相关路由
-      {
-        path: 'class-management',
-        name: 'ClassManagement',
-        component: () => import('@/views/ClassManagement.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-          title: '班级管理'
-        }
-      },
-      {
-        path: 'student-management',
-        name: 'StudentManagement',
-        component: () => import('@/views/StudentManagement.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '学生管理'
-        }
-      },
-      {
-        path: 'score-management',
-        name: 'ScoreManagement',
-        component: () => import('@/views/ScoreManagement.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '成绩管理'
-        }
-      },
-      {
-        path: 'exam-management',
-        name: 'ExamManagement',
-        component: () => import('@/views/ExamManagement.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '考试管理'
-        }
-      },
-      {
-        path: 'profile',
-        name: 'Profile',
-        component: () => import('@/views/Profile.vue'),
-        meta: { 
-          requiresAuth: true,
-          permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
-          title: '个人资料'
-        }
-      }
-    ]
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    name: 'NotFound',
-    component: () => import('@/views/NotFound.vue')
-  }
-]
-
-// 创建路由实例
-const router = createRouter({
-  history: createWebHistory(),
-  routes
-})
-
 // 路由守卫
-router.beforeEach((to: RouteLocationNormalized, from, next: NavigationGuardNext) => {
+router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuardNext) => {
   const authStore = useAuthStore()
   
   // 设置页面标题
@@ -228,6 +172,16 @@ router.beforeEach((to: RouteLocationNormalized, from, next: NavigationGuardNext)
     return
   }
   
+  // 如果已认证且未加载动态路由，则加载动态路由
+  if (to.meta.requiresAuth && authStore.token && authStore.user && !dynamicRoutesLoaded) {
+    const loaded = await loadDynamicRoutes()
+    // 如果路由加载成功，重新导航到目标路由
+    if (loaded && to.name !== 'Dashboard') {
+      next({ ...to, replace: true })
+      return
+    }
+  }
+  
   // 细粒度权限检查
   if (to.meta.requiresAuth && authStore.token && authStore.user) {
     const userRole = authStore.user?.role || null
@@ -235,13 +189,8 @@ router.beforeEach((to: RouteLocationNormalized, from, next: NavigationGuardNext)
     // 检查路由权限
     if (!hasPermission(to, userRole)) {
       ElMessage.error('没有权限访问此页面')
-      // 如果是从其他页面跳转过来的，返回上一页
-      if (from.fullPath !== '/' && from.fullPath !== to.fullPath) {
-        next(from)
-      } else {
-        // 否则重定向到仪表盘
-        next({ name: 'Dashboard' })
-      }
+      // 使用404而不是返回上一页，避免暴露权限信息
+      next('/404')
       return
     }
   }
@@ -254,5 +203,8 @@ router.onError((error) => {
   console.error('路由错误:', error)
   ElMessage.error('加载页面失败，请刷新重试')
 })
+
+// 导出路由相关功能供其他模块使用
+export { loadDynamicRoutes }
 
 export default router
