@@ -2,7 +2,7 @@ import type { PageMetadata, ComponentConfig, ComponentProps, ComponentEvent } fr
 import type { VNode } from 'vue';
 import { h, reactive, computed, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
-import api from './api';
+import { api } from './api';
 
 /**
  * 组件注册中心
@@ -80,8 +80,21 @@ export class PageBuilderService {
   static buildComponent(componentConfig: ComponentConfig, context: any): VNode {
     const { type, props = {}, events = [], children = [], vIf, vFor, crudConfig, formConfig, tableConfig } = componentConfig;
     
-    // 获取组件
-    const component = this.getComponent(type) || this.getComponent(type.replace(/-([a-z])/g, g => g[1].toUpperCase()));
+    // 获取组件 - 支持大小写不敏感的查找
+    let component = this.getComponent(type) || this.getComponent(type.replace(/-([a-z])/g, g => g[1].toUpperCase()));
+    
+    // 如果未找到，尝试大小写不敏感的查找
+    if (!component) {
+      const allComponents = this.getAllComponents();
+      const lowerType = type.toLowerCase();
+      
+      for (const [key, comp] of Object.entries(allComponents)) {
+        if (key.toLowerCase() === lowerType) {
+          component = comp;
+          break;
+        }
+      }
+    }
     
     if (!component) {
       console.error(`组件 ${type} 未注册`);

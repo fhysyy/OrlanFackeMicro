@@ -1116,6 +1116,46 @@ export const registerBaseComponents = (): void => {
         }
       ]
     },
+    // 注册小写版本以保持兼容性
+    {
+      type: 'container',
+      name: '容器(兼容)',
+      description: '基础容器组件的小写版本，用于兼容旧代码',
+      component: ContainerComponent,
+      category: 'layout',
+      icon: 's-grid',
+      props: [
+        {
+          name: 'class',
+          type: 'string',
+          description: 'CSS类名'
+        },
+        {
+          name: 'style',
+          type: 'object',
+          description: '内联样式对象'
+        },
+        {
+          name: 'tag',
+          type: 'string',
+          default: 'div',
+          description: 'HTML标签名',
+          options: [
+            { label: 'div', value: 'div' },
+            { label: 'section', value: 'section' },
+            { label: 'article', value: 'article' },
+            { label: 'aside', value: 'aside' }
+          ]
+        }
+      ],
+      slots: [
+        {
+          name: 'default',
+          description: '容器内容',
+          default: true
+        }
+      ]
+    },
     {
       type: 'Row',
       name: '行',

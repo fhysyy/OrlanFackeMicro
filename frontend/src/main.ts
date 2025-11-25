@@ -9,6 +9,7 @@ import '@/styles/index.scss'
 import App from './App.vue'
 import router from './router'
 import { useAuthStore } from './stores/auth'
+import { registerBaseComponents } from './services/componentRegistry'
 
 // 导入性能服务
 import { performanceService } from './services/performanceService'
@@ -60,6 +61,9 @@ const initApp = async () => {
     
     // 初始化用户偏好设置
     await userPreferenceService.initialize()
+    
+    // 初始化组件库
+    registerBaseComponents()
     
     // 初始化版本控制服务
     await versionControlService.initialize()

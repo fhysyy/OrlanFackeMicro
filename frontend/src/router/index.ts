@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import { UserRole } from '@/types/api'
 import type { DynamicRouteConfig } from '@/types/router'
 import dynamicRouteService from '@/services/dynamicRouteService'
+import LowCodeDesigner from '@/views/LowCodeDesigner.vue'
 
 // 定义路由元数据类型
 declare module 'vue-router' {
@@ -54,6 +55,18 @@ const mainLayoutRoute: RouteRecordRaw = {
         permission: { roles: [UserRole.User, UserRole.Admin, UserRole.SystemAdmin] },
         title: '仪表板',
         icon: 'el-icon-data-line'
+      }
+    },
+    {
+      path: 'low-code-designer',
+      name: 'LowCodeDesigner',
+      component: LowCodeDesigner,
+      meta: {
+        requiresAuth: true,
+        permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
+        title: '低代码设计器',
+        icon: 'el-icon-edit',
+        order: 10
       }
     }
   ]
@@ -108,25 +121,32 @@ async function loadDynamicRoutes() {
       return false
     }
 
-    // 从后端获取路由配置
-    const response = await dynamicRouteService.getRoutes()
-    const dynamicRoutes = response.data || []
+    try {
+      // 从后端获取路由配置
+      const response = await dynamicRouteService.getRoutes()
+      const dynamicRoutes = response.data || []
 
-    // 转换并添加动态路由
-    const mainRoute = router.getRoute('Main')
-    if (mainRoute) {
-      dynamicRoutes.forEach(route => {
-        const routeRecord = convertToRouteRecord(route)
-        // 将动态路由添加为主布局的子路由
-        router.addRoute('Main', routeRecord)
-      })
+      // 转换并添加动态路由
+      const mainRoute = router.getRoute('Main')
+      if (mainRoute) {
+        dynamicRoutes.forEach(route => {
+          const routeRecord = convertToRouteRecord(route)
+          // 将动态路由添加为主布局的子路由
+          router.addRoute('Main', routeRecord)
+        })
+      }
+    } catch (apiError) {
+      console.warn('动态路由API调用失败，将继续使用静态路由:', apiError)
+      // API调用失败时不阻止应用运行
     }
 
     dynamicRoutesLoaded = true
     return true
   } catch (error) {
-    console.error('Failed to load dynamic routes:', error)
-    return false
+    console.error('加载动态路由时发生错误:', error)
+    // 即使发生错误也设置为已加载，避免重复尝试
+    dynamicRoutesLoaded = true
+    return true
   }
 }
 

@@ -231,7 +231,7 @@ class PerformanceService {
     
     return {
       used: Math.round(usedMemory * 100) / 100,
-      total,
+      total: totalMemory,
       percentage: percentage !== undefined ? Math.round(percentage * 100) / 100 : undefined
     }
   }

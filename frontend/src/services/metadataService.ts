@@ -1,5 +1,5 @@
 import type { PageMetadata } from '../types/page';
-import api from './api';
+import { api } from './api';
 
 /**
  * 页面元数据管理服务

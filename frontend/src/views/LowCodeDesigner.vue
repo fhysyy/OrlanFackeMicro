@@ -509,30 +509,27 @@ const savePage = async () => {
 const previewPage = () => {
   const previewWindow = window.open('', '_blank');
   if (previewWindow) {
-    // 创建预览页面内容
-    const html = `
-      <!DOCTYPE html>
-      <html lang="zh-CN">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>${currentPageMetadata.value.name}</title>
-        <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
-        <style>
-          body {
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          }
-        </style>
-      </head>
-      <body>
-        <div id="app">正在加载...</div>
-        <script>window.__PAGE_METADATA__ = ${JSON.stringify(currentPageMetadata.value)};</script>
-        <script src="/preview.js"></script>
-      </body>
-      </html>
-    `;
+      // 创建预览页面内容 - 使用变量和字符串拼接，完全避免HTML标签被Vue编译器解析
+      const lt = '\u003c';
+      const gt = '\u003e';
+      const slash = '/';
+      const metadata = JSON.stringify(currentPageMetadata.value);
+      
+      const html = 
+        lt + '!DOCTYPE html' + gt + '\n' +
+        lt + 'html lang="zh-CN"' + gt + '\n' +
+        lt + 'head' + gt + '\n' +
+        '  ' + lt + 'meta charset="UTF-8"' + gt + '\n' +
+        '  ' + lt + 'meta name="viewport" content="width=device-width, initial-scale=1.0"' + gt + '\n' +
+        '  ' + lt + 'title' + gt + '预览 - ' + currentPageName + lt + slash + 'title' + gt + '\n' +
+        '  ' + lt + 'style' + gt + 'body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' + lt + slash + 'style' + gt + '\n' +
+        lt + slash + 'head' + gt + '\n' +
+        lt + 'body' + gt + '\n' +
+        '  ' + lt + 'div id="app"' + gt + '正在加载...' + lt + slash + 'div' + gt + '\n' +
+        '  ' + lt + 'script' + gt + 'window.__PAGE_METADATA__ = ' + metadata + ';' + lt + slash + 'script' + gt + '\n' +
+        '  ' + lt + 'script src="/preview.js"' + gt + lt + slash + 'script' + gt + '\n' +
+        lt + slash + 'body' + gt + '\n' +
+        lt + slash + 'html' + gt;
     
     previewWindow.document.open();
     previewWindow.document.write(html);

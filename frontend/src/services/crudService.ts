@@ -1,4 +1,4 @@
-import api from './api';
+import { api } from './api';
 import { ElMessage } from 'element-plus';
 import type { CrudConfig, ApiConfig } from '../types/crud';
 import type { TableColumn } from '../types/table';

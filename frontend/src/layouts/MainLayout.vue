@@ -58,6 +58,12 @@
           <el-icon><Setting /></el-icon>
           <span>系统监控</span>
         </el-menu-item>
+        
+        <!-- 低代码设计器 - 仅管理员和系统管理员可见 -->
+        <el-menu-item index="/low-code-designer" v-if="hasPermission('Admin')">
+          <el-icon><Edit /></el-icon>
+          <span>低代码设计器</span>
+        </el-menu-item>
         <!-- v-if="hasPermission('Admin')" -->
         <el-sub-menu  index="/dictionary">
           <template #title>
@@ -176,7 +182,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Monitor, User, UserFilled, Key, Message, Folder, Setting, Menu, Expand, Fold, ArrowDown, School } from '@element-plus/icons-vue'
+import { Monitor, User, UserFilled, Key, Message, Folder, Setting, Menu, Expand, Fold, ArrowDown, School, Edit } from '@element-plus/icons-vue'
 
 interface BreadcrumbItem {
   title: string
