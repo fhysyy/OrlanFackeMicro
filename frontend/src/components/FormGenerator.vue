@@ -212,10 +212,10 @@
 
             <!-- 文件上传 -->
             <el-upload
-              v-else-if="field.type === FormFieldType.UPLOAD"
-              v-model:file-list="formData[field.prop] || []"
-              :action="field.action"
-              :multiple="field.multiple"
+                v-else-if="field.type === FormFieldType.UPLOAD"
+                v-model:file-list="formData[field.prop]"
+                :action="field.action"
+                :multiple="field.multiple"
               :accept="field.accept"
               :disabled="field.disabled"
               :before-upload="(file) => handleBeforeUpload(file, field)"

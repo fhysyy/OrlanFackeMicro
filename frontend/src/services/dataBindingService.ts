@@ -59,74 +59,32 @@ class DataBindingService {
     return this.globalTransformers.get(name)
   }
   
-  // 编译绑定表达式
+  // 编译绑定表达式 - 优化版本
+  @performanceMonitor
   compileExpression(expression: string): CompiledExpression {
     // 检查缓存
     if (this.expressionCache.has(expression)) {
       return this.expressionCache.get(expression)! as CompiledExpression
     }
     
-    // 简单表达式直接返回
-    if (this.isSimplePath(expression)) {
-      const compiled: CompiledExpression = {
-        expression,
-        evaluate: (context: any) => this.evaluateSimplePath(expression, context)
-      }
-      this.expressionCache.set(expression, compiled)
-      return compiled
+    // 使用优化的表达式评估器
+    const compiled: CompiledExpression = {
+      expression,
+      evaluate: (context: any) => bindingOptimizer.optimizeExpression(expression, context)
     }
     
-    // 复杂表达式编译
-    try {
-      // 安全的表达式评估函数
-      const evaluateFn = this.createExpressionFunction(expression)
-      const compiled: CompiledExpression = {
-        expression,
-        evaluate: (context: any) => evaluateFn(context)
-      }
-      this.expressionCache.set(expression, compiled)
-      return compiled
-    } catch (error) {
-      console.error(`Failed to compile expression: ${expression}`, error)
-      throw new Error(`Invalid expression: ${expression}`)
-    }
+    this.expressionCache.set(expression, compiled)
+    return compiled
   }
   
-  // 判断是否为简单路径表达式
+  // 判断是否为简单路径表达式 - 保留用于兼容性
   private isSimplePath(expression: string): boolean {
-    // 简单路径只包含字母、数字、下划线、点和方括号
     return /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*|\[\d+\]|\['[^']*'\]|"[^"]*")*$/.test(expression)
   }
   
-  // 评估简单路径表达式
+  // 评估简单路径表达式 - 使用优化的路径解析器
   private evaluateSimplePath(path: string, context: any): any {
-    if (!context) return undefined
-    
-    const parts = path.split('.')
-    let value: any = context
-    
-    for (const part of parts) {
-      // 处理数组访问
-      const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/)
-      if (arrayMatch) {
-        const [, prop, index] = arrayMatch
-        if (value[prop] && Array.isArray(value[prop])) {
-          value = value[prop][parseInt(index, 10)]
-        } else {
-          return undefined
-        }
-        continue
-      }
-      
-      // 处理对象属性访问
-      if (value && typeof value === 'object' && part in value) {
-        value = value[part]
-      } else {
-        return undefined
-      }
-    }
-    
-    return value
+    return bindingOptimizer.pathParser.getValue(context, path)
   }
   
   // 创建表达式评估函数
@@ -408,9 +366,8 @@ class DataBinding {
   private compiledExpression?: CompiledExpression
   private watcher?: () => void
   private isDestroyed: boolean = false
-  private updateScheduled: boolean = false
-  private lastUpdateTime: number = 0
-  private pendingUpdate: any = null
+  private targetUpdateScheduler: any = null
+  private sourceUpdateScheduler: any = null
   
   constructor(target: any, targetKey: string, source: any, expression: string, options: BindingOptions) {
     this.target = target
@@ -418,6 +375,21 @@ class DataBinding {
     this.source = source
     this.expression = expression
     this.options = options
+    
+    // 初始化智能更新调度器
+    this.targetUpdateScheduler = bindingOptimizer.createUpdateScheduler({
+      debounce: options.debounce,
+      throttle: options.throttle,
+      batchUpdate: options.batchUpdate || false,
+      priority: options.priority || 'medium'
+    })
+    
+    this.sourceUpdateScheduler = bindingOptimizer.createUpdateScheduler({
+      debounce: options.debounce,
+      throttle: options.throttle,
+      batchUpdate: options.batchUpdate || false,
+      priority: options.priority || 'medium'
+    })
     
     this.init()
   }
@@ -537,25 +509,11 @@ class DataBinding {
     }
   }
   
-  // 设置源值
+  // 设置源值 - 使用优化的路径解析器
   private setSourceValue(value: any): void {
-    // 这里需要解析路径并设置值
+    // 使用高效路径解析器设置值
     if (this.expression && this.source) {
-      const pathParts = this.expression.split('.')
-      let current: any = this.source
-      
-      // 遍历路径，找到目标对象和属性
-      for (let i = 0; i < pathParts.length - 1; i++) {
-        const part = pathParts[i]
-        if (!current[part]) {
-          current[part] = {}
-        }
-        current = current[part]
-      }
-      
-      // 设置最终属性值
-      const lastPart = pathParts[pathParts.length - 1]
-      current[lastPart] = value
+      bindingOptimizer.pathParser.setValue(this.source, this.expression, value)
     }
   }
   
@@ -586,68 +544,18 @@ class DataBinding {
     this.setSourceValue(value)
   }
   
-  // 调度更新到目标（防抖/节流）
+  // 调度更新到目标 - 使用智能更新调度器
   private scheduleUpdateToTarget(value: any): void {
-    const now = Date.now()
-    
-    // 防抖处理
-    if (this.options.debounce > 0) {
-      this.pendingUpdate = value
-      
-      if (!this.updateScheduled) {
-        this.updateScheduled = true
-        setTimeout(() => {
-          if (this.isDestroyed) return
-          
-          this.syncToTarget()
-          this.updateScheduled = false
-          this.pendingUpdate = null
-        }, this.options.debounce)
-      }
-    }
-    // 节流处理
-    else if (this.options.throttle > 0) {
-      if (now - this.lastUpdateTime >= this.options.throttle) {
-        this.syncToTarget()
-        this.lastUpdateTime = now
-      }
-    }
-    // 立即更新
-    else {
+    this.targetUpdateScheduler.scheduleUpdate(value, () => {
       this.syncToTarget()
-    }
+    })
   }
   
-  // 调度更新到源（防抖/节流）
+  // 调度更新到源 - 使用智能更新调度器
   private scheduleUpdateToSource(value: any): void {
-    const now = Date.now()
-    
-    // 防抖处理
-    if (this.options.debounce > 0) {
-      this.pendingUpdate = value
-      
-      if (!this.updateScheduled) {
-        this.updateScheduled = true
-        setTimeout(() => {
-          if (this.isDestroyed) return
-          
-          this.syncToSource(this.pendingUpdate)
-          this.updateScheduled = false
-          this.pendingUpdate = null
-        }, this.options.debounce)
-      }
-    }
-    // 节流处理
-    else if (this.options.throttle > 0) {
-      if (now - this.lastUpdateTime >= this.options.throttle) {
-        this.syncToSource(value)
-        this.lastUpdateTime = now
-      }
-    }
-    // 立即更新
-    else {
-      this.syncToSource(value)
-    }
+    this.sourceUpdateScheduler.scheduleUpdate(value, (actualValue: any) => {
+      this.syncToSource(actualValue)
+    })
   }
   
   // 刷新绑定
@@ -663,6 +571,10 @@ class DataBinding {
     if (this.watcher) {
       this.watcher()
     }
+    
+    // 销毁更新调度器
+    this.targetUpdateScheduler.destroy()
+    this.sourceUpdateScheduler.destroy()
     
     this.isDestroyed = true
   }

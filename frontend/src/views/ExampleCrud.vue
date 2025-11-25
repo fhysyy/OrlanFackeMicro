@@ -138,13 +138,12 @@ const crudConfig: CrudConfig = generateDefaultCrudConfig({
       ]
     }),
     createInputField('password', '密码', {
-      required: true,
+      // 创建时必填，编辑时可选
+      required: false,
       placeholder: '请输入密码',
       type: 'password',
       showPassword: true,
       maxlength: 20,
-      // 创建时必填，编辑时可选
-      required: false,
       rules: [
         { required: false, message: '请输入密码', trigger: 'blur' },
         { min: 6, message: '密码长度至少为6位', trigger: 'blur' }

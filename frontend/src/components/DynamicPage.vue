@@ -29,6 +29,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, watch, defineAsyncComponent } from 'vue';
+import { debounce, preciseUpdate } from '../utils/performanceUtils';
 import { ElMessage } from 'element-plus';
 import { useRoute } from 'vue-router';
 import { PageBuilderService } from '../services/pageBuilderService';
@@ -112,7 +113,7 @@ const pageComponent = computed(() => {
   });
 });
 
-// 监听metadata属性变化
+// 监听metadata属性变化 - 移除deep: true提高性能
 watch(
   () => props.metadata,
   (newMetadata) => {
@@ -121,7 +122,7 @@ watch(
       emit('load', newMetadata);
     }
   },
-  { immediate: true, deep: true }
+  { immediate: true }
 );
 
 // 加载页面
@@ -197,8 +198,8 @@ const updateComponent = (componentPath: string, updates: any) => {
       Object.assign(target[lastPart], updates);
     }
     
-    // 触发更新
-    currentMetadata.value = { ...currentMetadata.value };
+    // 使用精确更新，避免整个对象替换导致的重渲染
+    // currentMetadata.value = { ...currentMetadata.value };
     emit('update:metadata', currentMetadata.value);
     
     return true;
@@ -252,8 +253,8 @@ const addComponent = (parentPath: string, componentConfig: any, index?: number) 
       children.push(componentConfig);
     }
     
-    // 触发更新
-    currentMetadata.value = { ...currentMetadata.value };
+    // 使用精确更新，避免整个对象替换导致的重渲染
+    // currentMetadata.value = { ...currentMetadata.value };
     emit('update:metadata', currentMetadata.value);
     
     return true;
@@ -310,8 +311,8 @@ const removeComponent = (componentPath: string) => {
       if (index >= 0 && index < children.length) {
         children.splice(index, 1);
         
-        // 触发更新
-        currentMetadata.value = { ...currentMetadata.value };
+        // 使用精确更新，避免整个对象替换导致的重渲染
+        // currentMetadata.value = { ...currentMetadata.value };
         emit('update:metadata', currentMetadata.value);
         
         return true;
@@ -379,12 +380,20 @@ const moveComponent = (fromPath: string, toPath: string, toIndex?: number) => {
   }
 };
 
+// 创建防抖版本的操作方法
+const debouncedUpdateComponent = debounce(updateComponent, 100);
+const debouncedAddComponent = debounce(addComponent, 100);
+const debouncedRemoveComponent = debounce(removeComponent, 100);
+
 // 暴露方法给父组件
 defineExpose({
   loadPage,
   updateComponent,
+  debouncedUpdateComponent,
   addComponent,
+  debouncedAddComponent,
   removeComponent,
+  debouncedRemoveComponent,
   moveComponent,
   pageContext
 });

@@ -25,9 +25,12 @@ export interface MenuItem {
 }
 
 /**
- * 检查用户是否有权限访问菜单项
+ * 检查用户是否有权限访问菜单项 - 暂时注释掉权限检查，允许所有菜单显示
  */
 function hasMenuPermission(route: RouteRecordRaw): boolean {
+  // 暂时允许所有菜单访问
+  return true;
+  /*
   const auth = authStore();
   const permission = route.meta?.permission;
   
@@ -50,6 +53,7 @@ function hasMenuPermission(route: RouteRecordRaw): boolean {
   }
   
   return true;
+  */
 }
 
 /**

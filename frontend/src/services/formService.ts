@@ -3,6 +3,50 @@ import type { ApiResponse } from '../types/api';
 import { api } from './api';
 
 /**
+ * 创建基本输入框字段
+ */
+export function createInputField(prop: string, label: string, options?: Partial<FormField>): FormField {
+  return {
+    prop,
+    label,
+    type: FormFieldType.INPUT,
+    placeholder: `请输入${label}`,
+    clearable: true,
+    ...options
+  };
+}
+
+/**
+ * 创建选择框字段
+ */
+export function createSelectField(prop: string, label: string, options: FormOption[], selectOptions?: Partial<FormField>): FormField {
+  return {
+    prop,
+    label,
+    type: FormFieldType.SELECT,
+    options,
+    placeholder: `请选择${label}`,
+    clearable: true,
+    ...selectOptions
+  };
+}
+
+/**
+ * 创建日期选择器字段
+ */
+export function createDateField(prop: string, label: string, options?: Partial<FormField>): FormField {
+  return {
+    prop,
+    label,
+    type: FormFieldType.DATE_PICKER,
+    pickerType: 'date',
+    format: 'YYYY-MM-DD',
+    placeholder: `请选择${label}`,
+    ...options
+  };
+}
+
+/**
  * 表单模板接口
  */
 export interface FormTemplate {
@@ -18,19 +62,12 @@ export interface FormTemplate {
  * 表单服务
  */
 export const formService = {
+  // 重定向到直接导出的函数
+  createInputField,
+  
   /**
-   * 创建基本输入框字段
+   * 创建文本域字段
    */
-  createInputField(prop: string, label: string, options?: Partial<FormField>): FormField {
-    return {
-      prop,
-      label,
-      type: FormFieldType.INPUT,
-      placeholder: `请输入${label}`,
-      clearable: true,
-      ...options
-    };
-  },
 
   /**
    * 创建文本域字段
@@ -47,20 +84,12 @@ export const formService = {
     };
   },
 
+  // 重定向到直接导出的函数
+  createSelectField,
+  
   /**
-   * 创建选择框字段
+   * 创建单选框字段
    */
-  createSelectField(prop: string, label: string, options: FormOption[], selectOptions?: Partial<FormField>): FormField {
-    return {
-      prop,
-      label,
-      type: FormFieldType.SELECT,
-      options,
-      placeholder: `请选择${label}`,
-      clearable: true,
-      ...selectOptions
-    };
-  },
 
   /**
    * 创建单选框字段
@@ -91,19 +120,14 @@ export const formService = {
     };
   },
 
+  // 重定向到直接导出的函数
+  createDateField,
+  
   /**
-   * 创建日期选择器字段
+   * 创建日期选择器字段（兼容旧版）
    */
   createDatePickerField(prop: string, label: string, options?: Partial<FormField>): FormField {
-    return {
-      prop,
-      label,
-      type: FormFieldType.DATE_PICKER,
-      pickerType: 'date',
-      format: 'YYYY-MM-DD',
-      placeholder: `请选择${label}`,
-      ...options
-    };
+    return createDateField(prop, label, options);
   },
 
   /**

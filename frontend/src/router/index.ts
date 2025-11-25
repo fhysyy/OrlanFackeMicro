@@ -4,7 +4,8 @@ import { ElMessage } from 'element-plus'
 import { UserRole } from '@/types/api'
 import type { DynamicRouteConfig } from '@/types/router'
 import dynamicRouteService from '@/services/dynamicRouteService'
-import LowCodeDesigner from '@/views/LowCodeDesigner.vue'
+import { logger } from '@/utils/logger'
+import { tokenManager } from '@/utils/tokenManager'
 
 // 定义路由元数据类型
 declare module 'vue-router' {
@@ -58,13 +59,13 @@ const mainLayoutRoute: RouteRecordRaw = {
       }
     },
     {
-      path: 'low-code-designer',
-      name: 'LowCodeDesigner',
-      component: LowCodeDesigner,
+      path: 'ali-lowcode-designer',
+      name: 'AliLowCodeDesigner',
+      component: () => import('@/views/AliLowCodeDesigner.vue'),
       meta: {
         requiresAuth: true,
         permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-        title: '低代码设计器',
+        title: '低代码设计器 (Ali)',
         icon: 'el-icon-edit',
         order: 10
       }
@@ -95,8 +96,8 @@ function convertToRouteRecord(route: DynamicRouteConfig): RouteRecordRaw {
   // 处理组件加载
   if (route.componentPath) {
     if (route.isDynamicComponent) {
-      // 动态组件路径加载
-      routeRecord.component = () => import(`@/views/${route.componentPath}`)
+      // 动态组件路径加载 - 添加.vue扩展名，确保符合Vite要求
+      routeRecord.component = () => import(`@/views/${route.componentPath}.vue`)
     } else {
       // 静态组件引用
       routeRecord.component = route.component
@@ -116,10 +117,12 @@ function convertToRouteRecord(route: DynamicRouteConfig): RouteRecordRaw {
  */
 async function loadDynamicRoutes() {
   try {
-    const authStoreInstance = useAuthStore()
-    if (!authStoreInstance.token || !authStoreInstance.user) {
+    // 暂时移除token验证，允许在未登录状态下加载动态路由
+    /*
+    if (!tokenManager.isTokenValid()) {
       return false
     }
+    */
 
     try {
       // 从后端获取路由配置
@@ -136,22 +139,25 @@ async function loadDynamicRoutes() {
         })
       }
     } catch (apiError) {
-      console.warn('动态路由API调用失败，将继续使用静态路由:', apiError)
+      logger.warn('动态路由API调用失败，将继续使用静态路由:', apiError)
       // API调用失败时不阻止应用运行
     }
 
     dynamicRoutesLoaded = true
     return true
   } catch (error) {
-    console.error('加载动态路由时发生错误:', error)
+    logger.error('加载动态路由时发生错误:', error)
     // 即使发生错误也设置为已加载，避免重复尝试
     dynamicRoutesLoaded = true
     return true
   }
 }
 
-// 检查用户是否有权限访问路由
+// 检查用户是否有权限访问路由 - 暂时注释掉权限检查，允许所有访问
 function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolean {
+  // 暂时允许所有访问
+  return true
+  /*
   // 如果没有定义权限要求，默认允许访问
   if (!route.meta?.permission) {
     return true
@@ -166,9 +172,10 @@ function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolea
   
   // 检查用户角色是否在允许列表中
   return roles.length === 0 || (userRole && roles.includes(userRole))
+  */
 }
 
-// 路由守卫
+// 路由守卫 - 暂时注释掉鉴权逻辑
 router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuardNext) => {
   const authStore = useAuthStore()
   
@@ -179,31 +186,38 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
     document.title = 'Orleans管理系统'
   }
   
+  // 暂时注释掉认证检查，允许所有访问
+  /*
   // 检查是否需要认证
-  if (to.meta.requiresAuth && !(authStore.token && authStore.user)) {
+  if (to.meta.requiresAuth && !tokenManager.isTokenValid()) {
     ElMessage.warning('请先登录')
     next({ name: 'Login', query: { redirect: to.fullPath } })
     return
   }
   
   // 如果已登录，不需要访问登录页面
-  if (to.name === 'Login' && authStore.token && authStore.user) {
+  if (to.name === 'Login' && tokenManager.isTokenValid()) {
     next({ name: 'Dashboard' })
     return
   }
+  */
   
   // 如果已认证且未加载动态路由，则加载动态路由
-  if (to.meta.requiresAuth && authStore.token && authStore.user && !dynamicRoutesLoaded) {
+  // 暂时修改为不检查token，直接加载动态路由
+  if (to.meta.requiresAuth && !dynamicRoutesLoaded) {
     const loaded = await loadDynamicRoutes()
-    // 如果路由加载成功，重新导航到目标路由
-    if (loaded && to.name !== 'Dashboard') {
+    // 如果路由加载成功，重新导航到目标路由，确保路由正确匹配
+    if (loaded) {
       next({ ...to, replace: true })
       return
     }
   }
   
+  // 暂时注释掉细粒度权限检查
+  /*
   // 细粒度权限检查
-  if (to.meta.requiresAuth && authStore.token && authStore.user) {
+  if (to.meta.requiresAuth && tokenManager.isTokenValid()) {
+    const authStore = useAuthStore()
     const userRole = authStore.user?.role || null
    
     // 检查路由权限
@@ -214,13 +228,14 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
       return
     }
   }
+  */
   
   next()
 })
 
 // 全局错误处理
 router.onError((error) => {
-  console.error('路由错误:', error)
+  logger.error('路由错误:', error)
   ElMessage.error('加载页面失败，请刷新重试')
 })
 

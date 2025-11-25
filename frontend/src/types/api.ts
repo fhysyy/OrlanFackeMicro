@@ -1,131 +1,10 @@
-// API响应类型定义
-/**
- * API响应基础格式
- */
-export interface ApiResponse<T = any> {
+// API 响应通用类型
+export interface ApiResponse<T = unknown> {
   success: boolean
   data?: T
   message?: string
-  error?: string
-  code?: string
-  timestamp?: number
-}
-
-/**
- * 分页响应格式
- */
-export interface PaginatedResponse<T = any> extends ApiResponse<T[]> {
-  pagination: {
-    page: number
-    size: number
-    total: number
-    pages: number
-  }
-}
-
-/**
- * 用户角色枚举
- */
-export enum UserRole {
-  User = 'User',
-  Admin = 'Admin',
-  SystemAdmin = 'SystemAdmin'
-}
-
-/**
- * 用户状态枚举
- */
-export enum UserStatus {
-  Active = 'Active',
-  Inactive = 'Inactive',
-  Locked = 'Locked',
-  Pending = 'Pending'
-}
-
-/**
- * 用户信息接口
- */
-export interface User {
-  id: string
-  username: string
-  email: string
-  phone?: string
-  role: UserRole
-  status: UserStatus
-  createdAt: string
-  updatedAt: string
-  lastLoginAt?: string
-  avatar?: string
-  name?: string
-  department?: string
-  position?: string
-}
-
-/**
- * 认证响应接口
- */
-export interface AuthResponse {
-  token: string
-  refreshToken?: string
-  user: User
-}
-
-/**
- * 登录请求接口
- */
-export interface LoginRequest {
-  username: string
-  usernameOrEmail: string
-  password: string
-  rememberMe?: boolean
-}
-
-/**
- * 注册请求接口
- */
-export interface RegisterRequest {
-  username: string
-  email: string
-  password: string
-  confirmPassword: string
-  name?: string
-}
-
-/**
- * 角色接口
- */
-export interface Role {
-  id: string
-  name: string
-  description?: string
-  permissions: string[]
-  createdAt: string
-  updatedAt: string
-  isSystem?: boolean
-}
-
-/**
- * 权限接口
- */
-export interface Permission {
-  id: string
-  name: string
-  code: string
-  description?: string
-  group?: string
-  category?: string
-  createdAt: string
-  updatedAt: string
-}
-
-/**
- * 权限组接口
- */
-export interface PermissionGroup {
-  id: string
-  name: string
-  permissions: Permission[]
-  description?: string
+  errorMessage?: string
+  code?: string | number
 }
 
 // 用户相关类型
@@ -133,9 +12,8 @@ export interface User {
   id: string
   username: string
   email: string
-  phone?: string
   role: UserRole
-  status: UserStatus
+  avatar?: string
   createdAt: string
   updatedAt: string
 }
@@ -147,12 +25,12 @@ export enum UserRole {
 }
 
 export enum UserStatus {
-  Pending = 'Pending',
   Active = 'Active',
-  Disabled = 'Disabled',
-  Locked = 'Locked'
+  Inactive = 'Inactive',
+  Suspended = 'Suspended'
 }
 
+// 认证相关类型
 export interface LoginRequest {
   username: string
   password: string
@@ -162,132 +40,117 @@ export interface RegisterRequest {
   username: string
   email: string
   password: string
-  phone?: string
+  confirmPassword: string
 }
 
 export interface AuthResponse {
   success: boolean
-  token?: string
+  token: string
   refreshToken?: string
-  expiresAt?: string
-  user?: User
+  user: User
+  message?: string
   errorMessage?: string
 }
 
-// 消息相关类型
-export interface Message {
-  id: string
-  senderId: string
-  receiverId?: string
-  receiverEmail?: string
-  receiverPhone?: string
-  title: string
-  content: string
-  messageType: MessageType
-  channel: MessageChannel
-  status: MessageStatus
-  sentAt?: string
-  deliveredAt?: string
-  readAt?: string
-  failedAt?: string
-  retryCount: number
-  errorMessage?: string
-  metadata?: any
-  scheduledAt?: string
-  expiresAt?: string
-  createdAt: string
-  updatedAt: string
+// 分页相关类型
+export interface PaginationParams {
+  page: number
+  pageSize: number
+  search?: string
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
-export enum MessageType {
-  System = 'System',
-  Notification = 'Notification',
-  Reminder = 'Reminder',
-  Marketing = 'Marketing',
-  Verification = 'Verification',
-  Warning = 'Warning',
-  Error = 'Error',
-  Success = 'Success',
-  Info = 'Info',
-  Custom = 'Custom'
+export interface PaginationResponse<T> {
+  items: T[]
+  total: number
+  page: number
+  pageSize: number
+  totalPages: number
 }
 
-export enum MessageChannel {
-  InApp = 'InApp',
-  Email = 'Email',
-  SMS = 'SMS',
-  Push = 'Push',
-  WeChat = 'WeChat',
-  DingTalk = 'DingTalk',
-  Webhook = 'Webhook',
-  MultiChannel = 'MultiChannel'
-}
-
-export enum MessageStatus {
-  Draft = 'Draft',
-  Pending = 'Pending',
-  Sending = 'Sending',
-  Sent = 'Sent',
-  Delivered = 'Delivered',
-  Read = 'Read',
-  Failed = 'Failed',
-  Cancelled = 'Cancelled',
-  Expired = 'Expired'
-}
-
-// 文件相关类型
-export interface FileInfo {
-  id: string
-  fileName: string
-  filePath: string
-  fileSize: number
-  mimeType?: string
-  uploaderId?: string
-  isPublic: boolean
-  createdAt: string
-  updatedAt: string
-}
-
-// 系统监控类型
-export interface SystemStats {
-  userCount: number
-  activeUsers: number
-  messageCount: number
-  pendingMessages: number
-  fileCount: number
-  totalFileSize: number
-  systemUptime: string
-  memoryUsage: number
-  cpuUsage: number
-}
-
-// 角色相关类型
-export interface Role {
-  id: string
-  name: string
-  description: string
-  permissions: string[]
-  createdAt: string
-  updatedAt: string
-  isSystem?: boolean
-}
-
-// 权限相关类型
-export interface Permission {
-  id: string
-  name: string
-  description: string
+// 错误类型
+export interface ApiError {
   code: string
-  category: string
-  parentId?: string
-  createdAt: string
-  updatedAt: string
+  message: string
+  details?: Record<string, unknown>
 }
 
-// 权限分组
-export interface PermissionGroup {
+// HTTP 状态码类型
+export type HttpStatus = 
+  | 200 | 201 | 204 // 成功
+  | 400 | 401 | 403 | 404 // 客户端错误
+  | 500 | 502 | 503 // 服务器错误
+
+// 请求方法类型
+export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+
+// 通用请求配置
+export interface RequestConfig {
+  method?: HttpMethod
+  url: string
+  params?: Record<string, string | number>
+  data?: Record<string, unknown>
+  headers?: Record<string, string>
+  timeout?: number
+}
+
+// 考试相关类型
+export interface Exam {
   id: string
-  name: string
+  title: string
   description: string
-  permissions: Permission[]
+  duration: number // 考试时长（分钟）
+  totalScore: number
+  passScore: number
+  status: ExamStatus
+  createdAt: string
+  updatedAt: string
+  startTime?: string
+  endTime?: string
+}
+
+export enum ExamStatus {
+  Draft = 'Draft',
+  Published = 'Published',
+  InProgress = 'InProgress',
+  Completed = 'Completed',
+  Cancelled = 'Cancelled'
+}
+
+export interface ExamQuestion {
+  id: string
+  examId: string
+  type: QuestionType
+  content: string
+  options?: string[]
+  correctAnswer: string | string[]
+  score: number
+  order: number
+}
+
+export enum QuestionType {
+  SingleChoice = 'SingleChoice',
+  MultipleChoice = 'MultipleChoice',
+  TrueFalse = 'TrueFalse',
+  ShortAnswer = 'ShortAnswer',
+  Essay = 'Essay'
+}
+
+export interface ExamParticipant {
+  id: string
+  examId: string
+  userId: string
+  username: string
+  startTime?: string
+  endTime?: string
+  score?: number
+  status: ParticipantStatus
+}
+
+export enum ParticipantStatus {
+  NotStarted = 'NotStarted',
+  InProgress = 'InProgress',
+  Submitted = 'Submitted',
+  Graded = 'Graded'
 }

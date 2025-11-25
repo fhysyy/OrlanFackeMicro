@@ -278,6 +278,58 @@ export interface PageTheme {
 }
 
 /**
+ * 页面配置接口
+ */
+export interface PageConfig {
+  // 页面ID
+  id?: string;
+  // 页面名称
+  name?: string;
+  // 页面描述
+  description?: string;
+  // 页面布局
+  layout?: LayoutConfig;
+  // 页面路由
+  route?: PageRoute;
+  // 页面状态
+  state?: PageState;
+  // 页面方法
+  methods?: PageMethod[];
+  // 页面生命周期
+  lifecycle?: PageLifecycle;
+  // 页面生命周期钩子
+  lifecycleHooks?: Record<string, string>;
+  // 页面主题
+  theme?: PageTheme;
+  // 组件配置
+  components: ComponentConfig[];
+  // 页面级数据源
+  dataSources?: Record<string, DataSourceConfig>;
+  // 数据源处理器
+  dataSourceHandlers?: Record<string, Function>;
+  // 数据处理器
+  dataProcessors?: Function[];
+  // 页面级样式
+  styles?: string; // CSS字符串
+  // 页面级脚本
+  script?: string; // JavaScript字符串
+  // 响应式设置
+  responsive?: boolean;
+  // 响应式配置
+  responsiveSettings?: Record<string, any>;
+  // 页面属性
+  pageProps?: Record<string, any>;
+  // 头部组件
+  header?: ComponentConfig;
+  // 侧边栏组件
+  sidebar?: ComponentConfig;
+  // 右侧边栏组件
+  rightSidebar?: ComponentConfig;
+  // 底部组件
+  footer?: ComponentConfig;
+}
+
+/**
  * 页面元数据配置
  */
 export interface PageMetadata {

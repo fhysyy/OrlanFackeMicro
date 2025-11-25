@@ -177,7 +177,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { ElMessage } from 'element-plus'
-import * as echarts from 'echarts'
+import echarts from '@/plugins/echarts'
 
 const loading = ref(false)
 const logLevel = ref('all')

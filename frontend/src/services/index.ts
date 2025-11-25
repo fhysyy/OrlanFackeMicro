@@ -4,7 +4,6 @@ export { api } from './api'
 // 服务导出
 export * from './dictionaryService'
 export * from './fileService'
-export * from './classService'
 export * from './studentService'
 export * from './scoreService'
 export * from './roleService'

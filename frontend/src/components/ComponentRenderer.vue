@@ -50,6 +50,7 @@
     <component
       v-if="componentInstance"
       :is="componentInstance"
+      :key="renderKey"
       v-bind="processedProps"
       v-on="eventHandlers"
       ref="actualComponentRef"
@@ -102,11 +103,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, nextTick, isRef } from 'vue'
 import { Top, Bottom, Delete, HelpFilled } from '@element-plus/icons-vue'
 import { ElMessageBox } from 'element-plus'
 import type { ComponentConfig, ComponentProps } from '@/types/page'
 import { getComponentDefinition } from '@/services/componentRegistry'
+import { componentCacheService } from '@/services/componentCacheService'
+import { performanceMonitor } from '@/utils/performanceUtils'
 
 // Props
 interface Props {
@@ -140,9 +143,11 @@ interface Emits {
 const emit = defineEmits<Emits>()
 
 // Refs
-const componentRef = ref<HTMLElement>()
-const actualComponentRef = ref<any>()
-const isHovered = ref(false)
+const componentRef = ref<HTMLElement>();
+const actualComponentRef = ref<any>();
+const isHovered = ref(false);
+const isUsingCachedInstance = ref(false);
+const renderKey = ref(0); // 用于强制重新渲染组件
 
 // Computed
 const componentDefinition = computed(() => {
@@ -151,6 +156,30 @@ const componentDefinition = computed(() => {
 
 const componentInstance = computed(() => {
   return componentDefinition.value?.component || null
+})
+
+// 获取组件使用的数据源依赖
+const componentDependencies = computed(() => {
+  const dependencies = new Set<string>();
+  
+  // 检查属性中的数据绑定
+  if (props.componentConfig.properties) {
+    Object.values(props.componentConfig.properties).forEach(value => {
+      if (typeof value === 'string' && value.startsWith('{{') && value.endsWith('}}')) {
+        const expression = value.slice(2, -2).trim();
+        // 简化处理：提取数据源引用
+        if (expression.includes('dataSources.')) {
+          const parts = expression.split('dataSources.');
+          if (parts.length > 1) {
+            const dataSourceKey = parts[1].split('.')[0];
+            dependencies.add(dataSourceKey);
+          }
+        }
+      }
+    });
+  }
+  
+  return Array.from(dependencies);
 })
 
 const isSelected = computed(() => {
@@ -252,6 +281,14 @@ const handleSelect = () => {
   }
 }
 
+// 暴露方法给父组件
+defineExpose({
+  forceRefresh,
+  isUsingCachedInstance,
+  getInstance: () => actualComponentRef.value,
+  getComponentDependencies: () => componentDependencies.value
+})
+
 const moveUp = () => {
   if (canMoveUp.value && props.parentConfig) {
     emit('componentMove', props.index, props.index - 1, props.parentConfig)
@@ -348,9 +385,96 @@ watch(() => props.componentConfig, () => {
   // 配置变化时的处理
 }, { deep: true })
 
+// 组件挂载处理
+@performanceMonitor('componentRenderer.mountComponent')
+async function mountComponent() {
+  // 尝试从缓存获取组件实例
+  const cachedInstance = componentCacheService.get(props.componentConfig.type, props.componentConfig);
+  
+  if (cachedInstance && actualComponentRef.value) {
+    isUsingCachedInstance.value = true;
+    
+    if (componentCacheService.config.debug) {
+      console.log(`[ComponentRenderer] Using cached instance for ${props.componentConfig.type}:${props.componentConfig.id}`);
+    }
+    
+    // 复制缓存实例的状态到当前实例
+    copyInstanceState(cachedInstance, actualComponentRef.value);
+  } else if (actualComponentRef.value) {
+    isUsingCachedInstance.value = false;
+    
+    // 缓存当前实例
+    componentCacheService.set(
+      props.componentConfig.type, 
+      props.componentConfig, 
+      actualComponentRef.value,
+      componentDependencies.value
+    );
+  }
+}
+
+// 复制实例状态
+function copyInstanceState(source: any, target: any) {
+  if (!source || !target) return;
+  
+  try {
+    // 复制基本属性
+    Object.keys(source).forEach(key => {
+      // 跳过方法、内部属性和只读属性
+      if (key.startsWith('$') || 
+          key.startsWith('_') || 
+          typeof source[key] === 'function' ||
+          key === 'constructor') {
+        return;
+      }
+      
+      // 安全地复制属性
+      try {
+        if (!Object.getOwnPropertyDescriptor(target, key)?.writable) {
+          return;
+        }
+        
+        if (isRef(source[key]) && isRef(target[key])) {
+          target[key].value = source[key].value;
+        } else if (typeof source[key] === 'object' && source[key] !== null) {
+          if (Array.isArray(source[key])) {
+            target[key] = [...source[key]];
+          } else if (typeof target[key] === 'object' && target[key] !== null) {
+            Object.assign(target[key], source[key]);
+          }
+        } else {
+          target[key] = source[key];
+        }
+      } catch (error) {
+        // 忽略无法复制的属性
+      }
+    });
+  } catch (error) {
+    console.warn('Failed to copy instance state:', error);
+  }
+}
+
+// 强制刷新组件（清除缓存并重新渲染）
+function forceRefresh() {
+  // 清除该组件的缓存
+  const key = `${props.componentConfig.type}:${props.componentConfig.id}`;
+  componentCacheService.remove(key);
+  
+  // 增加渲染键以强制重新渲染
+  renderKey.value++;
+  isUsingCachedInstance.value = false;
+}
+
+// 监听配置变化
+watch(() => [props.componentConfig, props.parentScope], async () => {
+  await nextTick();
+  mountComponent();
+}, { deep: true });
+
 // Lifecycle
-onMounted(() => {
-  // 组件挂载后的初始化
+onMounted(async () => {
+  await nextTick();
+  mountComponent();
 })
 </script>
 

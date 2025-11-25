@@ -383,6 +383,7 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed, watch, onMounted, nextTick } from 'vue';
+import { deepClone } from '../utils/deepCloneUtils';
 import type { EventConfig, ActionConfig } from '@/types/event'
 import { eventBusService, useEventBus } from '@/services/eventBusService';
 import type { Component } from 'vue';
@@ -503,7 +504,7 @@ const addNewEvent = () => {
 
 // 编辑事件
 const editEvent = (index: number) => {
-  currentEvent.value = JSON.parse(JSON.stringify(props.events[index]));
+  currentEvent.value = deepClone(props.events[index]);
   isEditing.value = true;
   eventDialogVisible.value = true;
 };
@@ -511,7 +512,7 @@ const editEvent = (index: number) => {
 // 复制事件
 const duplicateEvent = (index: number) => {
   const originalEvent = props.events[index];
-  const newEvent = JSON.parse(JSON.stringify(originalEvent));
+  const newEvent = deepClone(originalEvent);
   newEvent.name = `${newEvent.name}_copy`;
   
   const updatedEvents = [...props.events];

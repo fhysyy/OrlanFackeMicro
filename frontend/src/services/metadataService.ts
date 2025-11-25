@@ -1,5 +1,6 @@
 import type { PageMetadata } from '../types/page';
 import { api } from './api';
+import { deepClone } from '../utils/deepCloneUtils';
 
 /**
  * 页面元数据管理服务
@@ -161,7 +162,7 @@ export class MetadataService {
    */
   static duplicateMetadata(metadata: PageMetadata, newName: string, newPath: string): PageMetadata {
     // 深拷贝
-    const newMetadata = JSON.parse(JSON.stringify(metadata));
+    const newMetadata = deepClone(metadata);
     
     // 更新基本信息
     newMetadata.id = `${metadata.id || 'page'}_copy_${Date.now()}`;

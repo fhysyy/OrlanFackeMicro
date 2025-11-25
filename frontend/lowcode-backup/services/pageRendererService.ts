@@ -9,6 +9,7 @@ import type {
   ActionConfig,
   LifecycleHook
 } from '@/types/page'
+import { deepClone } from '@/utils/deepCloneUtils'
 import { getComponentDefinition, loadComponent } from './componentRegistry'
 import { apiService } from '@/utils/apiService'
 import { ElMessage } from 'element-plus'
@@ -156,7 +157,7 @@ class PageRendererService {
   
   // 优化页面配置
   optimizePageConfig(config: PageConfig): PageConfig {
-    const optimized = JSON.parse(JSON.stringify(config)) as PageConfig
+    const optimized = deepClone(config) as PageConfig
     
     // 移除空属性
     const removeEmptyProperties = (obj: any) => {

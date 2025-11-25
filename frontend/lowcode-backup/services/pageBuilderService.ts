@@ -3,42 +3,65 @@ import type { VNode } from 'vue';
 import { h, reactive, computed, ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { api } from './api';
-
-/**
- * 组件注册中心
- */
-const componentRegistry: Record<string, any> = {};
+import { componentRegistry } from './componentRegistry';
+import { deepClone } from '../utils/deepCloneUtils';
+import { debounce } from '../utils/debounceThrottleUtils';
+import { performanceMonitor } from '../utils/performanceUtils';
 
 /**
  * 页面构建器服务
  */
 export class PageBuilderService {
-  /**
-   * 注册组件
-   */
-  static registerComponent(name: string, component: any): void {
-    componentRegistry[name] = component;
-  }
-
-  /**
-   * 注册多个组件
-   */
-  static registerComponents(components: Record<string, any>): void {
-    Object.assign(componentRegistry, components);
-  }
-
+  // 组件缓存
+  private static componentCache = new Map<string, {
+    component: VNode;
+    lastAccessed: number;
+    usageCount: number;
+    configHash: string;
+  }>();
+  
+  // 最大缓存组件数量
+  private static readonly MAX_CACHE_SIZE = 100;
+  
+  // 防抖的状态持久化函数
+  private static debouncedPersistState = debounce(this.persistStateInternal, 300);
   /**
    * 获取组件
    */
   static getComponent(name: string): any {
-    return componentRegistry[name];
+    const componentDef = componentRegistry.getComponent(name);
+    return componentDef ? componentDef.component : undefined;
+  }
+
+  /**
+   * 生成组件配置对象
+   */
+  static generateComponentConfig(componentName: string): ComponentConfig {
+    // 生成唯一ID
+    const generateId = () => {
+      return `${componentName.toLowerCase().replace(/[^a-z0-9]/g, '-')}_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    };
+    
+    // 返回标准的组件配置对象
+    return {
+      id: generateId(),
+      type: componentName,
+      properties: {},
+      events: [],
+      children: []
+    };
   }
 
   /**
    * 获取所有注册的组件
    */
   static getAllComponents(): Record<string, any> {
-    return { ...componentRegistry };
+    const components = componentRegistry.getAllComponents();
+    const result: Record<string, any> = {};
+    components.forEach(comp => {
+      result[comp.type] = comp.component;
+    });
+    return result;
   }
 
   /**
@@ -77,22 +100,47 @@ export class PageBuilderService {
   /**
    * 构建组件树
    */
+  @performanceMonitor
   static buildComponent(componentConfig: ComponentConfig, context: any): VNode {
+    // 生成缓存键
+    const cacheKey = this.generateCacheKey(componentConfig);
+    
+    // 检查缓存中是否有相同配置的组件
+    if (this.componentCache.has(cacheKey)) {
+      const cached = this.componentCache.get(cacheKey)!;
+      cached.lastAccessed = Date.now();
+      cached.usageCount++;
+      return cached.component;
+    }
     const { type, props = {}, events = [], children = [], vIf, vFor, crudConfig, formConfig, tableConfig } = componentConfig;
     
-    // 获取组件 - 支持大小写不敏感的查找
-    let component = this.getComponent(type) || this.getComponent(type.replace(/-([a-z])/g, g => g[1].toUpperCase()));
+    let component = null;
     
-    // 如果未找到，尝试大小写不敏感的查找
+    // 1. 直接获取
+    const directComp = this.getComponent(type);
+    if (directComp) {
+      component = directComp;
+    }
+    
+    // 2. 如果未找到，尝试大小写不敏感的查找（通过遍历所有组件定义）
     if (!component) {
-      const allComponents = this.getAllComponents();
       const lowerType = type.toLowerCase();
+      const allComponents = componentRegistry.getAllComponents();
       
-      for (const [key, comp] of Object.entries(allComponents)) {
-        if (key.toLowerCase() === lowerType) {
-          component = comp;
+      for (const componentDef of allComponents) {
+        if (componentDef.type && componentDef.type.toLowerCase() === lowerType) {
+          component = componentDef.component;
           break;
         }
+      }
+    }
+    
+    // 3. 尝试camelCase形式
+    if (!component) {
+      const camelCaseType = type.replace(/-([a-z])/g, g => g[1].toUpperCase());
+      const camelComp = this.getComponent(camelCaseType);
+      if (camelComp) {
+        component = camelComp;
       }
     }
     
@@ -288,15 +336,64 @@ export class PageBuilderService {
 
     return componentTree;
   }
+  
+  /**
+   * 清理所有缓存
+   */
+  static clearCache(): void {
+    this.componentCache.clear();
+  }
 
   /**
-   * 持久化状态到localStorage
+   * 持久化状态到localStorage - 使用防抖优化性能
    */
   private static persistState(key: string, value: any): void {
+    // 使用防抖版本避免频繁写入
+    this.debouncedPersistState(key, value);
+  }
+  
+  /**
+   * 内部持久化方法
+   */
+  private static persistStateInternal(key: string, value: any): void {
     try {
-      localStorage.setItem(`page_state_${key}`, JSON.stringify(value));
+      // 使用深拷贝避免序列化问题
+      const serializedValue = JSON.stringify(value !== undefined && value !== null ? deepClone(value) : value);
+      localStorage.setItem(`page_state_${key}`, serializedValue);
     } catch (error) {
       console.error('状态持久化失败:', error);
+    }
+  }
+  
+  /**
+   * 生成组件缓存键
+   */
+  private static generateCacheKey(componentConfig: ComponentConfig): string {
+    // 使用组件类型、ID和子组件数量生成缓存键
+    const baseKey = `${componentConfig.type}:${componentConfig.id || 'no-id'}`;
+    if (!componentConfig.children || componentConfig.children.length === 0) {
+      return baseKey;
+    }
+    return `${baseKey}:c${componentConfig.children.length}`;
+  }
+  
+  /**
+   * 清理缓存
+   */
+  static cleanupCache(): void {
+    if (this.componentCache.size > this.MAX_CACHE_SIZE) {
+      const entries = Array.from(this.componentCache.entries());
+      entries.sort((a, b) => {
+        // 按使用频率和最后访问时间排序
+        if (a[1].usageCount !== b[1].usageCount) {
+          return a[1].usageCount - b[1].usageCount;
+        }
+        return a[1].lastAccessed - b[1].lastAccessed;
+      });
+      
+      // 删除最不常用的组件
+      const toRemove = entries.slice(0, Math.floor(entries.length * 0.2));
+      toRemove.forEach(([key]) => this.componentCache.delete(key));
     }
   }
 

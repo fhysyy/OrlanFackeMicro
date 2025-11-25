@@ -31,44 +31,54 @@
 
     <!-- 用户列表 -->
     <el-card>
-      <el-table :data="userList" v-loading="loading">
-      
-        <el-table-column prop="username" label="用户名" />
-        <el-table-column prop="email" label="邮箱" />
-        <el-table-column prop="phone" label="手机号" />
-        <el-table-column label="角色" width="180">
-          <template #default="{ row }">
-              <div class="role-tags">
-                <el-tag 
-                  v-for="role in ((row as any).roles || [row.role])" 
-                  :key="role"
-                  :type="getRoleType(role)"
-                  size="small"
-                  effect="plain"
-                  class="role-tag"
-                >
-                  {{ getRoleLabel(role) }}
-                </el-tag>
-              </div>
-            </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态">
-          <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180">
-          <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="操作" width="200">
-          <template #default="{ row }">
-            <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+      <!-- 骨架屏 -->
+      <div v-if="loading" class="skeleton-container">
+        <div v-for="i in 6" :key="i" class="skeleton-user-item">
+          <div class="skeleton-user-info">
+            <EasySkeleton type="line" width="120px" height="20px" />
+            <EasySkeleton type="line" width="180px" height="16px" />
+            <EasySkeleton type="line" width="100px" height="14px" />
+          </div>
+          <div class="skeleton-user-actions">
+            <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
+            <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 实际表格 -->
+      <virtual-scroll-table
+      v-else
+      v-model:data="users"
+      :columns="tableColumns"
+      :row-height="50"
+      height="500px"
+    >
+      <template #roles="{ row }">
+        <div class="role-tags">
+          <el-tag 
+            v-for="role in ((row as any).roles || [row.role])" 
+            :key="role"
+            :type="getRoleType(role)"
+            size="small"
+            effect="plain"
+            class="role-tag"
+          >
+            {{ getRoleLabel(role) }}
+          </el-tag>
+        </div>
+      </template>
+      <template #status="{ row }">
+        <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
+      </template>
+      <template #createdAt="{ row }">
+        {{ formatDate(row.createdAt) }}
+      </template>
+      <template #actions="{ row }">
+        <el-button size="small" @click="handleEdit(row)">编辑</el-button>
+        <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+      </template>
+    </virtual-scroll-table>
 
       <!-- 分页 -->
       <div class="pagination-container">
@@ -142,6 +152,8 @@ import { User, UserRole, UserStatus } from '@/types/api'
 import { userService, roleService, permissionService } from '@/services'
 import { useRouter } from 'vue-router'
 import { api } from '@/services/api'
+import VirtualScrollTable from '@/components/VirtualScrollTable.vue'
+import EasySkeleton from '@/components/EasySkeleton.vue'
 
 const authStore = useAuthStore()
 
@@ -514,5 +526,36 @@ onMounted(async () => {
   font-size: 12px;
   color: var(--el-text-color-secondary);
   margin-top: 4px;
+}
+
+/* 骨架屏样式 */
+.skeleton-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.skeleton-user-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.skeleton-user-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-user-actions {
+  display: flex;
+  gap: 8px;
 }
 </style>

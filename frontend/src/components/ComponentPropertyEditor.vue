@@ -582,7 +582,19 @@
 
 <script lang="ts" setup>
 import { ref, reactive, computed, watch, nextTick } from 'vue';
-import type { PropConfig } from '../types/page';
+
+// 定义PropConfig接口
+interface PropConfig {
+  name: string;
+  label?: string;
+  type?: string;
+  default?: any;
+  description?: string;
+  component?: any;
+  componentProps?: Record<string, any>;
+  disabled?: boolean;
+  [key: string]: any;
+}
 
 // 组件属性
 interface ComponentPropertyEditorProps {
@@ -597,7 +609,7 @@ interface ComponentPropertyEditorProps {
 
 const props = withDefaults(defineProps<ComponentPropertyEditorProps>(), {
   componentProps: () => ({}),
-  componentConfig: () => ({}),
+  componentConfig: () => ({ name: '' }),
   availableVariables: () => ['props', 'state', 'context']
 });
 
@@ -754,7 +766,7 @@ const handleCustomPropertyChange = (property: string) => {
 };
 
 // 处理高级属性变化
-const handleAdvancedPropertyChange = (property: string) => {
+const handleAdvancedPropertyChange = (property: keyof typeof advancedProps) => {
   const value = advancedProps[property];
   emit('propertyChange', property, value);
   updateComponentProps();
@@ -797,11 +809,11 @@ const updateComponentProps = () => {
   });
   
   // 添加高级属性
-  if (advancedProps.condition) {
+  if (advancedProps.condition && typeof advancedProps.condition === 'string') {
     updatedProps.condition = advancedProps.condition;
   }
   
-  if (advancedProps.customStyles) {
+  if (advancedProps.customStyles && typeof advancedProps.customStyles === 'string') {
     try {
       updatedProps.customStyles = JSON.parse(advancedProps.customStyles);
     } catch (error) {
@@ -895,7 +907,7 @@ nextTick(() => {
   flex-direction: column;
 }
 
-.dialog-toolbar {
+.dialog-toolbar { 
   margin-bottom: 16px;
 }
 

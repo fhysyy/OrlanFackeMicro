@@ -1,0 +1,430 @@
+{
+  "id": "example_dashboard",
+  "name": "示例仪表盘",
+  "description": "低代码设计器示例页面，展示常用组件和交互功能",
+  "version": "1.0.0",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z",
+  "layout": {
+    "type": "single-column"
+  },
+  "route": {
+    "path": "/example-dashboard",
+    "name": "example_dashboard",
+    "meta": {
+      "title": "示例仪表盘",
+      "showInMenu": true
+    }
+  },
+  "state": {
+    "counter": {
+      "initialValue": 0,
+      "persist": true,
+      "persistKey": "example_counter"
+    },
+    "userInfo": {
+      "initialValue": null,
+      "persist": false
+    }
+  },
+  "methods": [
+    {
+      "name": "incrementCounter",
+      "body": "this.counter.value++"
+    },
+    {
+      "name": "fetchUserInfo",
+      "body": "console.log('获取用户信息'); this.userInfo.value = { name: '测试用户', role: '开发者' };"
+    },
+    {
+      "name": "showMessage",
+      "body": "ElMessage.success('操作成功！');"
+    }
+  ],
+  "lifecycle": {
+    "created": "console.log('页面创建完成'); this.fetchUserInfo();",
+    "mounted": "console.log('页面挂载完成');"
+  },
+  "components": [
+    {
+      "type": "container",
+      "props": {
+        "class": "dashboard-container",
+        "style": {
+          "padding": "20px",
+          "backgroundColor": "#f0f2f5"
+        }
+      },
+      "children": [
+        {
+          "type": "card",
+          "props": {
+            "title": "仪表盘概览",
+            "style": {
+              "marginBottom": "20px"
+            }
+          },
+          "children": [
+            {
+              "type": "row",
+              "props": {
+                "class": "stats-row",
+                "gutter": 20
+              },
+              "children": [
+                {
+                  "type": "col",
+                  "props": {
+                    "span": 8
+                  },
+                  "children": [
+                    {
+                      "type": "stat-card",
+                      "props": {
+                        "title": "访问量",
+                        "value": "{{ counter.value * 100 }}",
+                        "icon": "el-icon-view",
+                        "color": "primary"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "col",
+                  "props": {
+                    "span": 8
+                  },
+                  "children": [
+                    {
+                      "type": "stat-card",
+                      "props": {
+                        "title": "用户数",
+                        "value": "256",
+                        "icon": "el-icon-user",
+                        "color": "success"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "col",
+                  "props": {
+                    "span": 8
+                  },
+                  "children": [
+                    {
+                      "type": "stat-card",
+                      "props": {
+                        "title": "成功率",
+                        "value": "98.5%",
+                        "icon": "el-icon-check",
+                        "color": "warning"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "row",
+          "props": {
+            "gutter": 20,
+            "style": {
+              "marginBottom": "20px"
+            }
+          },
+          "children": [
+            {
+              "type": "col",
+              "props": {
+                "span": 16
+              },
+              "children": [
+                {
+                  "type": "card",
+                  "props": {
+                    "title": "交互示例",
+                    "style": {
+                      "height": "100%"
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "button",
+                      "props": {
+                        "type": "primary",
+                        "size": "large",
+                        "icon": "el-icon-plus",
+                        "style": {
+                          "marginRight": "10px"
+                        }
+                      },
+                      "events": [
+                        {
+                          "name": "click",
+                          "body": "this.incrementCounter(); this.showMessage();"
+                        }
+                      ],
+                      "children": [
+                        {
+                          "type": "text",
+                          "props": {
+                            "text": "点击计数器: {{ counter.value }}"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "form",
+                      "props": {
+                        "title": "用户信息表单",
+                        "model": "userForm",
+                        "style": {
+                          "marginTop": "20px"
+                        }
+                      },
+                      "children": [
+                        {
+                          "type": "form-item",
+                          "props": {
+                            "label": "用户名",
+                            "prop": "username"
+                          },
+                          "children": [
+                            {
+                              "type": "input",
+                              "props": {
+                                "v-model": "userForm.username",
+                                "placeholder": "请输入用户名",
+                                "clearable": true
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "form-item",
+                          "props": {
+                            "label": "密码",
+                            "prop": "password"
+                          },
+                          "children": [
+                            {
+                              "type": "input",
+                              "props": {
+                                "v-model": "userForm.password",
+                                "type": "password",
+                                "placeholder": "请输入密码"
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "type": "form-item",
+                          "props": {
+                            "label": "角色",
+                            "prop": "role"
+                          },
+                          "children": [
+                            {
+                              "type": "select",
+                              "props": {
+                                "v-model": "userForm.role",
+                                "placeholder": "请选择角色"
+                              },
+                              "children": [
+                                {
+                                  "type": "option",
+                                  "props": {
+                                    "label": "管理员",
+                                    "value": "admin"
+                                  }
+                                },
+                                {
+                                  "type": "option",
+                                  "props": {
+                                    "label": "开发者",
+                                    "value": "developer"
+                                  }
+                                },
+                                {
+                                  "type": "option",
+                                  "props": {
+                                    "label": "普通用户",
+                                    "value": "user"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "form-item",
+                          "children": [
+                            {
+                              "type": "button",
+                              "props": {
+                                "type": "primary"
+                              },
+                              "events": [
+                                {
+                                  "name": "click",
+                                  "body": "console.log('表单提交:', this.userForm); ElMessage.success('表单提交成功！');"
+                                }
+                              ],
+                              "children": [
+                                {
+                                  "type": "text",
+                                  "props": {
+                                    "text": "提交"
+                                  }
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "col",
+              "props": {
+                "span": 8
+              },
+              "children": [
+                {
+                  "type": "card",
+                  "props": {
+                    "title": "用户信息",
+                    "style": {
+                      "height": "100%"
+                    }
+                  },
+                  "children": [
+                    {
+                      "type": "avatar",
+                      "props": {
+                        "size": "large",
+                        "src": "https://cube.elemecdn.com/3/7c/3ea6beec64369c2642b92c6726f1epng.png",
+                        "style": {
+                          "marginBottom": "10px"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "props": {
+                        "text": "用户名: {{ userInfo?.name || '未登录' }}",
+                        "tag": "p",
+                        "style": {
+                          "margin": "5px 0"
+                        }
+                      }
+                    },
+                    {
+                      "type": "text",
+                      "props": {
+                        "text": "角色: {{ userInfo?.role || '未知' }}",
+                        "tag": "p",
+                        "style": {
+                          "margin": "5px 0"
+                        }
+                      }
+                    },
+                    {
+                      "type": "divider",
+                      "props": {
+                        "style": {
+                          "margin": "15px 0"
+                        }
+                      }
+                    },
+                    {
+                      "type": "table",
+                      "props": {
+                        "data": "[{'id': 1, 'name': '任务1', 'status': '进行中'}, {'id': 2, 'name': '任务2', 'status': '已完成'}]",
+                        "columns": "[{\"prop\": \"id\", \"label\": \"ID\"}, {\"prop\": \"name\", \"label\": \"名称\"}, {\"prop\": \"status\", \"label\": \"状态\"}]",
+                        "style": {
+                          "fontSize": "14px"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "type": "card",
+          "props": {
+            "title": "数据展示"
+          },
+          "children": [
+            {
+              "type": "tabs",
+              "props": {
+                "activeName": "tab1"
+              },
+              "children": [
+                {
+                  "type": "tab-pane",
+                  "props": {
+                    "label": "选项卡1",
+                    "name": "tab1"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "props": {
+                        "text": "这是选项卡1的内容，使用了文本组件",
+                        "style": {
+                          "color": "#606266",
+                          "lineHeight": "1.8"
+                        }
+                      }
+                    }
+                  ]
+                },
+                {
+                  "type": "tab-pane",
+                  "props": {
+                    "label": "选项卡2",
+                    "name": "tab2"
+                  },
+                  "children": [
+                    {
+                      "type": "text",
+                      "props": {
+                        "text": "这是选项卡2的内容，可以展示不同的数据视图",
+                        "style": {
+                          "color": "#606266",
+                          "lineHeight": "1.8"
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "alert",
+              "props": {
+                "title": "提示信息",
+                "type": "info",
+                "description": "这是一个信息提示框，用于展示重要的提示信息。",
+                "style": {
+                  "marginTop": "20px"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

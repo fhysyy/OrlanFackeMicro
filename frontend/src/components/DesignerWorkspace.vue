@@ -113,6 +113,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { deepClone } from '../utils/deepCloneUtils';
 import { Monitor, Tablet, Smartphone } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
 import DesignerToolbar from './DesignerToolbar.vue'
@@ -194,7 +195,7 @@ const addToHistory = () => {
   }
   
   // 添加当前配置到历史记录
-  historyStack.value.push(JSON.parse(JSON.stringify(currentPageConfig.value)))
+  historyStack.value.push(deepClone(currentPageConfig.value))
   
   // 限制历史记录数量
   if (historyStack.value.length > MAX_HISTORY) {
@@ -214,7 +215,7 @@ const updateHistoryState = () => {
 const handleUndo = () => {
   if (canUndo.value) {
     historyIndex.value--
-    currentPageConfig.value = JSON.parse(JSON.stringify(historyStack.value[historyIndex.value]))
+    currentPageConfig.value = deepClone(historyStack.value[historyIndex.value])
     clearSelection()
     updateHistoryState()
     emit('update', currentPageConfig.value)
@@ -224,7 +225,7 @@ const handleUndo = () => {
 const handleRedo = () => {
   if (canRedo.value) {
     historyIndex.value++
-    currentPageConfig.value = JSON.parse(JSON.stringify(historyStack.value[historyIndex.value]))
+    currentPageConfig.value = deepClone(historyStack.value[historyIndex.value])
     clearSelection()
     updateHistoryState()
     emit('update', currentPageConfig.value)
@@ -246,12 +247,14 @@ const handleDrop = (event: DragEvent) => {
   try {
     const data = JSON.parse(event.dataTransfer!.getData('application/json'))
     
-    if (data.type === 'component') {
+    if (data.type === 'component' && data.component) {
       // 生成新组件配置
       const newComponent = generateComponentConfig(data.component.name)
       
       // 添加到根容器
       addComponentToParent(newComponent, currentPageConfig.value)
+    } else {
+      console.warn('无效的拖拽数据格式:', data)
     }
   } catch (error) {
     console.error('拖拽失败:', error)
@@ -267,7 +270,7 @@ const addComponentToParent = (component: ComponentConfig, parent: ComponentConfi
   
   parent.children.push(component)
   selectedComponent.value = component
-  selectedComponentPath.value = ['children', parent.children.length - 1.toString()]
+  selectedComponentPath.value = ['children', (parent.children.length - 1).toString()]
   
   emit('update', currentPageConfig.value)
   ElMessage.success('组件添加成功')

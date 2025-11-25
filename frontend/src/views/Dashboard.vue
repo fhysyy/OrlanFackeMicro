@@ -93,7 +93,8 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
-import * as echarts from 'echarts'
+import echarts from '@/plugins/echarts'
+import { Folder, Monitor, User, Message } from '@element-plus/icons-vue'
 import type { SystemStats } from '@/types/api'
 
 const authStore = useAuthStore()

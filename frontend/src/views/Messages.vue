@@ -61,53 +61,65 @@
     </el-card>
 
     <!-- 消息列表 -->
-    <el-card>
-      <el-table :data="messageList" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" label="标题" show-overflow-tooltip />
-        <el-table-column prop="messageType" label="类型" width="100">
-          <template #default="{ row }">
+      <el-card>
+        <!-- 骨架屏 -->
+        <div v-if="loading" class="skeleton-container">
+          <div v-for="i in 6" :key="i" class="skeleton-message-item">
+            <div class="skeleton-message-main">
+              <EasySkeleton type="line" width="200px" height="20px" />
+              <div class="skeleton-message-meta">
+                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
+                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
+                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
+              </div>
+              <EasySkeleton type="line" width="90%" height="16px" />
+            </div>
+            <div class="skeleton-message-actions">
+              <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
+              <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
+            </div>
+          </div>
+        </div>
+
+        <!-- 实际表格 -->
+        <virtual-scroll-table
+          v-else
+          :data="messageList"
+          :columns="tableColumns"
+          :row-height="50"
+          height="500px"
+        >
+          <template #messageType="{ row }">
             <el-tag size="small">{{ row.messageType }}</el-tag>
           </template>
-        </el-table-column>
-        <el-table-column prop="channel" label="渠道" width="100">
-          <template #default="{ row }">
+          <template #channel="{ row }">
             <el-tag size="small" :type="getChannelType(row.channel)">{{ row.channel }}</el-tag>
           </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
-          <template #default="{ row }">
+          <template #status="{ row }">
             <el-tag size="small" :type="getStatusType(row.status)">{{ row.status }}</el-tag>
           </template>
-        </el-table-column>
-        <el-table-column prop="senderId" label="发送者" width="120" />
-        <el-table-column prop="receiverId" label="接收者" width="120" />
-        <el-table-column prop="sentAt" label="发送时间" width="180">
-          <template #default="{ row }">
+          <template #sentAt="{ row }">
             {{ formatDate(row.sentAt) }}
           </template>
-        </el-table-column>
-        <el-table-column label="操作" width="150">
-          <template #default="{ row }">
+          <template #operation="{ row }">
             <el-button size="small" @click="handleView(row)">查看</el-button>
             <el-button size="small" type="danger" @click="handleCancel(row)" v-if="row.status === 'Pending'">取消</el-button>
           </template>
-        </el-table-column>
-      </el-table>
+        </virtual-scroll-table>
 
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.current"
-          v-model:page-size="pagination.size"
-          :total="pagination.total"
-          :page-sizes="[10, 20, 50, 100]"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
-    </el-card>
+        <!-- 分页 -->
+        <div class="pagination-container">
+          <el-pagination
+            v-model:current-page="pagination.current"
+            v-model:page-size="pagination.size"
+            :total="pagination.total"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next, jumper"
+            @size-change="handleSizeChange"
+            @current-change="handleCurrentChange"
+          />
+        </div>
+      </el-card>
 
     <!-- 消息详情对话框 -->
     <el-dialog v-model="detailVisible" title="消息详情" width="600px">
@@ -139,6 +151,8 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import type { Message, MessageType, MessageChannel, MessageStatus } from '@/types/api'
+import VirtualScrollTable from '@/components/VirtualScrollTable.vue'
+import EasySkeleton from '@/components/EasySkeleton.vue'
 
 const loading = ref(false)
 const detailVisible = ref(false)
@@ -164,6 +178,19 @@ const stats = reactive({
 })
 
 const messageList = ref<Message[]>([])
+
+// 表格列配置
+const tableColumns = [
+  { prop: 'id', label: 'ID', width: 80 },
+  { prop: 'title', label: '标题', showOverflowTooltip: true },
+  { prop: 'messageType', label: '类型', width: 100 },
+  { prop: 'channel', label: '渠道', width: 100 },
+  { prop: 'status', label: '状态', width: 100 },
+  { prop: 'senderId', label: '发送者', width: 120 },
+  { prop: 'receiverId', label: '接收者', width: 120 },
+  { prop: 'sentAt', label: '发送时间', width: 180 },
+  { prop: 'operation', label: '操作', width: 150, slot: 'operation' }
+]
 
 // 获取渠道标签类型
 const getChannelType = (channel: MessageChannel) => {
@@ -349,6 +376,60 @@ onMounted(() => {
     margin: 0;
     white-space: pre-wrap;
     word-wrap: break-word;
+  }
+}
+
+/* 骨架屏样式 */
+.skeleton-container {
+  background: #fff;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.skeleton-message-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.skeleton-message-item:last-child {
+  border-bottom: none;
+}
+
+.skeleton-message-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeleton-message-meta {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0;
+}
+
+.skeleton-message-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.skeleton-line,
+.skeleton-rect {
+  background: linear-gradient(90deg, #f0f0f0 25%, #f8f8f8 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }
 </style>

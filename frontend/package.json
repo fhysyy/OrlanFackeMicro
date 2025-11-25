@@ -11,27 +11,37 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
+    "@alifd/next": "^1.27.32",
     "@element-plus/icons-vue": "^2.1.0",
     "axios": "^1.4.0",
     "dayjs": "^1.11.9",
     "echarts": "^5.4.2",
     "element-plus": "^2.3.8",
+    "events": "^3.3.0",
     "lodash": "^4.17.21",
+    "moment": "^2.30.1",
     "pinia": "^2.1.6",
     "vue": "^3.3.4",
     "vue-echarts": "^6.6.1",
     "vue-router": "^4.2.4"
   },
   "devDependencies": {
+    "@alilc/lowcode-engine": "^1.3.4",
+    "@alilc/lowcode-materials": "^1.2.1",
     "@types/lodash": "^4.14.195",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
     "@vitejs/plugin-vue": "^4.2.3",
     "eslint": "^8.45.0",
     "eslint-plugin-vue": "^9.15.1",
+    "less": "^4.4.2",
+    "rollup-plugin-visualizer": "^6.0.5",
     "sass": "^1.63.6",
+    "terser": "^5.44.1",
     "typescript": "^5.0.2",
-    "vite": "^4.4.5",
+    "unplugin-auto-import": "^20.2.0",
+    "unplugin-vue-components": "^30.0.0",
+    "vite": "^7.2.4",
     "vue-tsc": "^3.1.1"
   }
 }
