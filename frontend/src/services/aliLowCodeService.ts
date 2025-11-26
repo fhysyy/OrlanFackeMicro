@@ -70,6 +70,11 @@ async function importLowCodeEngine() {
     return {
       engine,
       version: '1.0.0',
+      vueAdapter: {
+        register: () => {
+          logger.log('注册Vue适配器');
+        }
+      },
       init: async (container: HTMLElement, options: any) => {
         logger.log('初始化低代码引擎实例', { container, options });
         return Promise.resolve();
@@ -89,14 +94,13 @@ class AliLowCodeService {
 
   /**
    * 初始化低代码引擎
-   * @param containerId 容器ID
+   * @param container 容器DOM元素
    * @param options 初始化选项
    */
-  async initialize(containerId: string, options: any = {}) {
+  async initialize(container: HTMLElement, options: any = {}) {
     try {
-      const container = document.getElementById(containerId)
       if (!container) {
-        throw new Error(`容器元素 #${containerId} 不存在`)
+        throw new Error('容器元素不存在')
       }
 
       this.container = container
