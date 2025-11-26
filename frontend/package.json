@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "description": "FakeMicro 前端管理界面",
   "type": "module",
+  "vtj": {
+    "id": "fakemicro-frontend",
+    "name": "FakeMicro Frontend",
+    "description": "FakeMicro 前端管理界面",
+    "platform": "web",
+    "history": "hash",
+    "base": "/",
+    "pageRouteName": "page",
+    "checkVersion": false
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -11,8 +21,14 @@
     "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
-    "@alifd/next": "^1.27.32",
     "@element-plus/icons-vue": "^2.1.0",
+    "@vtj/core": "^0.13.34",
+    "@vtj/designer": "^0.13.34",
+    "@vtj/icons": "^0.13.34",
+    "@vtj/renderer": "^0.13.34",
+    "@vtj/ui": "^0.13.34",
+    "@vtj/utils": "^0.13.34",
+    "@vtj/web": "^0.13.34",
     "axios": "^1.4.0",
     "dayjs": "^1.11.9",
     "echarts": "^5.4.2",
@@ -26,12 +42,10 @@
     "vue-router": "^4.2.4"
   },
   "devDependencies": {
-    "@alilc/lowcode-engine": "^1.3.4",
-    "@alilc/lowcode-materials": "^1.2.1",
     "@types/lodash": "^4.14.195",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@vitejs/plugin-vue": "^4.2.3",
+    "@vitejs/plugin-vue": "^6.0.2",
     "eslint": "^8.45.0",
     "eslint-plugin-vue": "^9.15.1",
     "less": "^4.4.2",

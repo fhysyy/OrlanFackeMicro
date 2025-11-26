@@ -28,7 +28,6 @@ const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
-
 // 按需注册Element Plus组件和图标
 registerElementPlus(app)
 

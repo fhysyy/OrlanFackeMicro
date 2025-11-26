@@ -59,15 +59,27 @@ const mainLayoutRoute: RouteRecordRaw = {
       }
     },
     {
-      path: 'ali-lowcode-designer',
-      name: 'AliLowCodeDesigner',
-      component: () => import('@/views/AliLowCodeDesigner.vue'),
+      path: 'vtj-designer',
+      name: 'VtjDesigner',
+      component: () => import('@/views/VtjDesigner.vue'),
       meta: {
         requiresAuth: true,
         permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-        title: '低代码设计器 (Ali)',
+        title: 'VTJ低代码设计器',
         icon: 'el-icon-edit',
         order: 10
+      }
+    },
+    {
+      path: 'simple-vtj-designer',
+      name: 'SimpleVtjDesigner',
+      component: () => import('@/views/SimpleVtjDesigner.vue'),
+      meta: {
+        requiresAuth: true,
+        permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
+        title: '简化版VTJ设计器',
+        icon: 'el-icon-edit-outline',
+        order: 11
       }
     }
   ]

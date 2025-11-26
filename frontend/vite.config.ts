@@ -23,20 +23,16 @@ export default defineConfig({
       dts: true, // 生成类型声明文件
       vueTemplate: true,
     }),
+    // VTJ 开发工具插件 - 用于设计器功能
+    // createDevTools()
   ],
   
   resolve: {
     alias: {
-      '@': resolve(__dirname, 'src'),
-      // 为低代码引擎添加别名，提高兼容性
-      '@alilc/lowcode-engine': resolve(__dirname, 'node_modules/@alilc/lowcode-engine')
+      '@': resolve(__dirname, 'src')
     },
     // 配置扩展，确保模块解析正确
-    extensions: ['.mjs', '.js', '.ts', '.jsx', '.tsx', '.json', '.vue'],
-    // 为低代码引擎依赖的Node.js模块添加浏览器兼容处理
-    fallback: {
-      events: 'events'
-    }
+    extensions: ['.mjs', '.js', '.ts', '.json', '.vue']
   },
   
   server: {
@@ -82,18 +78,16 @@ export default defineConfig({
           'utils-vendor': ['axios', 'dayjs', 'lodash'],
           
           // 图表库
-          'chart-vendor': ['echarts', 'vue-echarts']
+          'chart-vendor': ['echarts', 'vue-echarts'],
+          
+          // VTJ 设计器
+          'vtj-vendor': ['@vtj/designer', '@vtj/core', '@vtj/renderer']
         },
         // 确保输出格式兼容性
         format: 'esm',
         // 解决循环依赖问题
         preserveModules: false
-      },
-      // 配置外部依赖，避免打包问题
-      external: [
-        '@alilc/lowcode-engine',
-        '@alilc/lowcode-materials'
-      ]
+      }
     }
   },
   
@@ -102,10 +96,6 @@ export default defineConfig({
       scss: {
         additionalData: '@use "@/styles/variables.scss" as *;'
       }
-    },
-    // 增加 CSS 配置以支持低代码引擎
-    modules: {
-      localsConvention: 'camelCaseOnly'
     }
   },
   
@@ -116,13 +106,10 @@ export default defineConfig({
       'pinia',
       'axios',
       'dayjs',
-      'lodash'
-    ],
-    // 排除低代码引擎相关依赖，避免构建问题
-    exclude: [
-      '@alilc/lowcode-engine',
-      '@alilc/lowcode-materials',
-      '@alifd/next'
+      'lodash',
+      '@vtj/designer',
+      '@vtj/core',
+      '@vtj/renderer'
     ],
     // 增加优化配置
     esbuildOptions: {
@@ -135,27 +122,9 @@ export default defineConfig({
     maxConcurrentWorkers: 8
   },
   
-  // 配置 worker 以支持低代码引擎
-  worker: {
-    format: 'es',
-    plugins: () => [vue()],
-    rollupOptions: {
-      output: {
-        inlineDynamicImports: true
-      }
-    }
-  },
-  
-  // 移除可能导致HMR冲突的实验性配置
-  // 简化配置以确保热模块替换正常工作
-  experimental: {
-    // 移除hmrPartialAccept以避免冲突
-  },
-  
   // 配置环境变量
   define: {
     'process.env': {},
-    // 低代码引擎需要的全局变量
     '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': false
   }
 })

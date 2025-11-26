@@ -1,0 +1,232 @@
+{
+  "__VTJ_PROJECT__": true,
+  "id": "vtj-project",
+  "locked": "",
+  "platform": "web",
+  "name": "VTJ.PRO",
+  "homepage": "1d331duw",
+  "description": "VTJ.PRO",
+  "dependencies": [
+    {
+      "package": "vue",
+      "version": "latest",
+      "library": "Vue",
+      "urls": [
+        "@vtj/materials/deps/vue/vue.global.prod.js"
+      ],
+      "assetsLibrary": "VueMaterial",
+      "required": true,
+      "official": true,
+      "enabled": true,
+      "platform": [
+        "web",
+        "h5"
+      ]
+    },
+    {
+      "package": "vue-router",
+      "version": "latest",
+      "library": "VueRouter",
+      "urls": [
+        "@vtj/materials/deps/vue-router/vue-router.global.prod.js"
+      ],
+      "assetsLibrary": "VueRouterMaterial",
+      "required": true,
+      "official": true,
+      "enabled": true
+    },
+    {
+      "package": "vue-i18n",
+      "version": "latest",
+      "library": "VueI18n",
+      "urls": [
+        "@vtj/materials/deps/vue-i18n/vue-i18n.global.prod.js"
+      ],
+      "required": true,
+      "official": true,
+      "enabled": true
+    },
+    {
+      "package": "pinia",
+      "version": "latest",
+      "library": "Pinia",
+      "urls": [
+        "@vtj/materials/deps/pinia/pinia.iife.prod.js"
+      ],
+      "required": true,
+      "official": true,
+      "enabled": true,
+      "platform": [
+        "web",
+        "h5"
+      ]
+    },
+    {
+      "package": "@vtj/utils",
+      "version": "latest",
+      "library": "VtjUtils",
+      "urls": [
+        "@vtj/materials/deps/@vtj/utils/index.umd.js"
+      ],
+      "required": false,
+      "official": true,
+      "enabled": true
+    },
+    {
+      "package": "@vtj/icons",
+      "version": "latest",
+      "library": "VtjIcons",
+      "urls": [
+        "@vtj/materials/deps/@vtj/icons/style.css",
+        "@vtj/materials/deps/@vtj/icons/index.umd.js"
+      ],
+      "required": false,
+      "official": true,
+      "enabled": true,
+      "assetsUrl": "@vtj/materials/assets/icons/index.umd.js",
+      "assetsLibrary": "VtjIconsMaterial",
+      "platform": [
+        "web",
+        "h5"
+      ]
+    },
+    {
+      "package": "@vueuse/core",
+      "version": "latest",
+      "library": "VueUse",
+      "urls": [
+        "@vtj/materials/deps/@vueuse/shared/index.iife.min.js",
+        "@vtj/materials/deps/@vueuse/core/index.iife.min.js"
+      ],
+      "required": false,
+      "official": true,
+      "enabled": true,
+      "platform": [
+        "web",
+        "h5"
+      ]
+    },
+    {
+      "package": "element-plus",
+      "version": "latest",
+      "library": "ElementPlus",
+      "localeLibrary": "ElementPlusLocaleZhCn",
+      "urls": [
+        "@vtj/materials/deps/element-plus/dark/css-vars.css",
+        "@vtj/materials/deps/element-plus/index.css",
+        "@vtj/materials/deps/element-plus/zh-cn.js",
+        "@vtj/materials/deps/element-plus/index.full.min.js"
+      ],
+      "assetsUrl": "@vtj/materials/assets/element/index.umd.js",
+      "assetsLibrary": "ElementPlusMaterial",
+      "required": false,
+      "official": true,
+      "enabled": true,
+      "platform": "web"
+    },
+    {
+      "package": "@vtj/ui",
+      "version": "latest",
+      "library": "VtjUI",
+      "urls": [
+        "@vtj/materials/deps/vxe-table/style.min.css",
+        "@vtj/materials/deps/@vtj/ui/style.css",
+        "@vtj/materials/deps/xe-utils/xe-utils.umd.min.js",
+        "@vtj/materials/deps/vxe-table/index.umd.min.js",
+        "@vtj/materials/deps/@vtj/ui/index.umd.js"
+      ],
+      "assetsUrl": "@vtj/materials/assets/ui/index.umd.js",
+      "assetsLibrary": "VtjUIMaterial",
+      "required": false,
+      "official": true,
+      "enabled": true,
+      "platform": "web"
+    },
+    {
+      "package": "ant-design-vue",
+      "version": "latest",
+      "library": "antd",
+      "urls": [
+        "@vtj/materials/deps/ant-design-vue/reset.css",
+        "@vtj/materials/deps/ant-design-vue/dayjs/dayjs.min.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/locale/zh-cn.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/customParseFormat.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/weekday.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/localeData.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/weekOfYear.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/weekYear.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/advancedFormat.js",
+        "@vtj/materials/deps/ant-design-vue/dayjs/plugin/quarterOfYear.js",
+        "@vtj/materials/deps/ant-design-vue/antd.min.js"
+      ],
+      "assetsUrl": "@vtj/materials/assets/antdv/index.umd.js",
+      "assetsLibrary": "AntdvMaterial",
+      "required": false,
+      "official": true,
+      "enabled": false,
+      "platform": [
+        "web"
+      ]
+    },
+    {
+      "package": "@vtj/charts",
+      "version": "latest",
+      "library": "VtjCharts",
+      "urls": [
+        "@vtj/materials/deps/echarts/echarts.min.js",
+        "@vtj/materials/deps/@vtj/charts/index.umd.js"
+      ],
+      "assetsUrl": "@vtj/materials/assets/charts/index.umd.js",
+      "assetsLibrary": "VtjChartsMaterial",
+      "required": false,
+      "official": true,
+      "enabled": true,
+      "platform": [
+        "web",
+        "h5"
+      ]
+    },
+    {
+      "package": "mockjs",
+      "version": "latest",
+      "library": "Mock",
+      "urls": [
+        "@vtj/materials/deps/mockjs/mock-min.js"
+      ],
+      "required": false,
+      "official": true,
+      "enabled": true
+    }
+  ],
+  "pages": [
+    {
+      "id": "1d331duw",
+      "dir": false,
+      "layout": false,
+      "name": "LaunchPage",
+      "title": "启动页",
+      "icon": "",
+      "mask": false,
+      "hidden": false,
+      "raw": false,
+      "pure": true,
+      "cache": false,
+      "needLogin": false,
+      "style": {},
+      "type": "page"
+    }
+  ],
+  "blocks": [],
+  "apis": [],
+  "meta": [],
+  "config": {},
+  "uniConfig": {},
+  "globals": {},
+  "i18n": {
+    "locale": "zh-CN",
+    "fallbackLocale": "zh-CN",
+    "messages": []
+  },
+  "__BASE_PATH__": "/",
+  "__UID__": "ebf2eee9-b876-4224-954d-276f50ca459e"
+}
