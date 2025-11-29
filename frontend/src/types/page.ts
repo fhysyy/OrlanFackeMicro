@@ -1,6 +1,6 @@
-import type { FormConfig } from './form';
-import type { TableConfig } from './table';
-import type { CrudConfig } from './crud';
+import type { FormConfig } from './form'
+import type { TableConfig } from './table'
+import type { CrudConfig } from './crud'
 
 /**
  * 页面布局类型

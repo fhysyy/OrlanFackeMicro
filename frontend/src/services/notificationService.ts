@@ -1,5 +1,5 @@
-import { ElNotification } from 'element-plus';
-import type { NotificationParams } from 'element-plus';
+import { ElNotification } from 'element-plus'
+import type { NotificationParams } from 'element-plus'
 
 export interface NotificationOptions extends Partial<NotificationParams> {
   title: string;
@@ -10,7 +10,7 @@ export interface NotificationOptions extends Partial<NotificationParams> {
 }
 
 class NotificationService {
-  private defaultDuration = 3000;
+  private defaultDuration = 3000
 
   // 显示普通通知
   show(options: NotificationOptions) {
@@ -21,7 +21,7 @@ class NotificationService {
       duration = this.defaultDuration,
       showClose = true,
       ...rest
-    } = options;
+    } = options
 
     ElNotification({
       title,
@@ -30,7 +30,7 @@ class NotificationService {
       duration,
       showClose,
       ...rest
-    });
+    })
   }
 
   // 显示成功通知
@@ -40,7 +40,7 @@ class NotificationService {
       message,
       type: 'success',
       ...options
-    });
+    })
   }
 
   // 显示警告通知
@@ -50,7 +50,7 @@ class NotificationService {
       message,
       type: 'warning',
       ...options
-    });
+    })
   }
 
   // 显示信息通知
@@ -60,7 +60,7 @@ class NotificationService {
       message,
       type: 'info',
       ...options
-    });
+    })
   }
 
   // 显示错误通知
@@ -71,19 +71,19 @@ class NotificationService {
       type: 'error',
       duration: 5000, // 错误通知显示时间更长
       ...options
-    });
+    })
   }
 
   // 清除所有通知
   clearAll() {
-    ElNotification.closeAll();
+    ElNotification.closeAll()
   }
 }
 
 // 导出单例实例
-export const notificationService = new NotificationService();
+export const notificationService = new NotificationService()
 
 // 导出useNotification组合式API
 export function useNotification() {
-  return notificationService;
+  return notificationService
 }

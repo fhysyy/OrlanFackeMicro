@@ -1,5 +1,5 @@
-import { RouteRecordRaw } from 'vue-router';
-import { UserRole } from './api';
+import { RouteRecordRaw } from 'vue-router'
+import { UserRole } from './api'
 
 /**
  * 动态路由配置项

@@ -1,11 +1,15 @@
 <template>
   <div id="app">
+     <Suspense>
     <router-view />
+     </Suspense>
+
   </div>
 </template>
 
 <script setup lang="ts">
 // 主应用组件
+ import { Suspense } from 'vue';
 </script>
 
 <style lang="scss">

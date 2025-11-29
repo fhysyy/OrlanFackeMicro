@@ -1,13 +1,13 @@
-import type { PageMetadata } from '../types/page';
-import { api } from './api';
-import { deepClone } from '../utils/deepCloneUtils';
+import type { PageMetadata } from '../types/page'
+import { api } from './api'
+import { deepClone } from '../utils/deepCloneUtils'
 
 /**
  * 页面元数据管理服务
  */
 export class MetadataService {
-  private static readonly STORAGE_KEY_PREFIX = 'page_metadata_';
-  private static readonly STORAGE_LIST_KEY = 'page_metadata_list';
+  private static readonly STORAGE_KEY_PREFIX = 'page_metadata_'
+  private static readonly STORAGE_LIST_KEY = 'page_metadata_list'
 
   /**
    * 保存页面元数据
@@ -15,32 +15,32 @@ export class MetadataService {
   static async saveMetadata(metadata: PageMetadata): Promise<PageMetadata> {
     try {
       // 更新时间戳
-      metadata.updatedAt = new Date().toISOString();
+      metadata.updatedAt = new Date().toISOString()
       
       // 如果是新页面，设置创建时间
       if (!metadata.createdAt) {
-        metadata.createdAt = metadata.updatedAt;
+        metadata.createdAt = metadata.updatedAt
       }
 
       // 尝试通过API保存到后端
       try {
-        const response = await api.post('/api/metadata/pages', metadata);
+        const response = await api.post('/api/metadata/pages', metadata)
         
         // 更新本地存储
-        this.updateLocalStorage(metadata);
+        this.updateLocalStorage(metadata)
         
-        return response.data;
+        return response.data
       } catch (apiError) {
-        console.warn('后端保存失败，使用本地存储', apiError);
+        console.warn('后端保存失败，使用本地存储', apiError)
         
         // 保存到本地存储
-        this.updateLocalStorage(metadata);
+        this.updateLocalStorage(metadata)
         
-        return metadata;
+        return metadata
       }
     } catch (error) {
-      console.error('保存页面元数据失败:', error);
-      throw new Error('保存页面元数据失败');
+      console.error('保存页面元数据失败:', error)
+      throw new Error('保存页面元数据失败')
     }
   }
 
@@ -51,24 +51,24 @@ export class MetadataService {
     try {
       // 尝试从后端获取
       try {
-        const response = await api.get(`/api/metadata/pages/${pageId}`);
-        const metadata = response.data;
+        const response = await api.get(`/api/metadata/pages/${pageId}`)
+        const metadata = response.data
         
         // 更新本地缓存
-        this.updateLocalStorage(metadata);
+        this.updateLocalStorage(metadata)
         
-        return metadata;
+        return metadata
       } catch (apiError) {
-        console.warn('后端获取失败，尝试从本地存储获取', apiError);
+        console.warn('后端获取失败，尝试从本地存储获取', apiError)
         
         // 从本地存储获取
-        return this.getFromLocalStorage(pageId);
+        return this.getFromLocalStorage(pageId)
       }
     } catch (error) {
-      console.error('获取页面元数据失败:', error);
+      console.error('获取页面元数据失败:', error)
       
       // 兜底从本地存储获取
-      return this.getFromLocalStorage(pageId);
+      return this.getFromLocalStorage(pageId)
     }
   }
 
@@ -79,24 +79,24 @@ export class MetadataService {
     try {
       // 尝试从后端获取
       try {
-        const response = await api.get('/api/metadata/pages');
-        const metadataList = response.data;
+        const response = await api.get('/api/metadata/pages')
+        const metadataList = response.data
         
         // 更新本地缓存
-        this.updateLocalStorageList(metadataList);
+        this.updateLocalStorageList(metadataList)
         
-        return metadataList;
+        return metadataList
       } catch (apiError) {
-        console.warn('后端获取失败，从本地存储获取列表', apiError);
+        console.warn('后端获取失败，从本地存储获取列表', apiError)
         
         // 从本地存储获取
-        return this.getListFromLocalStorage();
+        return this.getListFromLocalStorage()
       }
     } catch (error) {
-      console.error('获取页面元数据列表失败:', error);
+      console.error('获取页面元数据列表失败:', error)
       
       // 兜底从本地存储获取
-      return this.getListFromLocalStorage();
+      return this.getListFromLocalStorage()
     }
   }
 
@@ -107,16 +107,16 @@ export class MetadataService {
     try {
       // 尝试从后端删除
       try {
-        await api.delete(`/api/metadata/pages/${pageId}`);
+        await api.delete(`/api/metadata/pages/${pageId}`)
       } catch (apiError) {
-        console.warn('后端删除失败，仅删除本地存储', apiError);
+        console.warn('后端删除失败，仅删除本地存储', apiError)
       }
       
       // 从本地存储删除
-      this.removeFromLocalStorage(pageId);
+      this.removeFromLocalStorage(pageId)
     } catch (error) {
-      console.error('删除页面元数据失败:', error);
-      throw new Error('删除页面元数据失败');
+      console.error('删除页面元数据失败:', error)
+      throw new Error('删除页面元数据失败')
     }
   }
 
@@ -125,11 +125,11 @@ export class MetadataService {
    */
   static exportMetadata(metadata: PageMetadata): string {
     try {
-      const content = JSON.stringify(metadata, null, 2);
-      return content;
+      const content = JSON.stringify(metadata, null, 2)
+      return content
     } catch (error) {
-      console.error('导出页面元数据失败:', error);
-      throw new Error('导出页面元数据失败');
+      console.error('导出页面元数据失败:', error)
+      throw new Error('导出页面元数据失败')
     }
   }
 
@@ -138,22 +138,22 @@ export class MetadataService {
    */
   static importMetadata(content: string): PageMetadata {
     try {
-      const metadata = JSON.parse(content) as PageMetadata;
+      const metadata = JSON.parse(content) as PageMetadata
       
       // 验证导入的数据
-      this.validateMetadata(metadata);
+      this.validateMetadata(metadata)
       
       // 生成新的ID，避免覆盖
-      metadata.id = `${metadata.id || 'imported'}_${Date.now()}`;
+      metadata.id = `${metadata.id || 'imported'}_${Date.now()}`
       
       // 更新时间戳
-      metadata.createdAt = new Date().toISOString();
-      metadata.updatedAt = metadata.createdAt;
+      metadata.createdAt = new Date().toISOString()
+      metadata.updatedAt = metadata.createdAt
       
-      return metadata;
+      return metadata
     } catch (error) {
-      console.error('导入页面元数据失败:', error);
-      throw new Error('导入页面元数据格式错误或无效');
+      console.error('导入页面元数据失败:', error)
+      throw new Error('导入页面元数据格式错误或无效')
     }
   }
 
@@ -162,24 +162,24 @@ export class MetadataService {
    */
   static duplicateMetadata(metadata: PageMetadata, newName: string, newPath: string): PageMetadata {
     // 深拷贝
-    const newMetadata = deepClone(metadata);
+    const newMetadata = deepClone(metadata)
     
     // 更新基本信息
-    newMetadata.id = `${metadata.id || 'page'}_copy_${Date.now()}`;
-    newMetadata.name = newName;
-    newMetadata.createdAt = new Date().toISOString();
-    newMetadata.updatedAt = newMetadata.createdAt;
+    newMetadata.id = `${metadata.id || 'page'}_copy_${Date.now()}`
+    newMetadata.name = newName
+    newMetadata.createdAt = new Date().toISOString()
+    newMetadata.updatedAt = newMetadata.createdAt
     
     // 更新路由信息
     if (newMetadata.route) {
-      newMetadata.route.path = newPath;
-      newMetadata.route.name = newMetadata.id;
+      newMetadata.route.path = newPath
+      newMetadata.route.name = newMetadata.id
       if (newMetadata.route.meta) {
-        newMetadata.route.meta.title = newName;
+        newMetadata.route.meta.title = newName
       }
     }
     
-    return newMetadata;
+    return newMetadata
   }
 
   /**
@@ -448,7 +448,7 @@ export class MetadataService {
           `
         }
       }
-    ];
+    ]
   }
 
   /**
@@ -456,15 +456,15 @@ export class MetadataService {
    */
   private static validateMetadata(metadata: any): void {
     if (!metadata || typeof metadata !== 'object') {
-      throw new Error('页面元数据必须是有效的对象');
+      throw new Error('页面元数据必须是有效的对象')
     }
     
     if (!metadata.name || typeof metadata.name !== 'string') {
-      throw new Error('页面名称必须是有效的字符串');
+      throw new Error('页面名称必须是有效的字符串')
     }
     
     if (!metadata.components || !Array.isArray(metadata.components)) {
-      throw new Error('页面组件配置必须是有效的数组');
+      throw new Error('页面组件配置必须是有效的数组')
     }
   }
 
@@ -473,21 +473,21 @@ export class MetadataService {
    */
   private static updateLocalStorage(metadata: PageMetadata): void {
     try {
-      localStorage.setItem(`${this.STORAGE_KEY_PREFIX}${metadata.id}`, JSON.stringify(metadata));
+      localStorage.setItem(`${this.STORAGE_KEY_PREFIX}${metadata.id}`, JSON.stringify(metadata))
       
       // 更新列表
-      const list = this.getListFromLocalStorage();
-      const existingIndex = list.findIndex(item => item.id === metadata.id);
+      const list = this.getListFromLocalStorage()
+      const existingIndex = list.findIndex(item => item.id === metadata.id)
       
       if (existingIndex >= 0) {
-        list[existingIndex] = { ...metadata };
+        list[existingIndex] = { ...metadata }
       } else {
-        list.push({ ...metadata });
+        list.push({ ...metadata })
       }
       
-      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(list));
+      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(list))
     } catch (error) {
-      console.error('更新本地存储失败:', error);
+      console.error('更新本地存储失败:', error)
     }
   }
 
@@ -496,11 +496,11 @@ export class MetadataService {
    */
   private static getFromLocalStorage(pageId: string): PageMetadata | null {
     try {
-      const content = localStorage.getItem(`${this.STORAGE_KEY_PREFIX}${pageId}`);
-      return content ? JSON.parse(content) : null;
+      const content = localStorage.getItem(`${this.STORAGE_KEY_PREFIX}${pageId}`)
+      return content ? JSON.parse(content) : null
     } catch (error) {
-      console.error('从本地存储获取失败:', error);
-      return null;
+      console.error('从本地存储获取失败:', error)
+      return null
     }
   }
 
@@ -509,14 +509,14 @@ export class MetadataService {
    */
   private static updateLocalStorageList(metadataList: PageMetadata[]): void {
     try {
-      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(metadataList));
+      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(metadataList))
       
       // 更新每个页面的单独存储
       metadataList.forEach(metadata => {
-        localStorage.setItem(`${this.STORAGE_KEY_PREFIX}${metadata.id}`, JSON.stringify(metadata));
-      });
+        localStorage.setItem(`${this.STORAGE_KEY_PREFIX}${metadata.id}`, JSON.stringify(metadata))
+      })
     } catch (error) {
-      console.error('更新本地存储列表失败:', error);
+      console.error('更新本地存储列表失败:', error)
     }
   }
 
@@ -525,11 +525,11 @@ export class MetadataService {
    */
   private static getListFromLocalStorage(): PageMetadata[] {
     try {
-      const content = localStorage.getItem(this.STORAGE_LIST_KEY);
-      return content ? JSON.parse(content) : [];
+      const content = localStorage.getItem(this.STORAGE_LIST_KEY)
+      return content ? JSON.parse(content) : []
     } catch (error) {
-      console.error('从本地存储获取列表失败:', error);
-      return [];
+      console.error('从本地存储获取列表失败:', error)
+      return []
     }
   }
 
@@ -538,14 +538,14 @@ export class MetadataService {
    */
   private static removeFromLocalStorage(pageId: string): void {
     try {
-      localStorage.removeItem(`${this.STORAGE_KEY_PREFIX}${pageId}`);
+      localStorage.removeItem(`${this.STORAGE_KEY_PREFIX}${pageId}`)
       
       // 更新列表
-      const list = this.getListFromLocalStorage();
-      const filteredList = list.filter(item => item.id !== pageId);
-      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(filteredList));
+      const list = this.getListFromLocalStorage()
+      const filteredList = list.filter(item => item.id !== pageId)
+      localStorage.setItem(this.STORAGE_LIST_KEY, JSON.stringify(filteredList))
     } catch (error) {
-      console.error('从本地存储删除失败:', error);
+      console.error('从本地存储删除失败:', error)
     }
   }
 }

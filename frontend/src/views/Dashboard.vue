@@ -96,6 +96,7 @@ import { useAuthStore } from '@/stores/auth'
 import echarts from '@/plugins/echarts'
 import { Folder, Monitor, User, Message } from '@element-plus/icons-vue'
 import type { SystemStats } from '@/types/api'
+import { systemApi, activityApi } from '@/services/api'
 
 const authStore = useAuthStore()
 
@@ -205,22 +206,52 @@ const initCharts = () => {
 
 // 获取统计数据
 const fetchStats = async () => {
-  // 模拟API调用
-  stats.value = {
-    userCount: 1250,
-    activeUsers: 342,
-    messageCount: 15678,
-    pendingMessages: 23,
-    fileCount: 567,
-    totalFileSize: 1024 * 1024 * 500, // 500MB
-    systemUptime: '15天 8小时 23分钟',
-    memoryUsage: 65.5,
-    cpuUsage: 23.7
+  try {
+    const response = await systemApi.getStats()
+    if (response.data) {
+      stats.value = response.data
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+    // 使用默认数据作为回退
+    stats.value = {
+      userCount: 0,
+      activeUsers: 0,
+      messageCount: 0,
+      pendingMessages: 0,
+      fileCount: 0,
+      totalFileSize: 0,
+      systemUptime: '未知',
+      memoryUsage: 0,
+      cpuUsage: 0
+    }
   }
 }
 
-onMounted(() => {
-  fetchStats()
+// 获取最近活动
+const fetchRecentActivities = async () => {
+  try {
+    const response = await activityApi.getActivities({ page: 1, pageSize: 10 })
+    if (response.data?.items) {
+      recentActivities.value = response.data.items.map(activity => ({
+        id: activity.id,
+        timestamp: activity.timestamp,
+        type: activity.type === 'Error' ? 'danger' : 
+              activity.type === 'Create' ? 'success' : 
+              activity.type === 'Update' ? 'warning' : 'primary',
+        content: activity.details
+      }))
+    }
+  } catch (error) {
+    console.error('获取最近活动失败:', error)
+  }
+}
+
+onMounted(async () => {
+  await Promise.all([
+    fetchStats(),
+    fetchRecentActivities()
+  ])
   setTimeout(() => {
     initCharts()
   }, 100)

@@ -59,8 +59,8 @@
           <span>系统监控</span>
         </el-menu-item>
         
-        <!-- 低代码设计器 - 仅管理员和系统管理员可见 -->
-        <el-menu-item index="/ali-lowcode-designer" v-if="hasPermission('Admin')">
+        <!-- 低代码设计器 - 仅管理员和系统管理员可见v-if="hasPermission('Admin')" -->
+        <el-menu-item index="/ali-lowcode-designer" >
           <el-icon><Edit /></el-icon>
           <span>低代码设计器</span>
         </el-menu-item>

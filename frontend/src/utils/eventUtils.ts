@@ -1,6 +1,7 @@
-import type { EventConfig, ActionConfig, EventContext, EventFilter, EventTransformer } from '@/types/event'
+import type { EventConfig, ActionConfig, EventContext, EventFilter, EventTransformer, EventHandler } from '@/types/event'
 import { eventBusService, useEventBus } from '@/services/eventBusService'
 import { createEventFilter as createFilter, createEventTransformer as createTransformer } from '@/types/event'
+import { onUnmounted } from 'vue'
 
 /**
  * 创建事件过滤器
@@ -75,12 +76,12 @@ export function OnEvent(eventName: string, options?: {
  * @param delay 延迟时间（毫秒）
  */
 export function debounceEventHandler(
-  handler: EventHandler,
+  handler: EventHandler<any>,
   delay: number
-): EventHandler {
+): EventHandler<any> {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   
-  return async (eventData: any, context: EventContext) => {
+  return async (eventData: any) => {
     if (timeoutId) {
       clearTimeout(timeoutId)
     }
@@ -88,7 +89,7 @@ export function debounceEventHandler(
     return new Promise((resolve) => {
       timeoutId = setTimeout(async () => {
         try {
-          const result = await handler(eventData, context)
+          const result = await handler(eventData)
           resolve(result)
         } catch (error) {
           console.error('Debounced event handler error:', error)
@@ -105,18 +106,18 @@ export function debounceEventHandler(
  * @param limit 限制时间（毫秒）
  */
 export function throttleEventHandler(
-  handler: EventHandler,
+  handler: EventHandler<any>,
   limit: number
-): EventHandler {
+): EventHandler<any> {
   let inThrottle = false
   let lastResult: any = undefined
   
-  return async (eventData: any, context: EventContext) => {
+  return async (eventData: any) => {
     if (!inThrottle) {
       inThrottle = true
       
       try {
-        lastResult = await handler(eventData, context)
+        lastResult = await handler(eventData)
       } catch (error) {
         console.error('Throttled event handler error:', error)
       }
@@ -389,11 +390,11 @@ export function setupComponentEvents(
  */
 export function useEventListener(
   eventName: string,
-  handler: EventHandler,
+  handler: EventHandler<any>,
   options?: {
     once?: boolean
-    filter?: EventFilter
-    transformer?: EventTransformer
+    filter?: EventFilter<any>
+    transformer?: EventTransformer<any, any>
     debounce?: number
     throttle?: number
   }
@@ -404,7 +405,7 @@ export function useEventListener(
   const setupListener = () => {
     if (unsubscribe) return
     
-    let processedHandler = handler
+    let processedHandler: (eventData: any) => void | Promise<void> = handler
     
     // 应用防抖
     if (options?.debounce) {
@@ -419,18 +420,20 @@ export function useEventListener(
     // 应用转换器
     if (options?.transformer) {
       const originalHandler = processedHandler
-      processedHandler = (eventData: any, context: EventContext) => {
+      processedHandler = (eventData: any) => {
+        const context: EventContext = { id: 'useEventListener', eventBus, isActive: true }
         const transformedData = options.transformer!(eventData, context)
-        return originalHandler(transformedData, context)
+        return originalHandler(transformedData)
       }
     }
     
     // 应用过滤器
     if (options?.filter) {
       const originalHandler = processedHandler
-      processedHandler = (eventData: any, context: EventContext) => {
+      processedHandler = (eventData: any) => {
+        const context: EventContext = { id: 'useEventListener', eventBus, isActive: true }
         if (options.filter!(eventData, context)) {
-          return originalHandler(eventData, context)
+          return originalHandler(eventData)
         }
       }
     }

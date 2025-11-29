@@ -1,4 +1,4 @@
-import type { ColumnProps } from 'element-plus';
+import type { ColumnProps } from 'element-plus'
 
 /**
  * 表格排序方向

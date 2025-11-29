@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios'
 import { useAuthStore } from '@/stores/auth'
-import type { ApiResponse, Exam, ExamParticipant, PaginationParams, PaginationResponse, ExamQuestion } from '@/types/api'
+import type { ApiResponse, SystemStats, Message, FileInfo, Activity, PaginationParams, PaginationResponse } from '@/types/api'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { handleApiError } from '@/utils/errorHandler'
 import { logger } from '@/utils/logger'
@@ -86,66 +86,105 @@ api.interceptors.response.use(
   }
 )
 
-// 考试管理API
-export const examApi = {
-  // 获取考试列表
-  getExams: (params?: PaginationParams): Promise<ApiResponse<PaginationResponse<Exam>>> => {
-    return api.get('/api/exam', { params })
+// 系统管理API
+export const systemApi = {
+  // 获取系统统计信息
+  getStats: (): Promise<ApiResponse<SystemStats>> => {
+    return api.get('/api/system/stats')
   },
 
-  // 获取考试详情
-  getExam: (id: string): Promise<ApiResponse<Exam>> => {
-    return api.get(`/api/exam/${id}`)
+  // 获取系统健康状态
+  getHealth: (): Promise<ApiResponse<Record<string, any>>> => {
+    return api.get('/api/system/health')
   },
 
-  // 创建考试
-  createExam: (data: Omit<Exam, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Exam>> => {
-    return api.post('/api/exam', data)
+  // 获取系统信息
+  getInfo: (): Promise<ApiResponse<Record<string, any>>> => {
+    return api.get('/api/system/info')
+  }
+}
+
+// 消息管理API
+export const messageApi = {
+  // 获取消息列表
+  getMessages: (params?: PaginationParams): Promise<ApiResponse<PaginationResponse<Message>>> => {
+    return api.get('/api/messages', { params })
   },
 
-  // 更新考试
-  updateExam: (id: string, data: Partial<Exam>): Promise<ApiResponse<Exam>> => {
-    return api.put(`/api/exam/${id}`, data)
+  // 获取消息详情
+  getMessage: (id: string): Promise<ApiResponse<Message>> => {
+    return api.get(`/api/messages/${id}`)
   },
 
-  // 删除考试
-  deleteExam: (id: string): Promise<ApiResponse<void>> => {
-    return api.delete(`/api/exam/${id}`)
+  // 创建消息
+  createMessage: (data: Omit<Message, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<Message>> => {
+    return api.post('/api/messages', data)
   },
 
-  // 开始考试
-  startExam: (id: string): Promise<ApiResponse<void>> => {
-    return api.post(`/api/exam/${id}/start`)
+  // 更新消息状态
+  updateMessageStatus: (id: string, status: Message['status']): Promise<ApiResponse<void>> => {
+    return api.patch(`/api/messages/${id}/status`, { status })
   },
 
-  // 结束考试
-  endExam: (id: string): Promise<ApiResponse<void>> => {
-    return api.post(`/api/exam/${id}/end`)
+  // 删除消息
+  deleteMessage: (id: string): Promise<ApiResponse<void>> => {
+    return api.delete(`/api/messages/${id}`)
+  }
+}
+
+// 文件管理API
+export const fileApi = {
+  // 获取文件列表
+  getFiles: (params?: PaginationParams): Promise<ApiResponse<PaginationResponse<FileInfo>>> => {
+    return api.get('/api/files', { params })
   },
 
-  // 获取考试状态
-  getExamStatus: (id: string): Promise<ApiResponse<Exam['status']>> => {
-    return api.get(`/api/exam/${id}/status`)
+  // 获取文件详情
+  getFile: (id: string): Promise<ApiResponse<FileInfo>> => {
+    return api.get(`/api/files/${id}`)
   },
 
-  // 获取考试分析
-  getExamAnalysis: (id: string): Promise<ApiResponse<Record<string, unknown>>> => {
-    return api.get(`/api/exam/${id}/analysis`)
+  // 上传文件
+  uploadFile: (file: File, onProgress?: (progress: number) => void): Promise<ApiResponse<FileInfo>> => {
+    const formData = new FormData()
+    formData.append('file', file)
+    
+    return api.post('/api/files', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        if (onProgress && progressEvent.total) {
+          const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          onProgress(progress)
+        }
+      }
+    })
   },
 
-  // 添加参与者
-  addParticipant: (examId: string, studentId: string): Promise<ApiResponse<ExamParticipant>> => {
-    return api.post(`/api/exam/${examId}/participants/${studentId}`)
+  // 下载文件
+  downloadFile: (id: string): Promise<Blob> => {
+    return api.get(`/api/files/${id}/download`, {
+      responseType: 'blob'
+    }).then(response => response.data)
   },
 
-  // 移除参与者
-  removeParticipant: (examId: string, studentId: string): Promise<ApiResponse<void>> => {
-    return api.delete(`/api/exam/${examId}/participants/${studentId}`)
+  // 删除文件
+  deleteFile: (id: string): Promise<ApiResponse<void>> => {
+    return api.delete(`/api/files/${id}`)
+  }
+}
+
+// 活动日志API
+export const activityApi = {
+  // 获取活动日志
+  getActivities: (params?: PaginationParams): Promise<ApiResponse<PaginationResponse<Activity>>> => {
+    return api.get('/api/activities', { params })
   },
 
-  // 获取参与者列表
-  getParticipants: (examId: string): Promise<ApiResponse<ExamParticipant[]>> => {
-    return api.get(`/api/exam/${examId}/participants`)
+  // 创建活动日志
+  createActivity: (data: Omit<Activity, 'id' | 'timestamp'>): Promise<ApiResponse<Activity>> => {
+    return api.post('/api/activities', data)
   }
 }
 

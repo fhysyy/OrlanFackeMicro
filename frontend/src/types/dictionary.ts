@@ -70,4 +70,4 @@ export type {
   DictionaryTypeUpdateRequest,
   DictionaryItemCreateRequest,
   DictionaryItemUpdateRequest
-};
+}

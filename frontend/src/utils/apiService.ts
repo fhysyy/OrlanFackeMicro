@@ -1,10 +1,10 @@
 // API服务工具
 // 统一处理API请求，集成错误处理和加载状态管理
 
-import { api } from '@/services/api';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { apiCall, handleApiError } from './errorHandler';
+import { api } from '@/services/api'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import type { AxiosRequestConfig, AxiosResponse } from 'axios'
+import { apiCall, handleApiError } from './errorHandler'
 
 /**
  * 带加载状态的API请求配置
@@ -36,36 +36,36 @@ export class ApiService {
       errorMessage = '获取失败',
       critical = false,
       ...axiosOptions
-    } = options;
+    } = options
 
-    let loadingInstance: any = null;
+    let loadingInstance: any = null
     
     try {
       // 显示加载状态
       if (showLoading) {
-        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 });
+        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 })
       }
 
       // 发送请求
-      const response = await api.get<T>(url, axiosOptions);
+      const response = await api.get<T>(url, axiosOptions)
       
       // 显示成功消息
       if (showSuccessMessage) {
-        ElMessage.success(successMessage);
+        ElMessage.success(successMessage)
       }
 
-      return response.data;
+      return response.data
     } catch (error) {
       await handleApiError(error, {
         showMessage: showErrorMessage,
         defaultMessage: errorMessage,
         critical
-      });
-      return null;
+      })
+      return null
     } finally {
       // 隐藏加载状态
       if (loadingInstance) {
-        loadingInstance.close();
+        loadingInstance.close()
       }
     }
   }
@@ -83,36 +83,36 @@ export class ApiService {
       errorMessage = '操作失败',
       critical = false,
       ...axiosOptions
-    } = options;
+    } = options
 
-    let loadingInstance: any = null;
+    let loadingInstance: any = null
     
     try {
       // 显示加载状态
       if (showLoading) {
-        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 });
+        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 })
       }
 
       // 发送请求
-      const response = await api.post<T>(url, data, axiosOptions);
+      const response = await api.post<T>(url, data, axiosOptions)
       
       // 显示成功消息
       if (showSuccessMessage) {
-        ElMessage.success(successMessage);
+        ElMessage.success(successMessage)
       }
 
-      return response.data;
+      return response.data
     } catch (error) {
       await handleApiError(error, {
         showMessage: showErrorMessage,
         defaultMessage: errorMessage,
         critical
-      });
-      return null;
+      })
+      return null
     } finally {
       // 隐藏加载状态
       if (loadingInstance) {
-        loadingInstance.close();
+        loadingInstance.close()
       }
     }
   }
@@ -130,36 +130,36 @@ export class ApiService {
       errorMessage = '更新失败',
       critical = false,
       ...axiosOptions
-    } = options;
+    } = options
 
-    let loadingInstance: any = null;
+    let loadingInstance: any = null
     
     try {
       // 显示加载状态
       if (showLoading) {
-        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 });
+        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 })
       }
 
       // 发送请求
-      const response = await api.put<T>(url, data, axiosOptions);
+      const response = await api.put<T>(url, data, axiosOptions)
       
       // 显示成功消息
       if (showSuccessMessage) {
-        ElMessage.success(successMessage);
+        ElMessage.success(successMessage)
       }
 
-      return response.data;
+      return response.data
     } catch (error) {
       await handleApiError(error, {
         showMessage: showErrorMessage,
         defaultMessage: errorMessage,
         critical
-      });
-      return null;
+      })
+      return null
     } finally {
       // 隐藏加载状态
       if (loadingInstance) {
-        loadingInstance.close();
+        loadingInstance.close()
       }
     }
   }
@@ -177,36 +177,36 @@ export class ApiService {
       errorMessage = '删除失败',
       critical = false,
       ...axiosOptions
-    } = options;
+    } = options
 
-    let loadingInstance: any = null;
+    let loadingInstance: any = null
     
     try {
       // 显示加载状态
       if (showLoading) {
-        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 });
+        loadingInstance = ElMessage.loading(loadingMessage, { duration: 0 })
       }
 
       // 发送请求
-      const response = await api.delete<T>(url, axiosOptions);
+      const response = await api.delete<T>(url, axiosOptions)
       
       // 显示成功消息
       if (showSuccessMessage) {
-        ElMessage.success(successMessage);
+        ElMessage.success(successMessage)
       }
 
-      return response.data;
+      return response.data
     } catch (error) {
       await handleApiError(error, {
         showMessage: showErrorMessage,
         defaultMessage: errorMessage,
         critical
-      });
-      return null;
+      })
+      return null
     } finally {
       // 隐藏加载状态
       if (loadingInstance) {
-        loadingInstance.close();
+        loadingInstance.close()
       }
     }
   }
@@ -224,9 +224,9 @@ export class ApiService {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
-      });
+      })
       
-      return await this.delete<T>(url, options);
+      return await this.delete<T>(url, options)
     } catch (error: any) {
       // 如果是用户取消操作，不显示错误消息
       if (error.name !== 'Error') {
@@ -234,9 +234,9 @@ export class ApiService {
           showMessage: options.showErrorMessage !== undefined ? options.showErrorMessage : true,
           defaultMessage: options.errorMessage || '删除取消',
           critical: options.critical
-        });
+        })
       }
-      return null;
+      return null
     }
   }
 
@@ -249,8 +249,8 @@ export class ApiService {
     options: ApiRequestOptions = {}
   ): Promise<T | null> {
     if (!ids || ids.length === 0) {
-      ElMessage.warning('请选择要删除的数据');
-      return null;
+      ElMessage.warning('请选择要删除的数据')
+      return null
     }
 
     return this.confirmDelete<T>(
@@ -262,9 +262,9 @@ export class ApiService {
         data: { ids },
         successMessage: `成功删除 ${ids.length} 条数据`
       }
-    );
+    )
   }
 }
 
 // 导出实例
-export const apiService = ApiService;
+export const apiService = ApiService

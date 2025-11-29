@@ -127,7 +127,7 @@ export function createLazyComponent(
     // 记录性能指标
     performanceService.recordMetric({
       id: `component_load_${componentName}`,
-      name: `Component Load Time`,
+      name: 'Component Load Time',
       value: Date.now(),
       unit: 'ms',
       metadata: {
@@ -151,7 +151,7 @@ export function createLazyComponent(
     // 记录开始加载时间
     performanceService.recordMetric({
       id: `component_start_load_${componentName}`,
-      name: `Component Start Load`,
+      name: 'Component Start Load',
       value: Date.now(),
       unit: 'ms',
       metadata: {
@@ -407,12 +407,12 @@ function checkNetworkState(): 'good' | 'medium' | 'slow' {
       const { effectiveType, rtt } = navigator.connection
       
       switch (effectiveType) {
-        case '4g':
-          return 'good'
-        case '3g':
-          return rtt < 100 ? 'medium' : 'slow'
-        default:
-          return 'slow'
+      case '4g':
+        return 'good'
+      case '3g':
+        return rtt < 100 ? 'medium' : 'slow'
+      default:
+        return 'slow'
       }
     }
     
@@ -683,7 +683,7 @@ export async function importModule<T = any>(
     // 记录开始导入
     performanceService.recordMetric({
       id: `import_start_${moduleName}`,
-      name: `Module Import Start`,
+      name: 'Module Import Start',
       value: startTime,
       unit: 'ms',
       metadata: { moduleName }
@@ -698,7 +698,7 @@ export async function importModule<T = any>(
     
     performanceService.recordMetric({
       id: `import_complete_${moduleName}`,
-      name: `Module Import Time`,
+      name: 'Module Import Time',
       value: loadTime,
       unit: 'ms',
       metadata: { moduleName }
@@ -746,7 +746,7 @@ export function clearComponentCache(key?: string): void {
 export function getCacheStats(): {
   cachedComponents: number
   cacheSize: number // 估算的缓存大小（字节）
-} {
+  } {
   return {
     cachedComponents: componentCache.size,
     cacheSize: componentCache.size * 1024 // 估算每个组件平均占用1KB
@@ -780,7 +780,7 @@ export function optimizeComponent(
   // 这里简化实现，实际项目中可以使用Vue的memo、自定义hooks等
   // 来优化组件渲染性能
   
-  console.log(`Component optimized with options:`, options)
+  console.log('Component optimized with options:', options)
   
   return component
 }

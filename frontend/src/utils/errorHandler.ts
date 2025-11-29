@@ -24,13 +24,7 @@ export interface ErrorHandlerOptions {
   onSuccess?: () => void
 }
 
-/**
- * 全局错误处理器配置
- */
-export interface GlobalErrorHandlerConfig {
-  performanceService?: any
-  eventBusService?: any
-}
+
 
 /**
  * 从Axios错误中提取API错误信息
@@ -55,22 +49,22 @@ export function extractApiError(error: any): ApiError {
       
       // HTTP状态码处理
       switch (axiosError.response.status) {
-        case 400:
-          return { code: 'BAD_REQUEST', message: '请求参数错误', details: axiosError.response.data }
-        case 401:
-          return { code: 'UNAUTHORIZED', message: '未授权访问', details: axiosError.response.data }
-        case 403:
-          return { code: 'FORBIDDEN', message: '没有权限执行此操作', details: axiosError.response.data }
-        case 404:
-          return { code: 'NOT_FOUND', message: '请求的资源不存在', details: axiosError.response.data }
-        case 500:
-          return { code: 'SERVER_ERROR', message: '服务器内部错误', details: axiosError.response.data }
-        default:
-          return {
-            code: String(axiosError.response.status),
-            message: `请求失败: ${axiosError.message}`,
-            details: axiosError.response.data
-          }
+      case 400:
+        return { code: 'BAD_REQUEST', message: '请求参数错误', details: axiosError.response.data }
+      case 401:
+        return { code: 'UNAUTHORIZED', message: '未授权访问', details: axiosError.response.data }
+      case 403:
+        return { code: 'FORBIDDEN', message: '没有权限执行此操作', details: axiosError.response.data }
+      case 404:
+        return { code: 'NOT_FOUND', message: '请求的资源不存在', details: axiosError.response.data }
+      case 500:
+        return { code: 'SERVER_ERROR', message: '服务器内部错误', details: axiosError.response.data }
+      default:
+        return {
+          code: String(axiosError.response.status),
+          message: `请求失败: ${axiosError.message}`,
+          details: axiosError.response.data
+        }
       }
     }
     
@@ -92,8 +86,6 @@ export function extractApiError(error: any): ApiError {
  * 设置全局错误处理
  */
 export function setupGlobalErrorHandler(app: App, config: GlobalErrorHandlerConfig = {}): void {
-  const { performanceService, eventBusService } = config
-
   // 处理Vue错误
   app.config.errorHandler = (error, instance, info) => {
     const errorMessage = error instanceof Error ? error.message : 'Vue渲染错误'
@@ -105,16 +97,6 @@ export function setupGlobalErrorHandler(app: App, config: GlobalErrorHandlerConf
       info
     })
 
-    // 记录到性能服务（如果可用）
-    if (performanceService?.recordError) {
-      performanceService.recordError('vue_error', errorMessage, { error, componentName, info })
-    }
-
-    // 发出错误事件（如果可用）
-    if (eventBusService?.emit) {
-      eventBusService.emit('error:vue', { errorMessage, error, componentName, info })
-    }
-
     // 显示用户友好的错误消息
     ElMessage.error(`组件渲染错误: ${errorMessage}`)
   }
@@ -122,19 +104,6 @@ export function setupGlobalErrorHandler(app: App, config: GlobalErrorHandlerConf
   // 处理Vue警告
   app.config.warnHandler = (msg, instance, trace) => {
     logger.warn(`Vue warning: ${msg}`, trace)
-    
-    const componentName = instance?.type?.name || 'UnknownComponent'
-    
-    // 记录警告到性能服务（如果可用）
-    if (performanceService?.recordMetric) {
-      performanceService.recordMetric({
-        id: `vue_warning_${Date.now()}`,
-        name: 'Vue警告',
-        value: 0,
-        unit: 'warning',
-        metadata: { message: msg, trace, componentName }
-      })
-    }
   }
 
   // 处理全局未捕获错误
@@ -148,16 +117,6 @@ export function setupGlobalErrorHandler(app: App, config: GlobalErrorHandlerConf
       colno
     })
 
-    // 记录到性能服务（如果可用）
-    if (performanceService?.recordError) {
-      performanceService.recordError('window_error', errorMessage, { error, source, lineno, colno })
-    }
-
-    // 发出错误事件（如果可用）
-    if (eventBusService?.emit) {
-      eventBusService.emit('error:window', { errorMessage, error, source, lineno, colno })
-    }
-
     return false // 允许默认处理继续执行
   }
 
@@ -169,16 +128,6 @@ export function setupGlobalErrorHandler(app: App, config: GlobalErrorHandlerConf
       reason: event.reason,
       promise: event.promise
     })
-
-    // 记录到性能服务（如果可用）
-    if (performanceService?.recordError) {
-      performanceService.recordError('promise_rejection', errorMessage, { reason: event.reason, promise: event.promise })
-    }
-
-    // 发出错误事件（如果可用）
-    if (eventBusService?.emit) {
-      eventBusService.emit('error:promise', { errorMessage, reason: event.reason, promise: event.promise })
-    }
 
     // 显示用户友好的错误消息
     ElMessage.error(`操作失败: ${errorMessage}`)
@@ -211,37 +160,37 @@ export async function handleApiError(
   
   // 处理特定错误码
   switch (apiError.code) {
-    case 'UNAUTHORIZED':
-      // 未授权处理 - 显示提示但不直接跳转，让应用层处理
-      if (showMessage) {
-        ElMessage.warning('登录已过期，请重新登录')
-      }
-      break
+  case 'UNAUTHORIZED':
+    // 未授权处理 - 显示提示但不直接跳转，让应用层处理
+    if (showMessage) {
+      ElMessage.warning('登录已过期，请重新登录')
+    }
+    break
     
-    case 'FORBIDDEN':
-      // 权限不足处理
-      if (showMessage) {
-        ElMessage.error('您没有权限执行此操作')
-      }
-      break
+  case 'FORBIDDEN':
+    // 权限不足处理
+    if (showMessage) {
+      ElMessage.error('您没有权限执行此操作')
+    }
+    break
     
-    case 'NETWORK_ERROR':
-      // 网络错误处理
-      if (showMessage) {
-        ElMessage.error('网络连接失败，请检查您的网络设置')
-      }
-      break
+  case 'NETWORK_ERROR':
+    // 网络错误处理
+    if (showMessage) {
+      ElMessage.error('网络连接失败，请检查您的网络设置')
+    }
+    break
     
-    default:
-      // 默认错误处理
-      if (showMessage) {
-        const message = apiError.message || defaultMessage
-        if (showDetail && apiError.details) {
-          ElMessage.error(`${message}: ${JSON.stringify(apiError.details)}`)
-        } else {
-          ElMessage.error(message)
-        }
+  default:
+    // 默认错误处理
+    if (showMessage) {
+      const message = apiError.message || defaultMessage
+      if (showDetail && apiError.details) {
+        ElMessage.error(`${message}: ${JSON.stringify(apiError.details)}`)
+      } else {
+        ElMessage.error(message)
       }
+    }
   }
   
   // 处理严重错误

@@ -1,4 +1,4 @@
-import type { FormItemRule } from 'element-plus';
+import type { FormItemRule } from 'element-plus'
 
 /**
  * 表单字段类型枚举

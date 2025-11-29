@@ -97,8 +97,8 @@ class DataBindingService {
       .replace(/\$data\.(\w+)/g, `${safeContext}.$data.$1`)
       .replace(/\$props\.(\w+)/g, `${safeContext}.$props.$1`)
       .replace(/\$methods\.(\w+)/g, `${safeContext}.$methods.$1`)
-      .replace(/\$filters\.(\w+)\(/g, `this.getFilter('$1')(`)
-      .replace(/\$transformers\.(\w+)\(/g, `this.getTransformer('$1')(`)
+      .replace(/\$filters\.(\w+)\(/g, 'this.getFilter(\'$1\')(')
+      .replace(/\$transformers\.(\w+)\(/g, 'this.getTransformer(\'$1\')(')
     
     // 创建函数
     try {
@@ -622,20 +622,20 @@ class DataSource {
   // 加载数据
   private async loadData(): Promise<any> {
     switch (this.config.type) {
-      case 'api':
-        return await this.loadApiData()
-      case 'static':
-        return this.config.data
-      case 'function':
-        return typeof this.config.fn === 'function' ? await this.config.fn(this.config.params) : null
-      case 'websocket':
-        return this.config.initialData || null
-      case 'localStorage':
-        return this.loadLocalStorageData()
-      case 'sessionStorage':
-        return this.loadSessionStorageData()
-      default:
-        throw new Error(`Unknown data source type: ${this.config.type}`)
+    case 'api':
+      return await this.loadApiData()
+    case 'static':
+      return this.config.data
+    case 'function':
+      return typeof this.config.fn === 'function' ? await this.config.fn(this.config.params) : null
+    case 'websocket':
+      return this.config.initialData || null
+    case 'localStorage':
+      return this.loadLocalStorageData()
+    case 'sessionStorage':
+      return this.loadSessionStorageData()
+    default:
+      throw new Error(`Unknown data source type: ${this.config.type}`)
     }
   }
   

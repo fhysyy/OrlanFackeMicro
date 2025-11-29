@@ -1,5 +1,5 @@
-import type { FormConfig } from './form';
-import type { TableColumn } from './table';
+import type { FormConfig } from './form'
+import type { TableColumn } from './table'
 
 /**
  * CRUD操作类型

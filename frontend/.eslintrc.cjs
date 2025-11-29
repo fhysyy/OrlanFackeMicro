@@ -1,16 +1,20 @@
 /* eslint-env node */
-require('@rushstack/eslint-patch/modern-module-resolution')
 
 module.exports = {
   root: true,
   extends: [
     'eslint:recommended',
-    '@vue/eslint-config-typescript/recommended',
-    '@vue/eslint-config-prettier'
+    'plugin:vue/vue3-recommended'
   ],
+  parser: '@typescript-eslint/parser',
   parserOptions: {
-    ecmaVersion: 'latest'
+    ecmaVersion: 'latest',
+    parser: '@typescript-eslint/parser',
+    sourceType: 'module'
   },
+  plugins: [
+    '@typescript-eslint'
+  ],
   rules: {
     // Vue 相关规则
     'vue/multi-word-component-names': 'off',

@@ -1,10 +1,4 @@
 // 安全的 Token 管理器
-interface TokenData {
-  token: string
-  refreshToken?: string
-  expiresAt: number
-}
-
 class TokenManager {
   private readonly ACCESS_TOKEN_KEY = 'auth_access_token'
   private readonly REFRESH_TOKEN_KEY = 'auth_refresh_token'

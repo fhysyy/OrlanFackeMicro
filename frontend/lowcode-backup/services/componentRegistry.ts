@@ -1,9 +1,9 @@
 // 组件注册器，用于管理和注册低代码平台可用的组件
 
-import { ref, provide, inject } from 'vue';
-import type { ComponentConfig, ComponentType } from '../types/page';
-import { deepClone } from '../utils/deepCloneUtils';
-import { asyncComponentLoader, registerAsyncComponent } from './asyncComponentLoader';
+import { ref, provide, inject } from 'vue'
+import type { ComponentConfig, ComponentType } from '../types/page'
+import { deepClone } from '../utils/deepCloneUtils'
+import { asyncComponentLoader, registerAsyncComponent } from './asyncComponentLoader'
 
 // 组件定义接口
 export interface ComponentDefinition {
@@ -96,28 +96,28 @@ const DEFAULT_CATEGORIES: Record<string, string> = {
   'navigation': '导航组件',
   'business': '业务组件',
   'other': '其他组件'
-};
+}
 
 // 组件注册中心实现
 class ComponentRegistryImpl implements ComponentRegistry {
-  private components: Record<string, ComponentDefinition> = {};
-  private categories: Record<string, string> = { ...DEFAULT_CATEGORIES };
-  private usageStats: Record<string, { count: number; lastUsed?: Date }> = {};
-  private registeredEvents: Record<string, Array<(component: ComponentDefinition) => void>> = {};
+  private components: Record<string, ComponentDefinition> = {}
+  private categories: Record<string, string> = { ...DEFAULT_CATEGORIES }
+  private usageStats: Record<string, { count: number; lastUsed?: Date }> = {}
+  private registeredEvents: Record<string, Array<(component: ComponentDefinition) => void>> = {}
 
   // 注册单个组件
   registerComponent(component: ComponentDefinition): void {
     if (!component.type) {
-      throw new Error('Component type is required');
+      throw new Error('Component type is required')
     }
     
     // 设置默认值
-    const defaultProps = this.extractDefaultProps(component.props || []);
+    const defaultProps = this.extractDefaultProps(component.props || [])
     
     // 处理异步组件
-    let processedComponent = component;
+    let processedComponent = component
     if (component.asyncLoader && component.lazy) {
-      processedComponent = registerAsyncComponent(component);
+      processedComponent = registerAsyncComponent(component)
     }
     
     this.components[component.type] = {
@@ -130,58 +130,58 @@ class ComponentRegistryImpl implements ComponentRegistry {
       deprecated: component.deprecated || false,
       usageCount: component.usageCount || 0,
       defaultProps: { ...defaultProps, ...component.defaultProps }
-    };
+    }
     
     // 触发注册事件
-    this.triggerEvent('componentRegistered', this.components[component.type]);
+    this.triggerEvent('componentRegistered', this.components[component.type])
     
     // 处理预加载
     if (component.asyncLoader && component.preload) {
       asyncComponentLoader.preloadComponent(component.type, component.asyncLoader).catch(err => {
-        console.warn(`Failed to preload component ${component.type}:`, err);
-      });
+        console.warn(`Failed to preload component ${component.type}:`, err)
+      })
     }
   }
   
   // 批量注册组件
   registerComponents(components: ComponentDefinition[]): void {
-    components.forEach(component => this.registerComponent(component));
+    components.forEach(component => this.registerComponent(component))
   }
   
   // 注销组件
   unregisterComponent(type: string): void {
     if (this.hasComponent(type)) {
-      delete this.components[type];
-      delete this.usageStats[type];
+      delete this.components[type]
+      delete this.usageStats[type]
       
       // 触发注销事件
-      this.triggerEvent('componentUnregistered', { type });
+      this.triggerEvent('componentUnregistered', { type })
     }
   }
   
   // 获取单个组件
   getComponent(type: string): ComponentDefinition | undefined {
-    return this.components[type];
+    return this.components[type]
   }
   
   // 获取所有组件
   getAllComponents(): ComponentDefinition[] {
-    return Object.values(this.components);
+    return Object.values(this.components)
   }
   
   // 异步组件相关方法
   async preloadComponent(type: string): Promise<boolean> {
-    const component = this.components[type];
+    const component = this.components[type]
     if (!component || !component.asyncLoader) {
-      return false;
+      return false
     }
     
     try {
-      await asyncComponentLoader.preloadComponent(type, component.asyncLoader);
-      return true;
+      await asyncComponentLoader.preloadComponent(type, component.asyncLoader)
+      return true
     } catch (error) {
-      console.error(`Failed to preload component ${type}:`, error);
-      return false;
+      console.error(`Failed to preload component ${type}:`, error)
+      return false
     }
   }
   
@@ -192,208 +192,208 @@ class ComponentRegistryImpl implements ComponentRegistry {
       .map(component => ({
         type: component!.type,
         loader: component!.asyncLoader!
-      }));
+      }))
     
-    await asyncComponentLoader.preloadComponents(preloadItems);
+    await asyncComponentLoader.preloadComponents(preloadItems)
   }
   
   isComponentLoaded(type: string): boolean {
-    return asyncComponentLoader.isComponentLoaded(type);
+    return asyncComponentLoader.isComponentLoaded(type)
   }
   
   getComponentLoadStatus(type: string) {
-    return asyncComponentLoader.getLoadStatus(type);
+    return asyncComponentLoader.getLoadStatus(type)
   }
   
   // 获取可用组件（未禁用、未废弃）
   getAvailableComponents(): ComponentDefinition[] {
     return Object.values(this.components).filter(component => 
       !component.disabled && !component.deprecated
-    );
+    )
   }
   
   // 按类别获取组件
   getComponentsByCategory(category: string): ComponentDefinition[] {
     if (category === 'all') {
-      return this.getAllComponents();
+      return this.getAllComponents()
     }
     return Object.values(this.components).filter(component => 
       component.category === category
-    );
+    )
   }
   
   // 搜索组件
   searchComponents(query: string): ComponentDefinition[] {
     if (!query) {
-      return this.getAllComponents();
+      return this.getAllComponents()
     }
     
-    const lowercaseQuery = query.toLowerCase();
+    const lowercaseQuery = query.toLowerCase()
     return Object.values(this.components).filter(component => 
       component.name.toLowerCase().includes(lowercaseQuery) ||
       component.type.toLowerCase().includes(lowercaseQuery) ||
       (component.description && component.description.toLowerCase().includes(lowercaseQuery)) ||
       (component.category && component.category.toLowerCase().includes(lowercaseQuery))
-    );
+    )
   }
   
   // 获取组件类别列表
   getComponentCategories(): Array<{ key: string; name: string }> {
     // 确保 'all' 类别始终存在于首位
-    const categories = [{ key: 'all', name: '全部' }];
+    const categories = [{ key: 'all', name: '全部' }]
     
     // 添加其他类别
     Object.entries(this.categories).forEach(([key, name]) => {
-      categories.push({ key, name });
-    });
+      categories.push({ key, name })
+    })
     
-    return categories;
+    return categories
   }
   
   // 添加自定义类别
   addCategory(key: string, name: string): void {
-    this.categories[key] = name;
+    this.categories[key] = name
   }
   
   // 启用组件
   enableComponent(type: string): void {
     if (this.hasComponent(type)) {
-      this.components[type].disabled = false;
-      this.triggerEvent('componentEnabled', this.components[type]);
+      this.components[type].disabled = false
+      this.triggerEvent('componentEnabled', this.components[type])
     }
   }
   
   // 禁用组件
   disableComponent(type: string): void {
     if (this.hasComponent(type)) {
-      this.components[type].disabled = true;
-      this.triggerEvent('componentDisabled', this.components[type]);
+      this.components[type].disabled = true
+      this.triggerEvent('componentDisabled', this.components[type])
     }
   }
   
   // 标记组件为废弃
   markComponentDeprecated(type: string, message?: string): void {
     if (this.hasComponent(type)) {
-      this.components[type].deprecated = true;
+      this.components[type].deprecated = true
       if (message) {
-        this.components[type].deprecatedMessage = message;
+        this.components[type].deprecatedMessage = message
       }
-      this.triggerEvent('componentDeprecated', this.components[type]);
+      this.triggerEvent('componentDeprecated', this.components[type])
     }
   }
   
   // 检查组件是否存在
   hasComponent(type: string): boolean {
-    return !!this.components[type];
+    return !!this.components[type]
   }
   
   // 获取组件JSON Schema
   getComponentSchema(type: string): Record<string, any> | null {
-    const component = this.components[type];
-    if (!component) return null;
+    const component = this.components[type]
+    if (!component) return null
     
     // 如果已有schema，则返回
     if (component.schema) {
-      return component.schema;
+      return component.schema
     }
     
     // 否则根据props生成schema
-    return this.generateComponentSchema(component);
+    return this.generateComponentSchema(component)
   }
   
   // 获取组件文档URL
   getComponentDocumentationUrl(type: string): string | null {
-    const component = this.components[type];
+    const component = this.components[type]
     if (component && component.version) {
-      return `/docs/components/${type}?v=${component.version}`;
+      return `/docs/components/${type}?v=${component.version}`
     }
-    return null;
+    return null
   }
   
   // 验证组件属性
   validateComponentProps(type: string, props: Record<string, any>): { valid: boolean; errors: string[] } {
-    const component = this.components[type];
+    const component = this.components[type]
     if (!component || !component.props) {
-      return { valid: true, errors: [] };
+      return { valid: true, errors: [] }
     }
     
-    const errors: string[] = [];
+    const errors: string[] = []
     
     // 检查必填属性
     component.props.forEach(prop => {
       if (prop.required && !(prop.name in props)) {
-        errors.push(`属性 '${prop.name}' 是必填的`);
+        errors.push(`属性 '${prop.name}' 是必填的`)
       }
       
       // 检查属性类型
       if (prop.name in props && prop.type && props[prop.name] !== undefined) {
-        const propType = typeof props[prop.name];
-        const expectedType = prop.type.toLowerCase();
+        const propType = typeof props[prop.name]
+        const expectedType = prop.type.toLowerCase()
         
         // 简单类型检查
         if (expectedType !== 'any' && expectedType !== propType) {
           // 处理一些特殊情况
           if (!(expectedType === 'number' && propType === 'string' && !isNaN(Number(props[prop.name])))) {
-            errors.push(`属性 '${prop.name}' 类型错误，期望 ${expectedType}，得到 ${propType}`);
+            errors.push(`属性 '${prop.name}' 类型错误，期望 ${expectedType}，得到 ${propType}`)
           }
         }
       }
       
       // 检查枚举值
       if (prop.options && prop.name in props && props[prop.name] !== undefined) {
-        const validValues = prop.options.map(opt => opt.value);
+        const validValues = prop.options.map(opt => opt.value)
         if (!validValues.includes(props[prop.name])) {
-          errors.push(`属性 '${prop.name}' 值无效，有效值: ${validValues.join(', ')}`);
+          errors.push(`属性 '${prop.name}' 值无效，有效值: ${validValues.join(', ')}`)
         }
       }
-    });
+    })
     
-    return { valid: errors.length === 0, errors };
+    return { valid: errors.length === 0, errors }
   }
   
   // 增加组件使用统计
   incrementComponentUsage(type: string): void {
     if (!this.usageStats[type]) {
-      this.usageStats[type] = { count: 0 };
+      this.usageStats[type] = { count: 0 }
     }
     
-    this.usageStats[type].count++;
-    this.usageStats[type].lastUsed = new Date();
+    this.usageStats[type].count++
+    this.usageStats[type].lastUsed = new Date()
     
     // 更新组件的使用次数
     if (this.hasComponent(type)) {
-      this.components[type].usageCount = this.usageStats[type].count;
+      this.components[type].usageCount = this.usageStats[type].count
     }
   }
   
   // 获取组件使用统计
   getComponentUsageStats(): Record<string, { count: number; lastUsed?: Date }> {
-    return { ...this.usageStats };
+    return { ...this.usageStats }
   }
   
   // 导出单个组件配置
   exportComponentConfig(type: string): Record<string, any> | null {
-    const component = this.components[type];
+    const component = this.components[type]
     if (!component) {
-      return null;
+      return null
     }
     
     // 深拷贝避免引用问题
-    return deepClone(component);
+    return deepClone(component)
   }
   
   // 导入组件配置
   importComponentConfig(config: Record<string, any>): boolean {
     try {
       if (!config.type) {
-        throw new Error('Component type is required');
+        throw new Error('Component type is required')
       }
       
-      this.registerComponent(config as ComponentDefinition);
-      return true;
+      this.registerComponent(config as ComponentDefinition)
+      return true
     } catch (error) {
-      console.error('Failed to import component config:', error);
-      return false;
+      console.error('Failed to import component config:', error)
+      return false
     }
   }
   
@@ -405,7 +405,7 @@ class ComponentRegistryImpl implements ComponentRegistry {
       components: this.getAllComponents(),
       categories: this.categories,
       usageStats: this.usageStats
-    };
+    }
   }
   
   // 从配置导入多个组件
@@ -413,45 +413,45 @@ class ComponentRegistryImpl implements ComponentRegistry {
     try {
       // 导入类别
       if (config.categories) {
-        this.categories = { ...DEFAULT_CATEGORIES, ...config.categories };
+        this.categories = { ...DEFAULT_CATEGORIES, ...config.categories }
       }
       
       // 导入组件
       if (Array.isArray(config.components)) {
-        this.registerComponents(config.components as ComponentDefinition[]);
+        this.registerComponents(config.components as ComponentDefinition[])
       }
       
       // 导入使用统计
       if (config.usageStats) {
-        this.usageStats = { ...this.usageStats, ...config.usageStats };
+        this.usageStats = { ...this.usageStats, ...config.usageStats }
       }
       
-      return true;
+      return true
     } catch (error) {
-      console.error('Failed to import components from config:', error);
-      return false;
+      console.error('Failed to import components from config:', error)
+      return false
     }
   }
   
   // 注册事件监听器
   on(event: string, callback: (component: ComponentDefinition) => void): void {
     if (!this.registeredEvents[event]) {
-      this.registeredEvents[event] = [];
+      this.registeredEvents[event] = []
     }
-    this.registeredEvents[event].push(callback);
+    this.registeredEvents[event].push(callback)
   }
   
   // 移除事件监听器
   off(event: string, callback?: (component: ComponentDefinition) => void): void {
-    if (!this.registeredEvents[event]) return;
+    if (!this.registeredEvents[event]) return
     
     if (callback) {
-      const index = this.registeredEvents[event].indexOf(callback);
+      const index = this.registeredEvents[event].indexOf(callback)
       if (index > -1) {
-        this.registeredEvents[event].splice(index, 1);
+        this.registeredEvents[event].splice(index, 1)
       }
     } else {
-      delete this.registeredEvents[event];
+      delete this.registeredEvents[event]
     }
   }
   
@@ -460,23 +460,23 @@ class ComponentRegistryImpl implements ComponentRegistry {
     if (this.registeredEvents[event]) {
       this.registeredEvents[event].forEach(callback => {
         try {
-          callback(data);
+          callback(data)
         } catch (error) {
-          console.error(`Error in event handler for ${event}:`, error);
+          console.error(`Error in event handler for ${event}:`, error)
         }
-      });
+      })
     }
   }
   
   // 从props定义中提取默认值
   private extractDefaultProps(props: Array<{ name: string; default?: any }>): Record<string, any> {
-    const defaultProps: Record<string, any> = {};
+    const defaultProps: Record<string, any> = {}
     props.forEach(prop => {
       if (prop.default !== undefined) {
-        defaultProps[prop.name] = prop.default;
+        defaultProps[prop.name] = prop.default
       }
-    });
-    return defaultProps;
+    })
+    return defaultProps
   }
   
   // 生成组件的JSON Schema
@@ -485,84 +485,84 @@ class ComponentRegistryImpl implements ComponentRegistry {
       type: 'object',
       properties: {},
       required: []
-    };
+    }
     
     if (component.props) {
       component.props.forEach(prop => {
-        const propSchema: Record<string, any> = {};
+        const propSchema: Record<string, any> = {}
         
         // 设置类型
         switch (prop.type.toLowerCase()) {
-          case 'string':
-            propSchema.type = 'string';
-            break;
-          case 'number':
-            propSchema.type = 'number';
-            break;
-          case 'boolean':
-            propSchema.type = 'boolean';
-            break;
-          case 'object':
-            propSchema.type = 'object';
-            propSchema.properties = {};
-            break;
-          case 'array':
-            propSchema.type = 'array';
-            propSchema.items = {};
-            break;
-          default:
-            propSchema.type = 'string';
+        case 'string':
+          propSchema.type = 'string'
+          break
+        case 'number':
+          propSchema.type = 'number'
+          break
+        case 'boolean':
+          propSchema.type = 'boolean'
+          break
+        case 'object':
+          propSchema.type = 'object'
+          propSchema.properties = {}
+          break
+        case 'array':
+          propSchema.type = 'array'
+          propSchema.items = {}
+          break
+        default:
+          propSchema.type = 'string'
         }
         
         // 设置默认值
         if (prop.default !== undefined) {
-          propSchema.default = prop.default;
+          propSchema.default = prop.default
         }
         
         // 设置描述
         if (prop.description) {
-          propSchema.description = prop.description;
+          propSchema.description = prop.description
         }
         
         // 设置枚举值
         if (prop.options && prop.options.length > 0) {
-          propSchema.enum = prop.options.map(opt => opt.value);
+          propSchema.enum = prop.options.map(opt => opt.value)
         }
         
         // 添加到schema
-        schema.properties[prop.name] = propSchema;
+        schema.properties[prop.name] = propSchema
         
         // 添加到必填列表
         if (prop.required) {
-          schema.required.push(prop.name);
+          schema.required.push(prop.name)
         }
-      });
+      })
     }
     
-    return schema;
+    return schema
   }
 }
 
 // 创建组件注册中心实例
-const registryInstance = new ComponentRegistryImpl();
+const registryInstance = new ComponentRegistryImpl()
 
 // 响应式引用，用于在Vue组件中反应组件变化
-export const componentsList = ref<ComponentDefinition[]>([]);
+export const componentsList = ref<ComponentDefinition[]>([])
 
 // 更新响应式组件列表
 const updateComponentsList = () => {
-  componentsList.value = registryInstance.getAllComponents();
-};
+  componentsList.value = registryInstance.getAllComponents()
+}
 
 // 监听组件注册事件，更新响应式列表
-registryInstance.on('componentRegistered', updateComponentsList);
-registryInstance.on('componentUnregistered', updateComponentsList);
-registryInstance.on('componentEnabled', updateComponentsList);
-registryInstance.on('componentDisabled', updateComponentsList);
-registryInstance.on('componentDeprecated', updateComponentsList);
+registryInstance.on('componentRegistered', updateComponentsList)
+registryInstance.on('componentUnregistered', updateComponentsList)
+registryInstance.on('componentEnabled', updateComponentsList)
+registryInstance.on('componentDisabled', updateComponentsList)
+registryInstance.on('componentDeprecated', updateComponentsList)
 
 // 基础组件实现 - 使用Vue 3的组合式API
-import { h } from 'vue';
+import { h } from 'vue'
 
 // 容器组件实现
 const ContainerComponent = {
@@ -582,9 +582,9 @@ const ContainerComponent = {
     }
   },
   setup(props, { slots }) {
-    return () => h(props.tag, { style: props.style, class: props.class }, typeof slots.default === 'function' ? slots.default() : slots.default || []);
+    return () => h(props.tag, { style: props.style, class: props.class }, typeof slots.default === 'function' ? slots.default() : slots.default || [])
   }
-};
+}
 
 // 行布局组件实现
 const RowComponent = {
@@ -616,11 +616,11 @@ const RowComponent = {
       marginLeft: props.gutter ? `-${props.gutter / 2}px` : '0',
       marginRight: props.gutter ? `-${props.gutter / 2}px` : '0',
       ...props.style
-    };
+    }
     
-    return () => h('div', { style }, typeof slots.default === 'function' ? slots.default() : slots.default || []);
+    return () => h('div', { style }, typeof slots.default === 'function' ? slots.default() : slots.default || [])
   }
-};
+}
 
 // 列布局组件实现
 const ColComponent = {
@@ -673,16 +673,16 @@ const ColComponent = {
       marginLeft: props.offset ? `${(props.offset / 24) * 100}%` : '0',
       order: props.push || 0,
       ...props.style
-    };
-    
-    if (props.gutter) {
-      style.paddingLeft = `${props.gutter / 2}px`;
-      style.paddingRight = `${props.gutter / 2}px`;
     }
     
-    return () => h('div', { style }, typeof slots.default === 'function' ? slots.default() : slots.default || []);
+    if (props.gutter) {
+      style.paddingLeft = `${props.gutter / 2}px`
+      style.paddingRight = `${props.gutter / 2}px`
+    }
+    
+    return () => h('div', { style }, typeof slots.default === 'function' ? slots.default() : slots.default || [])
   }
-};
+}
 
 // 文本组件实现
 const TextComponent = {
@@ -727,14 +727,14 @@ const TextComponent = {
       fontStyle: props.italic ? 'italic' : 'normal',
       textDecoration: props.underline ? 'underline' : 'none',
       ...props.style
-    };
+    }
     
     // 优先使用content属性，兼容旧版的text属性
-    const displayText = props.content || props.text;
+    const displayText = props.content || props.text
     
-    return () => h(props.tag, { style: textStyle, class: props.class }, displayText);
+    return () => h(props.tag, { style: textStyle, class: props.class }, displayText)
   }
-};
+}
 
 // 静态文本组件实现 - 支持HTML
 const StaticTextComponent = {
@@ -753,9 +753,9 @@ const StaticTextComponent = {
     return () => h('div', { 
       style: props.style,
       innerHTML: props.content 
-    });
+    })
   }
-};
+}
 
 // 分隔线组件实现
 const DividerComponent = {
@@ -780,11 +780,11 @@ const DividerComponent = {
       marginTop: '20px',
       marginBottom: '20px',
       ...props.style
-    };
+    }
     
-    return () => h('div', { style }, slots.default?.());
+    return () => h('div', { style }, slots.default?.())
   }
-};
+}
 
 // 卡片组件实现
 const CardComponent = {
@@ -821,18 +821,18 @@ const CardComponent = {
       borderRadius: '4px',
       backgroundColor: '#fff',
       boxShadow: props.shadow === 'always' ? '0 2px 12px 0 rgba(0, 0, 0, 0.1)' : 
-                  props.shadow === 'hover' ? '0 2px 4px rgba(0, 0, 0, 0.12)' : 'none',
+        props.shadow === 'hover' ? '0 2px 4px rgba(0, 0, 0, 0.12)' : 'none',
       padding: '20px',
       ...props.style
-    };
+    }
     
     return () => h('div', { style }, [
       props.title && h('div', { style: { fontSize: '18px', fontWeight: 'bold', marginBottom: props.subtitle ? '5px' : '20px' } }, props.title),
       props.subtitle && h('div', { style: { fontSize: '14px', color: '#606266', marginBottom: '20px' } }, props.subtitle),
       typeof slots.default === 'function' ? slots.default() : slots.default || []
-    ]);
+    ])
   }
-};
+}
 
 // 统计卡片组件实现
 const StatCardComponent = {
@@ -874,38 +874,38 @@ const StatCardComponent = {
       warning: '#e6a23c',
       danger: '#f56c6c',
       info: '#909399'
-    };
+    }
     
     const style: any = {
       backgroundColor: '#fff',
       padding: '20px',
       borderRadius: '4px',
-      border: `1px solid #ebeef5`,
+      border: '1px solid #ebeef5',
       ...props.style
-    };
+    }
     
     const iconStyle: any = {
       fontSize: '32px',
       color: colorMap[props.color] || '#409eff',
       marginBottom: '10px'
-    };
+    }
     
     const valueStyle: any = {
       fontSize: '24px',
       fontWeight: 'bold',
       marginBottom: '5px'
-    };
+    }
     
     const titleStyle: any = {
       fontSize: '14px',
       color: '#606266',
       marginBottom: '10px'
-    };
+    }
     
     const trendStyle: any = {
       fontSize: '14px',
       color: colorMap[props.trendColor] || '#67c23a'
-    };
+    }
     
     return () => h('div', { style }, [
       props.title && h('div', { style: titleStyle }, props.title),
@@ -914,9 +914,9 @@ const StatCardComponent = {
         props.icon && h('i', { class: props.icon, style: iconStyle })
       ]),
       props.trend && h('div', { style: trendStyle }, props.trend)
-    ]);
+    ])
   }
-};
+}
 
 // 链接组件实现
 const LinkComponent = {
@@ -958,20 +958,20 @@ const LinkComponent = {
       warning: '#e6a23c',
       danger: '#f56c6c',
       info: '#909399'
-    };
+    }
     
     const linkStyle: any = {
       color: props.disabled ? '#c0c4cc' : colorMap[props.type] || '#409eff',
       textDecoration: props.underline && !props.disabled ? 'underline' : 'none',
       cursor: props.disabled ? 'not-allowed' : 'pointer',
       ...props.style
-    };
+    }
     
     const handleClick = (e: Event) => {
       if (props.disabled) {
-        e.preventDefault();
+        e.preventDefault()
       }
-    };
+    }
     
     return () => h(
       'a',
@@ -983,9 +983,9 @@ const LinkComponent = {
         disabled: props.disabled
       },
       props.text
-    );
+    )
   }
-};
+}
 
 // 图片组件实现
 const ImageComponent = {
@@ -1022,11 +1022,11 @@ const ImageComponent = {
       height: props.height,
       objectFit: props.fit,
       ...props.style
-    };
+    }
     
-    return () => h('img', { src: props.src, alt: props.alt, style: imgStyle });
+    return () => h('img', { src: props.src, alt: props.alt, style: imgStyle })
   }
-};
+}
 
 // 按钮组件实现
 const ButtonComponent = {
@@ -1081,14 +1081,14 @@ const ButtonComponent = {
       warning: '#e6a23c',
       danger: '#f56c6c',
       info: '#909399'
-    };
+    }
     
     const sizeMap: Record<string, any> = {
       large: { padding: '12px 20px', fontSize: '16px' },
       medium: { padding: '10px 18px', fontSize: '14px' },
       small: { padding: '8px 15px', fontSize: '13px' },
       mini: { padding: '6px 12px', fontSize: '12px' }
-    };
+    }
     
     const btnStyle: any = {
       padding: '10px 18px',
@@ -1098,18 +1098,18 @@ const ButtonComponent = {
       cursor: props.disabled ? 'not-allowed' : 'pointer',
       backgroundColor: props.plain || !typeMap[props.type] ? '#fff' : typeMap[props.type],
       color: props.plain && typeMap[props.type] ? typeMap[props.type] : 
-             !props.plain && typeMap[props.type] ? '#fff' : '#606266',
+        !props.plain && typeMap[props.type] ? '#fff' : '#606266',
       borderColor: typeMap[props.type] || '#dcdfe6',
       opacity: props.disabled ? 0.6 : 1,
       ...sizeMap[props.size],
       ...props.style
-    };
+    }
     
     const handleClick = (e: Event) => {
       if (!props.disabled && !props.loading) {
-        emit('click', e);
+        emit('click', e)
       }
-    };
+    }
     
     return () => h(
       'button',
@@ -1123,9 +1123,9 @@ const ButtonComponent = {
         props.icon && h('i', { class: props.icon, style: { marginRight: props.text ? '5px' : '0' } }),
         props.text
       ]
-    );
+    )
   }
-};
+}
 
 // 定义基础组件是否懒加载的配置
 const LAZY_COMPONENTS_CONFIG: Record<string, boolean> = {
@@ -1138,7 +1138,7 @@ const LAZY_COMPONENTS_CONFIG: Record<string, boolean> = {
   'Col': false,
   'Text': false,
   'Button': false
-};
+}
 
 // 注册基础组件
 export const registerBaseComponents = (): void => {
@@ -1350,7 +1350,7 @@ export const registerBaseComponents = (): void => {
         }
       ]
     }
-  ]);
+  ])
 
   // 基础组件
   registryInstance.registerComponents([
@@ -1734,7 +1734,7 @@ export const registerBaseComponents = (): void => {
         }
       ]
     }
-  ]);
+  ])
   
   // 容器组件
   registryInstance.registerComponents([
@@ -1793,7 +1793,7 @@ export const registerBaseComponents = (): void => {
         }
       ]
     }
-  ]);
+  ])
   
   // 数据展示组件
   registryInstance.registerComponents([
@@ -1858,15 +1858,15 @@ export const registerBaseComponents = (): void => {
         }
       ]
     }
-  ]);
-};
+  ])
+}
 
 // 导出组件注册中心实例
-export const componentRegistry = registryInstance;
+export const componentRegistry = registryInstance
 
 // 为了兼容性，保留原来的导出函数和配置
 // 组件配置映射 - 用于兼容旧版代码
-export const componentConfigMap: Record<string, any> = {};
+export const componentConfigMap: Record<string, any> = {}
 
 // 初始化兼容配置
 const initCompatibilityConfig = () => {
@@ -1879,8 +1879,8 @@ const initCompatibilityConfig = () => {
       props: (component.props || []).map((prop) => ({
         name: prop.name,
         type: prop.type === 'object' ? 'object' : 
-              prop.type === 'boolean' ? 'boolean' :
-              prop.type === 'number' ? 'number' :
+          prop.type === 'boolean' ? 'boolean' :
+            prop.type === 'number' ? 'number' :
               prop.options ? 'select' : 'string',
         label: prop.description || prop.name,
         default: prop.default,
@@ -1892,31 +1892,31 @@ const initCompatibilityConfig = () => {
         name: event.name,
         label: event.description || event.name
       }))
-    };
-  });
-};
+    }
+  })
+}
 
 // 初始化兼容配置
-initCompatibilityConfig();
+initCompatibilityConfig()
 
 // 获取组件定义
 export const getComponentDefinition = (componentType: string): ComponentDefinition | undefined => {
-  return registryInstance.getComponent(componentType);
-};
+  return registryInstance.getComponent(componentType)
+}
 
 // 兼容旧版API
 export const getComponentConfig = (componentType: string): any => {
-  return componentConfigMap[componentType.toLowerCase()] || registryInstance.getComponent(componentType);
-};
+  return componentConfigMap[componentType.toLowerCase()] || registryInstance.getComponent(componentType)
+}
 
 export const getComponentCategories = (): Record<string, any[]> => {
-  const categories: Record<string, any[]> = {};
-  const components = registryInstance.getAllComponents();
+  const categories: Record<string, any[]> = {}
+  const components = registryInstance.getAllComponents()
   
   components.forEach(component => {
-    const category = component.category || '基础';
+    const category = component.category || '基础'
     if (!categories[category]) {
-      categories[category] = [];
+      categories[category] = []
     }
     
     categories[category].push({
@@ -1924,85 +1924,85 @@ export const getComponentCategories = (): Record<string, any[]> => {
       name: component.name,
       icon: component.icon,
       ...componentConfigMap[component.type.toLowerCase()]
-    });
-  });
+    })
+  })
   
-  return categories;
-};
+  return categories
+}
 
 // 其他兼容导出
 export const registerComponent = (component: ComponentDefinition): void => {
-  registryInstance.registerComponent(component);
-};
+  registryInstance.registerComponent(component)
+}
 
 export const registerComponents = (components: ComponentDefinition[]): void => {
-  registryInstance.registerComponents(components);
-};
+  registryInstance.registerComponents(components)
+}
 
 export const getAllComponents = (): ComponentDefinition[] => {
-  return registryInstance.getAllComponents();
-};
+  return registryInstance.getAllComponents()
+}
 
 export const getComponentsByCategory = (category: string): ComponentDefinition[] => {
-  return registryInstance.getComponentsByCategory(category);
-};
+  return registryInstance.getComponentsByCategory(category)
+}
 
 export const getAvailableComponents = (): ComponentDefinition[] => {
-  return registryInstance.getAvailableComponents();
-};
+  return registryInstance.getAvailableComponents()
+}
 
 export const searchComponents = (query: string): ComponentDefinition[] => {
-  return registryInstance.searchComponents(query);
-};
+  return registryInstance.searchComponents(query)
+}
 
 export const disableComponent = (type: string): void => {
-  registryInstance.disableComponent(type);
-};
+  registryInstance.disableComponent(type)
+}
 
 export const enableComponent = (type: string): void => {
-  registryInstance.enableComponent(type);
-};
+  registryInstance.enableComponent(type)
+}
 
 export const hasComponent = (type: string): boolean => {
-  return registryInstance.hasComponent(type);
-};
+  return registryInstance.hasComponent(type)
+}
 
 // 创建Vue注入键
-const componentRegistryKey = Symbol('componentRegistry');
+const componentRegistryKey = Symbol('componentRegistry')
 
 // 提供组件注册中心
 export const provideComponentRegistry = () => {
-  provide(componentRegistryKey, registryInstance);
-};
+  provide(componentRegistryKey, registryInstance)
+}
 
 // 注入组件注册中心
 export const injectComponentRegistry = (): ComponentRegistry => {
-  const registry = inject<ComponentRegistry>(componentRegistryKey);
+  const registry = inject<ComponentRegistry>(componentRegistryKey)
   if (!registry) {
-    throw new Error('Component registry not provided');
+    throw new Error('Component registry not provided')
   }
-  return registry;
-};
+  return registry
+}
 
 // 确保所有方法都存在
 const safePreloadComponent = typeof preloadComponent === 'function' ? preloadComponent : async (type: string) => {
-  console.warn(`preloadComponent called but not defined for component: ${type}`);
-  return false;
-};
+  console.warn(`preloadComponent called but not defined for component: ${type}`)
+  return false
+}
 
 const safePreloadComponents = typeof preloadComponents === 'function' ? preloadComponents : async (types: string[]) => {
-  console.warn('preloadComponents called but not defined');
-};
+  console.warn('preloadComponents called but not defined')
+}
 
 const safeIsComponentLoaded = typeof isComponentLoaded === 'function' ? isComponentLoaded : (type: string) => {
-  console.warn(`isComponentLoaded called but not defined for component: ${type}`);
-  return false;
-};
+  console.warn(`isComponentLoaded called but not defined for component: ${type}`)
+  return false
+}
 
 const safeGetComponentLoadStatus = typeof getComponentLoadStatus === 'function' ? getComponentLoadStatus : (type: string) => {
-  console.warn(`getComponentLoadStatus called but not defined for component: ${type}`);
-  return null;
-};
+  console.warn(`getComponentLoadStatus called but not defined for component: ${type}`)
+  return null
+}
 
 // 默认导出
 export default {
@@ -2026,4 +2026,4 @@ export default {
   preloadComponents: safePreloadComponents,
   isComponentLoaded: safeIsComponentLoaded,
   getComponentLoadStatus: safeGetComponentLoadStatus
-};
+}

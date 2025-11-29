@@ -95,62 +95,74 @@ export interface RequestConfig {
   timeout?: number
 }
 
-// 考试相关类型
-export interface Exam {
+// 系统统计相关类型
+export interface SystemStats {
+  userCount: number
+  activeUsers: number
+  messageCount: number
+  pendingMessages: number
+  fileCount: number
+  totalFileSize: number
+  systemUptime: string
+  memoryUsage: number
+  cpuUsage: number
+}
+
+// 消息相关类型
+export interface Message {
   id: string
   title: string
-  description: string
-  duration: number // 考试时长（分钟）
-  totalScore: number
-  passScore: number
-  status: ExamStatus
+  content: string
+  type: MessageType
+  status: MessageStatus
+  recipient: string
+  sender: string
   createdAt: string
   updatedAt: string
-  startTime?: string
-  endTime?: string
 }
 
-export enum ExamStatus {
-  Draft = 'Draft',
-  Published = 'Published',
-  InProgress = 'InProgress',
-  Completed = 'Completed',
-  Cancelled = 'Cancelled'
+export enum MessageType {
+  Email = 'Email',
+  SMS = 'SMS',
+  InApp = 'InApp'
 }
 
-export interface ExamQuestion {
+export enum MessageStatus {
+  Pending = 'Pending',
+  Sent = 'Sent',
+  Delivered = 'Delivered',
+  Failed = 'Failed'
+}
+
+// 文件相关类型
+export interface FileInfo {
   id: string
-  examId: string
-  type: QuestionType
-  content: string
-  options?: string[]
-  correctAnswer: string | string[]
-  score: number
-  order: number
+  name: string
+  originalName: string
+  size: number
+  type: string
+  path: string
+  url?: string
+  uploadedBy: string
+  createdAt: string
 }
 
-export enum QuestionType {
-  SingleChoice = 'SingleChoice',
-  MultipleChoice = 'MultipleChoice',
-  TrueFalse = 'TrueFalse',
-  ShortAnswer = 'ShortAnswer',
-  Essay = 'Essay'
-}
-
-export interface ExamParticipant {
+// 活动日志类型
+export interface Activity {
   id: string
-  examId: string
+  action: string
+  details: string
   userId: string
   username: string
-  startTime?: string
-  endTime?: string
-  score?: number
-  status: ParticipantStatus
+  timestamp: string
+  type: ActivityType
 }
 
-export enum ParticipantStatus {
-  NotStarted = 'NotStarted',
-  InProgress = 'InProgress',
-  Submitted = 'Submitted',
-  Graded = 'Graded'
+export enum ActivityType {
+  Login = 'Login',
+  Logout = 'Logout',
+  Create = 'Create',
+  Update = 'Update',
+  Delete = 'Delete',
+  Error = 'Error'
 }

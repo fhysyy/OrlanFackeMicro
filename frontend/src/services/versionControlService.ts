@@ -9,37 +9,37 @@ interface PageConfig {
 // 模拟性能服务
 const performanceService = {
   recordMetric: (metric: any) => {
-    console.log('Performance metric recorded:', metric);
+    console.log('Performance metric recorded:', metric)
   }
-};
+}
 
 // 模拟深克隆和深比较函数
 const deepClone = <T>(obj: T): T => {
-  if (obj === null || typeof obj !== 'object') return obj;
-  const clone: any = Array.isArray(obj) ? [] : {};
+  if (obj === null || typeof obj !== 'object') return obj
+  const clone: any = Array.isArray(obj) ? [] : {}
   for (const key in obj) {
     if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      clone[key] = deepClone(obj[key]);
+      clone[key] = deepClone(obj[key])
     }
   }
-  return clone;
-};
+  return clone
+}
 
 const deepEqual = (obj1: any, obj2: any): boolean => {
-  if (obj1 === obj2) return true;
+  if (obj1 === obj2) return true
   if (obj1 === null || obj2 === null || typeof obj1 !== 'object' || typeof obj2 !== 'object') {
-    return false;
+    return false
   }
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-  if (keys1.length !== keys2.length) return false;
+  const keys1 = Object.keys(obj1)
+  const keys2 = Object.keys(obj2)
+  if (keys1.length !== keys2.length) return false
   for (const key of keys1) {
     if (keys2.indexOf(key) === -1 || !deepEqual(obj1[key], obj2[key])) {
-      return false;
+      return false
     }
   }
-  return true;
-};
+  return true
+}
 
 // 导入本地类型
 type VersionComparisonResult = any;
@@ -87,13 +87,13 @@ class CustomMap<K, V> {
   }
   
   entries(): Array<[K, V]> {
-    const entries: Array<[K, V]> = [];
+    const entries: Array<[K, V]> = []
     for (const key in this.items) {
       if (Object.prototype.hasOwnProperty.call(this.items, key)) {
-        entries.push([key as unknown as K, this.items[key]]);
+        entries.push([key as unknown as K, this.items[key]])
       }
     }
-    return entries;
+    return entries
   }
   
   keys(): K[] {
@@ -101,13 +101,13 @@ class CustomMap<K, V> {
   }
   
   values(): V[] {
-    const values: V[] = [];
+    const values: V[] = []
     for (const key in this.items) {
       if (Object.prototype.hasOwnProperty.call(this.items, key)) {
-        values.push(this.items[key]);
+        values.push(this.items[key])
       }
     }
-    return values;
+    return values
   }
 }
 
@@ -155,46 +155,46 @@ declare global {
 }
 
 // 自定义assign函数，替代Object.assign
-  function customAssign(target: any, ...sources: any[]): any {
-    if (target === null || target === undefined) {
-      throw new TypeError('Cannot convert undefined or null to object')
-    }
+function customAssign(target: any, ...sources: any[]): any {
+  if (target === null || target === undefined) {
+    throw new TypeError('Cannot convert undefined or null to object')
+  }
     
-    const to = Object(target)
+  const to = Object(target)
     
-    for (let index = 0; index < sources.length; index++) {
-      const nextSource = sources[index]
-      if (nextSource !== null && nextSource !== undefined) {
-        for (const nextKey in nextSource) {
-          if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
-            to[nextKey] = nextSource[nextKey]
-          }
+  for (let index = 0; index < sources.length; index++) {
+    const nextSource = sources[index]
+    if (nextSource !== null && nextSource !== undefined) {
+      for (const nextKey in nextSource) {
+        if (Object.prototype.hasOwnProperty.call(nextSource, nextKey)) {
+          to[nextKey] = nextSource[nextKey]
         }
       }
     }
-    return to
   }
+  return to
+}
   
-  // 自定义fromEntries函数 - 替代Object.fromEntries
-  function fromEntries(entries: any[]): any {
-    const obj: any = {}
-    for (let i = 0; i < entries.length; i++) {
-      if (entries[i] && entries[i].length >= 2) {
-        obj[entries[i][0]] = entries[i][1]
-      }
+// 自定义fromEntries函数 - 替代Object.fromEntries
+function fromEntries(entries: any[]): any {
+  const obj: any = {}
+  for (let i = 0; i < entries.length; i++) {
+    if (entries[i] && entries[i].length >= 2) {
+      obj[entries[i][0]] = entries[i][1]
     }
-    return obj
   }
+  return obj
+}
   
-  // 自定义数组includes函数
-  function arrayIncludes(array: any[], searchElement: any): boolean {
-    for (let i = 0; i < array.length; i++) {
-      if (array[i] === searchElement) {
-        return true
-      }
+// 自定义数组includes函数
+function arrayIncludes(array: any[], searchElement: any): boolean {
+  for (let i = 0; i < array.length; i++) {
+    if (array[i] === searchElement) {
+      return true
     }
-    return false
   }
+  return false
+}
 
 // 版本比较优化器配置
 export interface VersionComparisonOptimizerConfig {
@@ -274,13 +274,13 @@ const defaultComparisonConfig: VersionComparisonOptimizerConfig = customAssign({
   cacheSize: 100,
   ignoreProperties: ['id', 'key', 'uuid', 'timestamp'],
   maxDepth: 10
-});
+})
 
 // 版本比较优化器实现（已移至导出部分）
 
 
 // 响应式状态
-  const config = reactive<VersionControlConfig>(customAssign({}, defaultConfig))
+const config = reactive<VersionControlConfig>(customAssign({}, defaultConfig))
 const versions = reactive<CustomMap<string, PageVersion[]>>(new CustomMap()) // pageId -> versions
 const currentVersions = reactive<CustomMap<string, string>>(new CustomMap()) // pageId -> current versionId
 const autoSaveTimers = reactive<CustomMap<string, number>>(new CustomMap()) // pageId -> timerId
@@ -606,11 +606,11 @@ const restoreVersion = async (pageId: string, versionId: string): Promise<PageVe
     })
     
     // 显示通知
-      notificationService.success(
-        `已成功恢复到版本: ${version.name}`,
-        '版本恢复成功',
-        { duration: 3000 }
-      )
+    notificationService.success(
+      `已成功恢复到版本: ${version.name}`,
+      '版本恢复成功',
+      { duration: 3000 }
+    )
     
     return restoredVersion
   } catch (err) {
@@ -645,11 +645,11 @@ const deleteVersion = async (pageId: string, versionId: string): Promise<void> =
     await saveVersionsToStorage()
     
     // 发送通知
-      notificationService.success(
-        `已成功删除版本: ${version.name}`,
-        '版本删除成功',
-        { duration: 2000 }
-      )
+    notificationService.success(
+      `已成功删除版本: ${version.name}`,
+      '版本删除成功',
+      { duration: 2000 }
+    )
   } catch (err) {
     console.error('Failed to delete version:', err)
     throw new Error('删除版本失败')
@@ -713,11 +713,11 @@ const publishVersion = async (pageId: string, versionId: string): Promise<void> 
     await saveVersionsToStorage()
     
     // 发送通知
-      notificationService.success(
-        `版本 ${version.name} 已成功发布`,
-        '版本发布成功',
-        { duration: 3000 }
-      )
+    notificationService.success(
+      `版本 ${version.name} 已成功发布`,
+      '版本发布成功',
+      { duration: 3000 }
+    )
   } catch (err) {
     console.error('Failed to publish version:', err)
     throw new Error('发布版本失败')

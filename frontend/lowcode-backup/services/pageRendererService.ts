@@ -51,7 +51,7 @@ class PageRendererService {
   async prerenderPage(config: PageConfig): Promise<string> {
     // 在客户端环境中，这里可以返回占位内容
     // 在SSR环境中，这里可以进行服务端渲染
-    return `<div class="prerendered-page"></div>`
+    return '<div class="prerendered-page"></div>'
   }
   
   // 收集性能数据
@@ -245,16 +245,16 @@ class PageContext {
     
     // 根据数据源类型执行不同的加载逻辑
     switch (config.type) {
-      case 'api':
-        return await this.loadApiDataSource(config)
-      case 'static':
-        return config.data
-      case 'function':
-        return typeof config.fn === 'function' ? await config.fn(config.params) : null
-      case 'websocket':
-        return await this.loadWebSocketDataSource(config)
-      default:
-        throw new Error(`Unknown data source type: ${config.type}`)
+    case 'api':
+      return await this.loadApiDataSource(config)
+    case 'static':
+      return config.data
+    case 'function':
+      return typeof config.fn === 'function' ? await config.fn(config.params) : null
+    case 'websocket':
+      return await this.loadWebSocketDataSource(config)
+    default:
+      throw new Error(`Unknown data source type: ${config.type}`)
     }
   }
   
@@ -387,7 +387,7 @@ class PageContext {
       try {
         await this.executeAction(action, eventData)
       } catch (error) {
-        console.error(`Failed to execute action:`, error)
+        console.error('Failed to execute action:', error)
         
         // 处理错误动作
         if (action.onError) {
@@ -400,26 +400,26 @@ class PageContext {
   // 执行单个动作
   private async executeAction(action: ActionConfig, eventData: any): Promise<void> {
     switch (action.type) {
-      case 'apiCall':
-        await this.executeApiCall(action, eventData)
-        break
-      case 'stateUpdate':
-        this.executeStateUpdate(action)
-        break
-      case 'navigate':
-        this.executeNavigate(action)
-        break
-      case 'showMessage':
-        this.executeShowMessage(action)
-        break
-      case 'customScript':
-        this.executeCustomScript(action, eventData)
-        break
-      case 'componentMethod':
-        this.executeComponentMethod(action)
-        break
-      default:
-        console.warn(`Unknown action type: ${action.type}`)
+    case 'apiCall':
+      await this.executeApiCall(action, eventData)
+      break
+    case 'stateUpdate':
+      this.executeStateUpdate(action)
+      break
+    case 'navigate':
+      this.executeNavigate(action)
+      break
+    case 'showMessage':
+      this.executeShowMessage(action)
+      break
+    case 'customScript':
+      this.executeCustomScript(action, eventData)
+      break
+    case 'componentMethod':
+      this.executeComponentMethod(action)
+      break
+    default:
+      console.warn(`Unknown action type: ${action.type}`)
     }
   }
   

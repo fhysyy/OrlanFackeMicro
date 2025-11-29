@@ -1,17 +1,17 @@
-import { api } from './api';
-import { ElMessage } from 'element-plus';
-import type { CrudConfig, ApiConfig } from '../types/crud';
-import type { TableColumn } from '../types/table';
-import type { FormConfig, FormField } from '../types/form';
+import { api } from './api'
+import { ElMessage } from 'element-plus'
+import type { CrudConfig, ApiConfig } from '../types/crud'
+import type { TableColumn } from '../types/table'
+import type { FormConfig, FormField } from '../types/form'
 
 /**
  * CRUD服务类
  */
 export class CrudService<T = any> {
-  private config: CrudConfig;
+  private config: CrudConfig
   
   constructor(config: CrudConfig) {
-    this.config = config;
+    this.config = config
   }
   
   /**
@@ -21,12 +21,12 @@ export class CrudService<T = any> {
    */
   async getList(params: any = {}): Promise<any> {
     try {
-      const response = await api.get(this.config.api.list, { params });
-      return response.data;
+      const response = await api.get(this.config.api.list, { params })
+      return response.data
     } catch (error) {
-      console.error('获取列表数据失败:', error);
-      ElMessage.error('获取数据失败');
-      throw error;
+      console.error('获取列表数据失败:', error)
+      ElMessage.error('获取数据失败')
+      throw error
     }
   }
   
@@ -37,16 +37,16 @@ export class CrudService<T = any> {
    */
   async getDetail(id: any): Promise<T> {
     if (!this.config.api.detail) {
-      throw new Error('未配置详情API');
+      throw new Error('未配置详情API')
     }
     
     try {
-      const response = await api.get(this.config.api.detail!.replace(':id', String(id)), { params: { id } });
-      return response.data;
+      const response = await api.get(this.config.api.detail!.replace(':id', String(id)), { params: { id } })
+      return response.data
     } catch (error) {
-      console.error('获取详情数据失败:', error);
-      ElMessage.error('获取详情失败');
-      throw error;
+      console.error('获取详情数据失败:', error)
+      ElMessage.error('获取详情失败')
+      throw error
     }
   }
   
@@ -57,17 +57,17 @@ export class CrudService<T = any> {
    */
   async create(data: Partial<T>): Promise<T> {
     if (!this.config.api.create) {
-      throw new Error('未配置创建API');
+      throw new Error('未配置创建API')
     }
     
     try {
-      const response = await api.post(this.config.api.create!, data);
-      ElMessage.success('创建成功');
-      return response.data;
+      const response = await api.post(this.config.api.create!, data)
+      ElMessage.success('创建成功')
+      return response.data
     } catch (error) {
-      console.error('创建数据失败:', error);
-      ElMessage.error('创建失败');
-      throw error;
+      console.error('创建数据失败:', error)
+      ElMessage.error('创建失败')
+      throw error
     }
   }
   
@@ -79,17 +79,17 @@ export class CrudService<T = any> {
    */
   async update(id: any, data: Partial<T>): Promise<T> {
     if (!this.config.api.update) {
-      throw new Error('未配置更新API');
+      throw new Error('未配置更新API')
     }
     
     try {
-      const response = await api.put(this.config.api.update!.replace(':id', String(id)), data);
-      ElMessage.success('更新成功');
-      return response.data;
+      const response = await api.put(this.config.api.update!.replace(':id', String(id)), data)
+      ElMessage.success('更新成功')
+      return response.data
     } catch (error) {
-      console.error('更新数据失败:', error);
-      ElMessage.error('更新失败');
-      throw error;
+      console.error('更新数据失败:', error)
+      ElMessage.error('更新失败')
+      throw error
     }
   }
   
@@ -100,16 +100,16 @@ export class CrudService<T = any> {
    */
   async delete(id: any): Promise<void> {
     if (!this.config.api.delete) {
-      throw new Error('未配置删除API');
+      throw new Error('未配置删除API')
     }
     
     try {
-      await api.delete(this.config.api.delete!.replace(':id', String(id)), { params: { id } });
-      ElMessage.success('删除成功');
+      await api.delete(this.config.api.delete!.replace(':id', String(id)), { params: { id } })
+      ElMessage.success('删除成功')
     } catch (error) {
-      console.error('删除数据失败:', error);
-      ElMessage.error('删除失败');
-      throw error;
+      console.error('删除数据失败:', error)
+      ElMessage.error('删除失败')
+      throw error
     }
   }
   
@@ -119,18 +119,18 @@ export class CrudService<T = any> {
    * @returns 删除结果
    */
   async batchDelete(ids: any[]): Promise<void> {
-    const deleteApi = this.config.api.batchDelete || this.config.api.delete;
+    const deleteApi = this.config.api.batchDelete || this.config.api.delete
     if (!deleteApi) {
-      throw new Error('未配置删除API');
+      throw new Error('未配置删除API')
     }
     
     try {
-      await api.post(deleteApi, { ids });
-      ElMessage.success('批量删除成功');
+      await api.post(deleteApi, { ids })
+      ElMessage.success('批量删除成功')
     } catch (error) {
-      console.error('批量删除数据失败:', error);
-      ElMessage.error('批量删除失败');
-      throw error;
+      console.error('批量删除数据失败:', error)
+      ElMessage.error('批量删除失败')
+      throw error
     }
   }
   
@@ -140,33 +140,33 @@ export class CrudService<T = any> {
    */
   async export(params: any = {}): Promise<void> {
     if (!this.config.api.export) {
-      throw new Error('未配置导出API');
+      throw new Error('未配置导出API')
     }
     
     try {
       const response = await api.get(this.config.api.export!, {
         params,
         responseType: 'blob'
-      });
+      })
       
       // 处理文件下载
       const blob = new Blob([response.data], {
         type: 'application/vnd.ms-excel'
-      });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${this.config.entityName}列表.xlsx`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      })
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${this.config.entityName}列表.xlsx`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
       
-      ElMessage.success('导出成功');
+      ElMessage.success('导出成功')
     } catch (error) {
-      console.error('导出数据失败:', error);
-      ElMessage.error('导出失败');
-      throw error;
+      console.error('导出数据失败:', error)
+      ElMessage.error('导出失败')
+      throw error
     }
   }
   
@@ -177,25 +177,25 @@ export class CrudService<T = any> {
    */
   async import(file: File): Promise<any> {
     if (!this.config.api.import) {
-      throw new Error('未配置导入API');
+      throw new Error('未配置导入API')
     }
     
     try {
-      const formData = new FormData();
-      formData.append('file', file);
+      const formData = new FormData()
+      formData.append('file', file)
       
       const response = await api.post(this.config.api.import!, formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
-      });
+      })
       
-      ElMessage.success('导入成功');
-      return response.data;
+      ElMessage.success('导入成功')
+      return response.data
     } catch (error) {
-      console.error('导入数据失败:', error);
-      ElMessage.error('导入失败');
-      throw error;
+      console.error('导入数据失败:', error)
+      ElMessage.error('导入失败')
+      throw error
     }
   }
   
@@ -203,14 +203,14 @@ export class CrudService<T = any> {
    * 获取配置
    */
   getConfig(): CrudConfig {
-    return this.config;
+    return this.config
   }
   
   /**
    * 更新配置
    */
   updateConfig(config: Partial<CrudConfig>): void {
-    this.config = { ...this.config, ...config };
+    this.config = { ...this.config, ...config }
   }
 }
 
@@ -218,7 +218,7 @@ export class CrudService<T = any> {
  * 创建CRUD服务实例
  */
 export function createCrudService<T = any>(config: CrudConfig): CrudService<T> {
-  return new CrudService<T>(config);
+  return new CrudService<T>(config)
 }
 
 /**
@@ -231,7 +231,7 @@ export function generateDefaultCrudConfig(options: {
   formFields?: FormField[];
   showActions?: boolean[];
 }): CrudConfig {
-  const { entityName, apiBaseUrl, tableColumns, formFields = [], showActions = [] } = options;
+  const { entityName, apiBaseUrl, tableColumns, formFields = [], showActions = [] } = options
   
   // 生成API配置
   const api: ApiConfig = {
@@ -243,12 +243,12 @@ export function generateDefaultCrudConfig(options: {
     batchDelete: `${apiBaseUrl}/batchDelete`,
     import: `${apiBaseUrl}/import`,
     export: `${apiBaseUrl}/export`
-  };
+  }
   
   // 生成表单配置
   const formConfig: FormConfig = {
     fields: formFields
-  };
+  }
   
   // 生成操作配置
   const enabledActions = [
@@ -258,7 +258,7 @@ export function generateDefaultCrudConfig(options: {
     ...(showActions.includes(true) || showActions.includes('view') ? ['view'] : []),
     ...(showActions.includes(true) || showActions.includes('import') ? ['import'] : []),
     ...(showActions.includes(true) || showActions.includes('export') ? ['export'] : [])
-  ] as any[];
+  ] as any[]
   
   return {
     entityName,
@@ -319,7 +319,7 @@ export function generateDefaultCrudConfig(options: {
         sortOrder: 'sortOrder'
       }
     }
-  };
+  }
 }
 
 /**
@@ -340,24 +340,24 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
     includedFields: [],
     fieldOptions: {},
     showActions: [true]
-  };
+  }
   
-  const mergedOptions = { ...defaultOptions, ...options };
-  const { entityName, apiBaseUrl, excludedFields, includedFields, fieldOptions, showActions } = mergedOptions;
+  const mergedOptions = { ...defaultOptions, ...options }
+  const { entityName, apiBaseUrl, excludedFields, includedFields, fieldOptions, showActions } = mergedOptions
   
   // 生成表格列和表单字段
-  const tableColumns: TableColumn[] = [];
-  const formFields: FormField[] = [];
+  const tableColumns: TableColumn[] = []
+  const formFields: FormField[] = []
   
   // 获取模型字段
   const modelKeys = includedFields.length > 0 
     ? includedFields 
-    : Object.keys(model).filter(key => !excludedFields.includes(key));
+    : Object.keys(model).filter(key => !excludedFields.includes(key))
   
   // 为每个字段生成配置
   modelKeys.forEach(key => {
-    const fieldOption = fieldOptions[key] || {};
-    const fieldType = getFieldType(model[key]);
+    const fieldOption = fieldOptions[key] || {}
+    const fieldType = getFieldType(model[key])
     
     // 生成表格列
     tableColumns.push({
@@ -367,7 +367,7 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
       sortable: fieldOption.sortable !== false,
       align: fieldOption.align || 'left',
       formatter: fieldOption.formatter
-    });
+    })
     
     // 生成表单字段
     formFields.push({
@@ -378,8 +378,8 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
       placeholder: `请输入${camelToLabel(key)}`,
       default: model[key],
       ...fieldOption
-    } as FormField);
-  });
+    } as FormField)
+  })
   
   // 添加ID列
   if (!excludedFields.includes('id')) {
@@ -388,7 +388,7 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
       prop: 'id',
       width: 80,
       fixed: 'left'
-    });
+    })
   }
   
   // 添加时间列
@@ -398,7 +398,7 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
       prop: 'createdAt',
       width: 180,
       formatter: (row: any) => formatDate(row.createdAt)
-    });
+    })
   }
   
   return generateDefaultCrudConfig({
@@ -407,37 +407,37 @@ export function generateCrudConfigFromModel(model: any, options?: Partial<{
     tableColumns,
     formFields,
     showActions
-  });
+  })
 }
 
 /**
  * 获取字段类型
  */
 function getFieldType(value: any): string {
-  if (value === null || value === undefined) return 'input';
+  if (value === null || value === undefined) return 'input'
   
-  const type = typeof value;
+  const type = typeof value
   switch (type) {
-    case 'string':
-      // 判断是否为日期格式
-      if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
-        return 'date';
-      }
-      return 'input';
-    case 'number':
-      return 'number';
-    case 'boolean':
-      return 'switch';
-    case 'object':
-      if (Array.isArray(value)) {
-        return 'select';
-      }
-      if (value instanceof Date) {
-        return 'datetime';
-      }
-      return 'input';
-    default:
-      return 'input';
+  case 'string':
+    // 判断是否为日期格式
+    if (value.match(/^\d{4}-\d{2}-\d{2}/)) {
+      return 'date'
+    }
+    return 'input'
+  case 'number':
+    return 'number'
+  case 'boolean':
+    return 'switch'
+  case 'object':
+    if (Array.isArray(value)) {
+      return 'select'
+    }
+    if (value instanceof Date) {
+      return 'datetime'
+    }
+    return 'input'
+  default:
+    return 'input'
   }
 }
 
@@ -447,22 +447,22 @@ function getFieldType(value: any): string {
 function camelToLabel(str: string): string {
   return str.replace(/([A-Z])/g, ' $1')
     .replace(/^./, str => str.toUpperCase())
-    .replace(/^Id$/, 'ID');
+    .replace(/^Id$/, 'ID')
 }
 
 /**
  * 格式化日期
  */
 function formatDate(date: any): string {
-  if (!date) return '';
+  if (!date) return ''
   
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  const seconds = String(d.getSeconds()).padStart(2, '0');
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
   
-  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }

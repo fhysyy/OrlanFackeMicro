@@ -1,6 +1,6 @@
-import { api } from './api';
-import type { DynamicRouteConfig } from '../types/router';
-import type { ApiResponse } from '../types/api';
+import { api } from './api'
+import type { DynamicRouteConfig } from '../types/router'
+import type { ApiResponse } from '../types/api'
 
 /**
  * 动态路由服务
@@ -10,7 +10,7 @@ export const dynamicRouteService = {
    * 获取当前用户可访问的路由列表
    */
   getRoutes(): Promise<ApiResponse<DynamicRouteConfig[]>> {
-    return api.get<ApiResponse<DynamicRouteConfig[]>>('/api/routes');
+    return api.get<ApiResponse<DynamicRouteConfig[]>>('/api/routes')
   },
 
   /**
@@ -18,7 +18,7 @@ export const dynamicRouteService = {
    * @param role 角色名称
    */
   getRoutesByRole(role: string): Promise<ApiResponse<DynamicRouteConfig[]>> {
-    return api.get<ApiResponse<DynamicRouteConfig[]>>(`/api/routes/role/${role}`);
+    return api.get<ApiResponse<DynamicRouteConfig[]>>(`/api/routes/role/${role}`)
   },
 
   /**
@@ -26,7 +26,7 @@ export const dynamicRouteService = {
    * @param route 路由配置
    */
   createRoute(route: Omit<DynamicRouteConfig, 'routeId' | 'children'>): Promise<ApiResponse<DynamicRouteConfig>> {
-    return api.post<ApiResponse<DynamicRouteConfig>>('/api/routes', route);
+    return api.post<ApiResponse<DynamicRouteConfig>>('/api/routes', route)
   },
 
   /**
@@ -35,7 +35,7 @@ export const dynamicRouteService = {
    * @param route 路由配置
    */
   updateRoute(routeId: string, route: Partial<DynamicRouteConfig>): Promise<ApiResponse<DynamicRouteConfig>> {
-    return api.put<ApiResponse<DynamicRouteConfig>>(`/api/routes/${routeId}`, route);
+    return api.put<ApiResponse<DynamicRouteConfig>>(`/api/routes/${routeId}`, route)
   },
 
   /**
@@ -43,15 +43,15 @@ export const dynamicRouteService = {
    * @param routeId 路由ID
    */
   deleteRoute(routeId: string): Promise<ApiResponse<void>> {
-    return api.delete<ApiResponse<void>>(`/api/routes/${routeId}`);
+    return api.delete<ApiResponse<void>>(`/api/routes/${routeId}`)
   },
 
   /**
    * 获取所有路由（系统管理员使用）
    */
   getAllRoutes(): Promise<ApiResponse<DynamicRouteConfig[]>> {
-    return api.get<ApiResponse<DynamicRouteConfig[]>>('/api/routes/all');
+    return api.get<ApiResponse<DynamicRouteConfig[]>>('/api/routes/all')
   }
-};
+}
 
-export default dynamicRouteService;
+export default dynamicRouteService

@@ -61,27 +61,14 @@ const mainLayoutRoute: RouteRecordRaw = {
     {
       path: 'vtj-designer',
       name: 'VtjDesigner',
-      component: () => import('@/views/VtjDesigner.vue'),
+      component: () => import('@/views/VTJDesigner.vue'),
       meta: {
         requiresAuth: true,
-        permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-        title: 'VTJ低代码设计器',
-        icon: 'el-icon-edit',
-        order: 10
-      }
-    },
-    {
-      path: 'simple-vtj-designer',
-      name: 'SimpleVtjDesigner',
-      component: () => import('@/views/SimpleVtjDesigner.vue'),
-      meta: {
-        requiresAuth: true,
-        permission: { roles: [UserRole.Admin, UserRole.SystemAdmin] },
-        title: '简化版VTJ设计器',
-        icon: 'el-icon-edit-outline',
-        order: 11
+        title: 'VTJ设计器',
+        icon: 'el-icon-edit'
       }
     }
+
   ]
 }
 

@@ -4,7 +4,7 @@ import { resolve } from 'path'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import AutoImport from 'unplugin-auto-import/vite'
-
+import { createDevTools } from '@vtj/pro/vite'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -12,19 +12,19 @@ export default defineConfig({
     Components({
       resolvers: [
         ElementPlusResolver({
-          importStyle: 'css',
-        }),
+          importStyle: 'css'
+        })
       ],
-      dts: true, // 生成类型声明文件
+      dts: true // 生成类型声明文件
     }),
     AutoImport({
       resolvers: [ElementPlusResolver()],
       imports: ['vue', 'vue-router', 'pinia'],
       dts: true, // 生成类型声明文件
-      vueTemplate: true,
+      vueTemplate: true
     }),
-    // VTJ 开发工具插件 - 用于设计器功能
-    // createDevTools()
+   createDevTools({ linkOptions: { href: "/__vtj__/#/" } }),
+  
   ],
   
   resolve: {
@@ -38,13 +38,6 @@ export default defineConfig({
   server: {
     port: 3000,
     host: true,
-    // 增加服务器配置以支持大文件
-    maxPayloadSize: 50,
-    // 配置静态资源目录
-    watch: {
-      usePolling: true,
-      interval: 100,
-    },
     proxy: {
       '/api': {
         target: 'http://localhost:5000',
@@ -63,30 +56,22 @@ export default defineConfig({
       compress: {
         drop_console: process.env.NODE_ENV === 'production',
         drop_debugger: true
-      }
+      },
+      // 保留类名，避免类构造函数调用错误
+      keep_classnames: true,
+      keep_fnames: true
     },
+    // 确保构建目标支持ES6类
+    target: 'es2020',
     rollupOptions: {
       output: {
         manualChunks: {
-          // Vue 生态系统
-          'vue-vendor': ['vue', 'vue-router', 'pinia'],
-          
-          // UI 组件库
-          'ui-vendor': ['element-plus', '@element-plus/icons-vue'],
-          
-          // 工具库
-          'utils-vendor': ['axios', 'dayjs', 'lodash'],
-          
-          // 图表库
-          'chart-vendor': ['echarts', 'vue-echarts'],
-          
-          // VTJ 设计器
-          'vtj-vendor': ['@vtj/designer', '@vtj/core', '@vtj/renderer']
-        },
-        // 确保输出格式兼容性
-        format: 'esm',
-        // 解决循环依赖问题
-        preserveModules: false
+          vendor: ['vue', 'vue-router', 'pinia'],
+          ui: ['element-plus', '@element-plus/icons-vue'],
+          utils: ['axios', 'dayjs', 'lodash'],
+          charts: ['echarts', 'vue-echarts']
+
+        }
       }
     }
   },
@@ -99,32 +84,29 @@ export default defineConfig({
     }
   },
   
+  // 优化配置，确保正确处理ES6类
   optimizeDeps: {
     include: [
+      '@vtj/designer', 
+      '@vtj/web',
       'vue',
       'vue-router',
       'pinia',
       'axios',
       'dayjs',
-      'lodash',
-      '@vtj/designer',
-      '@vtj/core',
-      '@vtj/renderer'
+      'lodash'
     ],
-    // 增加优化配置
     esbuildOptions: {
+      // 确保ES6类正确编译
       target: 'es2020',
-      supported: {
-        bigint: true
-      }
-    },
-    // 增加依赖优化并发数
-    maxConcurrentWorkers: 8
+      // 避免对@vtj相关包进行过度优化
+      keepNames: true
+    }
   },
   
   // 配置环境变量
   define: {
-    'process.env': {},
+    'process.env': process.env,
     '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': false
   }
 })
