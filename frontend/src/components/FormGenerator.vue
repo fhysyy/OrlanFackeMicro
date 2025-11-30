@@ -10,243 +10,44 @@
       class="dynamic-form"
     >
       <template v-if="formConfig.fields">
-        <!-- 基本字段 -->
-        <div
-          v-for="field in formConfig.fields"
-          :key="field.prop"
-          v-show="!field.hidden"
-          :class="[
-            'form-item-wrapper',
-            { 'form-item-hidden': field.hidden },
-            field.className
-          ]"
+        <!-- 使用表单布局组件渲染字段 -->
+        <FormLayout
+          :layout="formConfig.layout || 'grid'"
+          :gutter="formConfig.gutter || 20"
+          :xs="formConfig.xs || 12"
+          :sm="formConfig.sm || 8"
+          :md="formConfig.md || 6"
+          :lg="formConfig.lg || 6"
+          :xl="formConfig.xl || 6"
+          :min-col-width="'100px'"
+          :children="visibleFields"
         >
-          <el-form-item
-            :label="field.label"
-            :prop="field.prop"
-            :rules="field.rules"
-            :required="field.required"
-            :help="field.helpText"
-          >
-            <!-- 输入框 -->
-            <el-input
-              v-if="field.type === FormFieldType.INPUT"
-              v-model="formData[field.prop]"
-              :type="field.inputType || 'text'"
-              :placeholder="field.placeholder || `请输入${field.label}`"
-              :disabled="field.disabled"
-              :maxlength="field.maxlength"
-              :clearable="field.clearable"
-              :show-word-limit="field.showWordLimit"
-              :prefix-icon="field.prefixIcon"
-              :suffix-icon="field.suffixIcon"
-              :style="{ width: field.width }"
-            />
-
-            <!-- 文本域 -->
-            <el-input
-              v-else-if="field.type === FormFieldType.TEXTAREA"
-              v-model="formData[field.prop]"
-              type="textarea"
-              :placeholder="field.placeholder || `请输入${field.label}`"
-              :disabled="field.disabled"
-              :maxlength="field.maxlength"
-              :clearable="field.clearable"
-              :show-word-limit="field.showWordLimit"
-              :rows="field.rows || 4"
-              :autosize="field.autosize"
-              :style="{ width: field.width }"
-            />
-
-            <!-- 选择框 -->
-            <el-select
-              v-else-if="field.type === FormFieldType.SELECT"
-              v-model="formData[field.prop]"
-              :placeholder="field.placeholder || `请选择${field.label}`"
-              :disabled="field.disabled"
-              :multiple="field.multiple"
-              :filterable="field.filterable"
-              :clearable="field.clearable"
-              :remote="field.remote"
-              :remote-method="field.remoteMethod"
-              :loading="field.loading"
-              :style="{ width: field.width }"
-              @change="handleFieldChange(field.prop, $event)"
+          <template #item-="{ item, index }">
+            <el-form-item
+              :label="item.label"
+              :prop="item.prop"
+              :rules="item.rules"
+              :required="item.required"
+              :help="item.helpText"
+              :label-width="formConfig.labelWidth || '80px'"
+              class="form-item-wrapper"
             >
-              <el-option
-                v-for="option in field.options"
-                :key="option[field.valueKey || 'value']"
-                :label="option[field.labelKey || 'label']"
-                :value="option[field.valueKey || 'value']"
-                :disabled="option.disabled"
+              <!-- 使用动态组件渲染不同类型的表单字段 -->
+              <component
+                :is="getFieldComponent(item.type)"
+                v-model="formData[item.prop]"
+                :field="item"
+                :disabled="item.disabled"
+                :custom-props="getComponentProps(item)"
+                @change="handleFieldChange(item.prop, $event)"
               />
-            </el-select>
 
-            <!-- 单选框 -->
-            <div v-else-if="field.type === FormFieldType.RADIO" class="radio-group-wrapper">
-              <el-radio-group
-                v-model="formData[field.prop]"
-                :disabled="field.disabled"
-                :class="`radio-group-${field.layout || 'horizontal'}`"
-              >
-                <el-radio
-                  v-for="option in field.options"
-                  :key="option[field.valueKey || 'value']"
-                  :label="option[field.valueKey || 'value']"
-                  :disabled="option.disabled"
-                >
-                  {{ option[field.labelKey || 'label'] }}
-                </el-radio>
-              </el-radio-group>
-            </div>
-
-            <!-- 复选框 -->
-            <div v-else-if="field.type === FormFieldType.CHECKBOX" class="checkbox-group-wrapper">
-              <el-checkbox-group
-                v-model="formData[field.prop]"
-                :disabled="field.disabled"
-                :class="`checkbox-group-${field.layout || 'horizontal'}`"
-              >
-                <el-checkbox
-                  v-for="option in field.options"
-                  :key="option[field.valueKey || 'value']"
-                  :label="option[field.valueKey || 'value']"
-                  :disabled="option.disabled"
-                >
-                  {{ option[field.labelKey || 'label'] }}
-                </el-checkbox>
-              </el-checkbox-group>
-            </div>
-
-            <!-- 开关 -->
-            <el-switch
-              v-else-if="field.type === FormFieldType.SWITCH"
-              v-model="formData[field.prop]"
-              :disabled="field.disabled"
-              :active-value="field.activeValue !== undefined ? field.activeValue : true"
-              :inactive-value="field.inactiveValue !== undefined ? field.inactiveValue : false"
-              :active-text="field.activeText"
-              :inactive-text="field.inactiveText"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 日期选择器 -->
-            <el-date-picker
-              v-else-if="field.type === FormFieldType.DATE_PICKER"
-              v-model="formData[field.prop]"
-              :type="field.pickerType || 'date'"
-              :format="field.format || 'YYYY-MM-DD'"
-              :placeholder="field.placeholder || `请选择${field.label}`"
-              :disabled="field.disabled"
-              :start-placeholder="field.startPlaceholder"
-              :end-placeholder="field.endPlaceholder"
-              :style="{ width: field.width }"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 时间选择器 -->
-            <el-time-picker
-              v-else-if="field.type === FormFieldType.TIME_PICKER"
-              v-model="formData[field.prop]"
-              :type="field.pickerType || 'time'"
-              :format="field.format || 'HH:mm:ss'"
-              :placeholder="field.placeholder || `请选择${field.label}`"
-              :disabled="field.disabled"
-              :start-placeholder="field.startPlaceholder"
-              :end-placeholder="field.endPlaceholder"
-              :style="{ width: field.width }"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 日期时间选择器 -->
-            <el-date-picker
-              v-else-if="field.type === FormFieldType.DATETIME_PICKER"
-              v-model="formData[field.prop]"
-              :type="field.pickerType || 'datetime'"
-              :format="field.format || 'YYYY-MM-DD HH:mm:ss'"
-              :placeholder="field.placeholder || `请选择${field.label}`"
-              :disabled="field.disabled"
-              :start-placeholder="field.startPlaceholder"
-              :end-placeholder="field.endPlaceholder"
-              :style="{ width: field.width }"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 数字输入框 -->
-            <el-input-number
-              v-else-if="field.type === FormFieldType.INPUT_NUMBER"
-              v-model="formData[field.prop]"
-              :min="field.min"
-              :max="field.max"
-              :step="field.step"
-              :precision="field.precision"
-              :disabled="field.disabled"
-              :clearable="field.clearable"
-              :style="{ width: field.width }"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 滑块 -->
-            <el-slider
-              v-else-if="field.type === FormFieldType.SLIDER"
-              v-model="formData[field.prop]"
-              :min="field.min || 0"
-              :max="field.max || 100"
-              :step="field.step || 1"
-              :disabled="field.disabled"
-              :show-input="field.showInput"
-              :range="field.range"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 评分 -->
-            <el-rate
-              v-else-if="field.type === FormFieldType.RATE"
-              v-model="formData[field.prop]"
-              :max="field.max || 5"
-              :disabled="field.disabled"
-              :allow-half="field.allowHalf"
-              :allow-clear="field.allowClear"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 文件上传 -->
-            <el-upload
-                v-else-if="field.type === FormFieldType.UPLOAD"
-                v-model:file-list="formData[field.prop]"
-                :action="field.action"
-                :multiple="field.multiple"
-              :accept="field.accept"
-              :disabled="field.disabled"
-              :before-upload="(file) => handleBeforeUpload(file, field)"
-              :on-success="(response, file) => handleUploadSuccess(response, file, field)"
-              :on-error="(error, file) => handleUploadError(error, file, field)"
-              :on-remove="handleFileRemove"
-            >
-              <el-button type="primary">点击上传</el-button>
-              <template #tip>
-                <div class="el-upload__tip">
-                  {{ field.helpText || '请上传文件' }}
-                  <span v-if="field.fileSize">，大小不超过{{ formatFileSize(field.fileSize) }}</span>
-                </div>
-              </template>
-            </el-upload>
-
-            <!-- 自定义组件 -->
-            <component
-              v-else
-              :is="customComponents[field.type] || 'div'"
-              v-bind="getComponentProps(field)"
-              v-model="formData[field.prop]"
-              :disabled="field.disabled"
-              @change="handleFieldChange(field.prop, $event)"
-            />
-
-            <!-- 插槽：自定义字段内容 -->
-            <slot :name="`field-${field.prop}`" :field="field" :value="formData[field.prop]">
-            </slot>
-          </el-form-item>
-        </div>
+              <!-- 插槽：自定义字段内容 -->
+              <slot :name="`field-${item.prop}`" :field="item" :value="formData[item.prop]">
+              </slot>
+            </el-form-item>
+          </template>
+        </FormLayout>
       </template>
 
       <!-- 表单操作按钮 -->
@@ -266,7 +67,26 @@
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { ElMessage } from 'element-plus';
 import type { FormInstance } from 'element-plus';
-import type { FormConfig, FormField, FormFieldType } from '@/types/form';
+import type { FormConfig, FormField, ValidationRule } from '@/types/form';
+import { FormFieldType, DatabaseDataType } from '@/types/form';
+import { convertValidationRules, generateValidationRulesFromDatabase } from '@/utils/validationUtils';
+import {
+  FormFieldInput,
+  FormFieldTextarea,
+  FormFieldSelect,
+  FormFieldRadio,
+  FormFieldCheckbox,
+  FormFieldSwitch,
+  FormFieldDatePicker,
+  FormFieldTimePicker,
+  FormFieldDatetimePicker,
+  FormFieldInputNumber,
+  FormFieldSlider,
+  FormFieldRate,
+  FormFieldUpload,
+  FormFieldTime,
+  FormLayout
+} from './form-fields';
 
 // Props
 const props = defineProps<{
@@ -292,13 +112,73 @@ const submitting = ref(false);
 // 表单数据
 const formData = reactive<Record<string, any>>({});
 
+// 可见字段
+const visibleFields = computed(() => {
+  return formConfig.value.fields?.filter(field => !field.hidden) || [];
+});
+
+// 组件映射
+const componentMap = {
+  [FormFieldType.INPUT]: FormFieldInput,
+  [FormFieldType.TEXTAREA]: FormFieldTextarea,
+  [FormFieldType.SELECT]: FormFieldSelect,
+  [FormFieldType.RADIO]: FormFieldRadio,
+  [FormFieldType.CHECKBOX]: FormFieldCheckbox,
+  [FormFieldType.SWITCH]: FormFieldSwitch,
+  [FormFieldType.DATE_PICKER]: FormFieldDatePicker,
+  [FormFieldType.TIME_PICKER]: FormFieldTimePicker,
+  [FormFieldType.DATETIME_PICKER]: FormFieldDatetimePicker,
+  [FormFieldType.INPUT_NUMBER]: FormFieldInputNumber,
+  [FormFieldType.SLIDER]: FormFieldSlider,
+  [FormFieldType.RATE]: FormFieldRate,
+  [FormFieldType.UPLOAD]: FormFieldUpload,
+  [FormFieldType.TIME]: FormFieldTime
+};
+
+// 获取字段组件
+function getFieldComponent(type: FormFieldType) {
+  return componentMap[type] || props.customComponents?.[type] || 'div';
+}
+
+// 表单配置计算属性 - 确保始终有默认值
+const formConfig = computed(() => ({
+  fields: [],
+  labelPosition: 'right',
+  labelWidth: '120px',
+  layout: '',
+  showSubmitButton: false,
+  showResetButton: false,
+  ...props.config
+}));
+
 // 表单规则
 const formRules = computed(() => {
   const rules: Record<string, any[]> = {};
-  props.config.fields?.forEach(field => {
-    if (field.rules && field.rules.length > 0) {
+  formConfig.value.fields?.forEach(field => {
+    // 优先使用新的validationRules字段
+    if (field.validationRules && field.validationRules.length > 0) {
+      rules[field.prop] = convertValidationRules(field.validationRules, getFieldTrigger(field.type));
+    }
+    // 兼容旧的rules字段
+    else if (field.rules && field.rules.length > 0) {
       rules[field.prop] = field.rules;
-    } else if (field.required) {
+    }
+    // 如果有数据库配置，生成验证规则
+    else if (field.databaseType) {
+      const dbRules = generateValidationRulesFromDatabase({
+        type: field.databaseType,
+        length: field.databaseLength,
+        required: field.required
+      });
+      if (dbRules.length > 0) {
+        rules[field.prop] = dbRules.map(rule => ({
+          ...rule,
+          trigger: getFieldTrigger(field.type)
+        }));
+      }
+    }
+    // 仅处理必填字段
+    else if (field.required) {
       rules[field.prop] = [
         {
           required: true,
@@ -313,7 +193,7 @@ const formRules = computed(() => {
 
 // 是否显示操作按钮
 const showActions = computed(() => {
-  return props.config.showSubmitButton !== false || props.config.showResetButton !== false;
+  return formConfig.value.showSubmitButton !== false || formConfig.value.showResetButton !== false;
 });
 
 // 初始化表单数据
@@ -324,17 +204,17 @@ function initFormData() {
   });
 
   // 设置初始值
-  if (props.config.fields) {
-    props.config.fields.forEach(field => {
+  if (formConfig.value.fields) {
+    formConfig.value.fields.forEach(field => {
       // 优先使用传入的modelValue
       if (props.modelValue && props.modelValue[field.prop] !== undefined) {
         formData[field.prop] = props.modelValue[field.prop];
       } else if (field.value !== undefined) {
         // 其次使用字段配置的value
         formData[field.prop] = field.value;
-      } else if (props.config.initialData && props.config.initialData[field.prop] !== undefined) {
+      } else if (formConfig.value.initialData && formConfig.value.initialData[field.prop] !== undefined) {
         // 最后使用表单配置的initialData
-        formData[field.prop] = props.config.initialData[field.prop];
+        formData[field.prop] = formConfig.value.initialData[field.prop];
       } else {
         // 设置默认值
         formData[field.prop] = getDefaultValueByType(field.type);
@@ -354,7 +234,14 @@ function getDefaultValueByType(type: FormFieldType) {
       return false;
     case FormFieldType.INPUT_NUMBER:
     case FormFieldType.RATE:
+    case FormFieldType.SLIDER:
       return 0;
+    case FormFieldType.DATE_PICKER:
+    case FormFieldType.DATETIME_PICKER:
+      return null;
+    case FormFieldType.TIME_PICKER:
+    case FormFieldType.TIME:
+      return null;
     default:
       return '';
   }
@@ -392,6 +279,35 @@ function getComponentProps(field: FormField) {
     placeholder: field.placeholder,
     disabled: field.disabled
   };
+  
+  // 根据数据库类型添加特定属性
+  if (field.databaseType) {
+    switch (field.databaseType) {
+      case DatabaseDataType.VARCHAR:
+      case DatabaseDataType.CHAR:
+        if (field.databaseLength) {
+          baseProps.maxlength = field.databaseLength;
+          baseProps.showWordLimit = true;
+        }
+        break;
+      case DatabaseDataType.TEXT:
+      case DatabaseDataType.MEDIUMTEXT:
+      case DatabaseDataType.LONGTEXT:
+        if (field.type === FormFieldType.TEXTAREA && field.databaseLength) {
+          baseProps.maxlength = field.databaseLength;
+          baseProps.showWordLimit = true;
+        }
+        break;
+      case DatabaseDataType.INT:
+      case DatabaseDataType.SMALLINT:
+      case DatabaseDataType.TINYINT:
+      case DatabaseDataType.BIGINT:
+        if (field.type === FormFieldType.INPUT_NUMBER) {
+          baseProps.integer = true;
+        }
+        break;
+    }
+  }
   
   // 合并字段特定的属性
   return { ...baseProps, ...field.componentProps };
@@ -446,6 +362,24 @@ function handleFileRemove(file: any, fileList: any[]) {
 function handleFieldChange(field: string, value: any) {
   emit('fieldChange', field, value);
   emit('update:modelValue', { ...formData });
+  
+  // 如果字段有验证规则，触发验证
+  const currentField = formConfig.value.fields?.find(f => f.prop === field);
+  if (currentField && currentField.validationRules?.length) {
+    validateField(field);
+  }
+}
+
+// 验证单个字段
+async function validateField(field: string) {
+  if (!formRef.value) return;
+  
+  try {
+    await formRef.value.validateField(field);
+    return true;
+  } catch (error) {
+    return false;
+  }
 }
 
 // 提交表单
@@ -457,8 +391,8 @@ async function handleSubmit() {
     submitting.value = true;
 
     // 调用自定义提交函数
-    if (props.config.onSubmit) {
-      await props.config.onSubmit(formData);
+    if (formConfig.value.onSubmit) {
+      await formConfig.value.onSubmit(formData);
     }
 
     // 触发提交事件
@@ -478,8 +412,8 @@ function handleReset() {
   initFormData();
   
   // 调用自定义重置函数
-  if (props.config.onReset) {
-    props.config.onReset();
+  if (formConfig.value.onReset) {
+    formConfig.value.onReset();
   }
   
   // 触发重置事件
@@ -548,13 +482,15 @@ defineExpose({
 }
 
 .dynamic-form {
-  background: #fff;
-  padding: 20px;
-  border-radius: 4px;
+  width: 100%;
+}
+
+.form-row {
+  margin-bottom: 12px;
 }
 
 .form-item-wrapper {
-  margin-bottom: 16px;
+  margin-bottom: 0;
 }
 
 .form-item-hidden {
@@ -564,21 +500,33 @@ defineExpose({
 .radio-group-wrapper,
 .checkbox-group-wrapper {
   display: flex;
+  align-items: center;
   flex-wrap: wrap;
 }
 
 .radio-group-horizontal .el-radio,
 .checkbox-group-horizontal .el-checkbox {
-  margin-right: 16px;
+  margin-right: 15px;
+  margin-bottom: 4px;
 }
 
-.radio-group-vertical .el-radio,
-.checkbox-group-vertical .el-checkbox {
-  display: block;
-  margin-bottom: 8px;
+/* 优化标签和输入框的对齐 */
+:deep(.el-form-item__label) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-:deep(.el-upload) {
-  display: block;
+:deep(.el-form-item__content) {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 确保输入控件在容器内正确对齐 */
+:deep(.el-input),
+:deep(.el-select),
+:deep(.el-date-editor),
+:deep(.el-time-editor) {
+  width: 100%;
 }
 </style>

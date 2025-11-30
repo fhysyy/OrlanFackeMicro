@@ -1,9 +1,13 @@
 // 前端类型定义主文件
 export * from './api'
 export * from './dictionary'
-export * from './class'
-export * from './student'
-export * from './score'
+export * from './form'
+export * from './crud'
+export * from './dataBinding'
+export * from './event'
+export * from './page'
+export * from './router'
+export * from './table'
 
 // 用户相关类型
 export interface User {

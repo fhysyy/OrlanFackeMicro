@@ -1,6 +1,27 @@
 import type { FormItemRule } from 'element-plus'
 
 /**
+ * 数据库数据类型枚举
+ */
+export enum DatabaseDataType {
+  STRING = 'varchar',
+  TEXT = 'text',
+  INT = 'int',
+  BIGINT = 'bigint',
+  DECIMAL = 'decimal',
+  FLOAT = 'float',
+  DOUBLE = 'double',
+  BOOLEAN = 'boolean',
+  DATE = 'date',
+  TIME = 'time',
+  DATETIME = 'datetime',
+  TIMESTAMP = 'timestamp',
+  JSON = 'json',
+  ENUM = 'enum',
+  SET = 'set'
+}
+
+/**
  * 表单字段类型枚举
  */
 export enum FormFieldType {
@@ -34,6 +55,16 @@ export interface FormOption {
 }
 
 /**
+ * 验证规则类型
+ */
+export interface ValidationRule {
+  type: 'required' | 'min' | 'max' | 'len' | 'email' | 'phone' | 'idcard' | 'noChinese' | 'hasNumber' | 'hasSpecialChar' | 'pattern';
+  value?: any;
+  message: string;
+  trigger?: 'blur' | 'change' | 'focus';
+}
+
+/**
  * 表单字段基础配置接口
  */
 export interface BaseFormField {
@@ -43,6 +74,14 @@ export interface BaseFormField {
   label: string;
   // 字段类型
   type: FormFieldType;
+  // 数据库数据类型
+  databaseType?: DatabaseDataType;
+  // 数据库字段长度
+  databaseLength?: number;
+  // 数据库字段精度（用于数值类型）
+  databasePrecision?: number;
+  // 数据库字段小数位数（用于数值类型）
+  databaseScale?: number;
   // 初始值
   value?: any;
   // 占位符
@@ -55,6 +94,8 @@ export interface BaseFormField {
   width?: number | string;
   // 表单校验规则
   rules?: FormItemRule[];
+  // 可视化配置的验证规则
+  validationRules?: ValidationRule[];
   // 帮助文本
   helpText?: string;
   // 前置图标
@@ -67,6 +108,14 @@ export interface BaseFormField {
   required?: boolean;
   // 栅格列数 (1-24)
   span?: number;
+  // 字段描述（用于生成文档）
+  description?: string;
+  // 字段说明（用于表单提示）
+  fieldDescription?: string;
+  // 是否允许搜索
+  searchable?: boolean;
+  // 是否允许排序
+  sortable?: boolean;
   // 附加配置
   [key: string]: any;
 }

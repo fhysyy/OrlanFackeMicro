@@ -1,6 +1,12 @@
-import type { FormConfig, FormField, FormFieldType, FormOption } from '../types/form'
+import type { FormConfig, FormField, FormOption, ValidationRule, DatabaseDataType } from '../types/form'
+import { FormFieldType } from '../types/form'
 import type { ApiResponse } from '../types/api'
 import { api } from './api'
+import { 
+  convertValidationRules, 
+  generateValidationRulesFromDatabase, 
+  getValidationRuleTemplates 
+} from '../utils/validationUtils'
 
 /**
  * 创建基本输入框字段
@@ -64,6 +70,161 @@ export interface FormTemplate {
 export const formService = {
   // 重定向到直接导出的函数
   createInputField,
+
+  /**
+   * 获取验证规则模板
+   */
+  getValidationRuleTemplates,
+
+  /**
+   * 根据数据库配置生成表单字段
+   */
+  createFieldFromDatabase(
+    prop: string,
+    label: string,
+    databaseType: DatabaseDataType,
+    databaseLength?: number,
+    databasePrecision?: number,
+    databaseScale?: number,
+    options?: Partial<FormField>
+  ): FormField {
+    // 根据数据库类型映射到表单字段类型
+    let formFieldType: FormFieldType;
+    switch (databaseType) {
+      case DatabaseDataType.STRING:
+      case DatabaseDataType.TEXT:
+        formFieldType = databaseLength && databaseLength > 255 ? FormFieldType.TEXTAREA : FormFieldType.INPUT;
+        break;
+      case DatabaseDataType.INT:
+      case DatabaseDataType.BIGINT:
+      case DatabaseDataType.DECIMAL:
+      case DatabaseDataType.FLOAT:
+      case DatabaseDataType.DOUBLE:
+        formFieldType = FormFieldType.INPUT_NUMBER;
+        break;
+      case DatabaseDataType.BOOLEAN:
+        formFieldType = FormFieldType.SWITCH;
+        break;
+      case DatabaseDataType.DATE:
+        formFieldType = FormFieldType.DATE_PICKER;
+        break;
+      case DatabaseDataType.TIME:
+        formFieldType = FormFieldType.TIME_PICKER;
+        break;
+      case DatabaseDataType.DATETIME:
+      case DatabaseDataType.TIMESTAMP:
+        formFieldType = FormFieldType.DATETIME_PICKER;
+        break;
+      case DatabaseDataType.ENUM:
+        formFieldType = FormFieldType.SELECT;
+        break;
+      default:
+        formFieldType = FormFieldType.INPUT;
+    }
+
+    // 生成验证规则
+    const validationRules = generateValidationRulesFromDatabase(
+      databaseType,
+      databaseLength,
+      databasePrecision,
+      databaseScale
+    );
+
+    // 根据字段类型创建不同的表单字段
+    let field: FormField;
+    switch (formFieldType) {
+      case FormFieldType.INPUT:
+        field = this.createInputField(prop, label, {
+          databaseType,
+          databaseLength,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.TEXTAREA:
+        field = this.createTextareaField(prop, label, {
+          databaseType,
+          databaseLength,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.INPUT_NUMBER:
+        field = this.createInputNumberField(prop, label, {
+          databaseType,
+          databaseLength: databasePrecision,
+          databaseScale,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.SWITCH:
+        field = this.createSwitchField(prop, label, {
+          databaseType,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.DATE_PICKER:
+        field = this.createDateField(prop, label, {
+          databaseType,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.TIME_PICKER:
+        field = this.createTimeField(prop, label, {
+          databaseType,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.DATETIME_PICKER:
+        field = this.createDateTimePickerField(prop, label, {
+          databaseType,
+          validationRules,
+          ...options
+        });
+        break;
+      case FormFieldType.SELECT:
+        field = this.createSelectField(prop, label, options?.options || [], {
+          databaseType,
+          databaseLength,
+          validationRules,
+          ...options
+        });
+        break;
+      default:
+        field = this.createInputField(prop, label, {
+          databaseType,
+          databaseLength,
+          validationRules,
+          ...options
+        });
+    }
+
+    return field;
+  },
+
+  /**
+   * 转换可视化验证规则为Element Plus验证规则
+   */
+  convertValidationRules,
+
+  /**
+   * 创建时间选择器字段
+   */
+  createTimeField(prop: string, label: string, options?: Partial<FormField>): FormField {
+    return {
+      prop,
+      label,
+      type: FormFieldType.TIME_PICKER,
+      pickerType: 'time',
+      format: 'HH:mm:ss',
+      placeholder: `请选择${label}`,
+      ...options
+    }
+  },
   
   /**
    * 创建文本域字段

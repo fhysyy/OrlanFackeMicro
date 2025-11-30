@@ -67,6 +67,36 @@ const mainLayoutRoute: RouteRecordRaw = {
         title: 'VTJ设计器',
         icon: 'el-icon-edit'
       }
+    },
+    {
+      path: 'custom-crud',
+      name: 'CustomCrud',
+      component: () => import('@/views/CustomCrudPage.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '自定义CRUD页面',
+        icon: 'el-icon-setting'
+      }
+    },
+    {
+      path: 'configurable-form',
+      name: 'ConfigurableForm',
+      component: () => import('@/views/ConfigurableForm.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '可配置表单',
+        icon: 'el-icon-document-add'
+      }
+    },
+    {
+      path: 'form-config-management',
+      name: 'FormConfigManagement',
+      component: () => import('@/views/FormConfigManagement.vue'),
+      meta: {
+        requiresAuth: true,
+        title: '表单配置管理',
+        icon: 'el-icon-setting'
+      }
     }
 
   ]

@@ -60,7 +60,7 @@
         </el-menu-item>
         
         <!-- 低代码设计器 - 仅管理员和系统管理员可见v-if="hasPermission('Admin')" -->
-        <el-menu-item index="/ali-lowcode-designer" >
+        <el-menu-item index="/__vtj__/#/" >
           <el-icon><Edit /></el-icon>
           <span>低代码设计器</span>
         </el-menu-item>
@@ -84,6 +84,16 @@
           <el-menu-item index="/student-management">学生管理</el-menu-item>
           <el-menu-item index="/score-management">成绩管理</el-menu-item>
           <el-menu-item index="/exam-management">考试管理</el-menu-item>
+        </el-sub-menu>
+        
+        <!-- 可配置表单 -->
+        <el-sub-menu index="/configurable-form">
+          <template #title>
+            <el-icon><Document /></el-icon>
+            <span>表单管理</span>
+          </template>
+          <el-menu-item index="/form-config-management">表单配置管理</el-menu-item>
+          <el-menu-item index="/configurable-form">创建/编辑表单</el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -182,7 +192,7 @@ import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { Monitor, User, UserFilled, Key, Message, Folder, Setting, Menu, Expand, Fold, ArrowDown, School, Edit } from '@element-plus/icons-vue'
+import { Monitor, User, UserFilled, Key, Message, Folder, Setting, Menu, Expand, Fold, ArrowDown, School, Edit, Document } from '@element-plus/icons-vue'
 
 interface BreadcrumbItem {
   title: string

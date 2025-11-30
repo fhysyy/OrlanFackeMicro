@@ -7,6 +7,7 @@
 export {}
 declare global {
   const EffectScope: typeof import('vue').EffectScope
+  const ElMessageBox: typeof import('element-plus/es').ElMessageBox
   const acceptHMRUpdate: typeof import('pinia').acceptHMRUpdate
   const computed: typeof import('vue').computed
   const createApp: typeof import('vue').createApp
@@ -95,6 +96,7 @@ declare module 'vue' {
   interface GlobalComponents {}
   interface ComponentCustomProperties {
     readonly EffectScope: UnwrapRef<typeof import('vue')['EffectScope']>
+    readonly ElMessageBox: UnwrapRef<typeof import('element-plus/es')['ElMessageBox']>
     readonly acceptHMRUpdate: UnwrapRef<typeof import('pinia')['acceptHMRUpdate']>
     readonly computed: UnwrapRef<typeof import('vue')['computed']>
     readonly createApp: UnwrapRef<typeof import('vue')['createApp']>

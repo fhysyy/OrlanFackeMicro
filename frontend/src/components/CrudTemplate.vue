@@ -1,214 +1,89 @@
 <template>
   <div class="crud-template">
     <!-- 工具栏 -->
-    <div class="crud-toolbar">
-      <el-button-group>
-        <template v-for="action in toolbarActions" :key="action.name">
-          <el-button
-            v-if="isActionVisible(action)"
-            :type="action.type"
-            :icon="action.icon"
-            :disabled="isActionDisabled(action)"
-            @click="handleToolbarAction(action)"
-          >
-            {{ action.name }}
-          </el-button>
-        </template>
-      </el-button-group>
-      
-      <!-- 批量操作 -->
-      <el-dropdown
-        v-if="selectedRows.length > 0 && batchActions.length > 0"
-        @command="handleBatchAction"
-      >
-        <el-button type="primary" plain>
-          批量操作 <el-icon class="el-icon--right"><arrow-down /></el-icon>
-        </el-button>
-        <template #dropdown>
-          <el-dropdown-menu>
-            <el-dropdown-item
-              v-for="action in batchActions"
-              :key="action"
-              :command="action"
-            >
-              {{ getActionName(action) }}
-            </el-dropdown-item>
-          </el-dropdown-menu>
-        </template>
-      </el-dropdown>
-    </div>
+    <CrudToolbar
+      :toolbar-actions="toolbarActions"
+      :batch-actions="batchActions"
+      :selected-rows="selectedRows"
+      @toolbar-action="handleToolbarAction"
+      @batch-action="handleBatchAction"
+    />
 
     <!-- 搜索表单 -->
-    <el-form
+    <CrudSearchForm
       v-if="config.table.showSearch && searchFormConfig"
-      :model="searchParams"
-      :inline="true"
-      :size="'small'"
-      class="crud-search"
-    >
-      <FormGenerator
-        :config="searchFormConfig"
-        :model="searchParams"
-      />
-      <el-form-item>
-        <el-button type="primary" @click="handleSearch">搜索</el-button>
-        <el-button @click="handleReset">重置</el-button>
-      </el-form-item>
-    </el-form>
+      :show-search="config.table.showSearch"
+      :search-form-config="searchFormConfig"
+      :initial-search-params="searchParams"
+      @search="handleSearch"
+      @reset="handleReset"
+    />
 
     <!-- 表格 -->
-    <el-table
+    <CrudTable
       ref="tableRef"
-      :data="dataList"
+      :data-list="dataList"
       :loading="loading"
-      :stripe="true"
-      :border="true"
+      :columns="tableColumns"
+      :row-actions="rowActions"
+      :show-selection="config.table.showSelection"
+      :show-index="config.table.showIndex"
+      :show-actions="config.table.showActions"
       :row-key="config.table.rowKey || 'id'"
+      :action-width="config.table.actionWidth"
+      :selectable="config.table.selectable"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
-    >
-      <!-- 选择列 -->
-      <el-table-column
-        v-if="config.table.showSelection"
-        type="selection"
-        width="55"
-        :selectable="config.table.selectable"
-      />
-
-      <!-- 序号列 -->
-      <el-table-column
-        v-if="config.table.showIndex"
-        type="index"
-        width="50"
-        label="序号"
-      />
-
-      <!-- 自定义列 -->
-      <template v-for="column in tableColumns" :key="column.key || column.prop">
-        <table-column-renderer
-          :column="column"
-          @cell-action="handleCellAction"
-        />
-      </template>
-
-      <!-- 操作列 -->
-      <el-table-column
-        v-if="config.table.showActions"
-        label="操作"
-        width="config.table.actionWidth || 200"
-        fixed="right"
-      >
-        <template #default="{ row, $index }">
-          <template v-for="action in rowActions" :key="action.name">
-            <el-button
-              v-if="isActionVisible(action, row)"
-              :type="action.type || 'default'"
-              :icon="action.icon"
-              :size="'small'"
-              :disabled="isActionDisabled(action, row)"
-              @click="handleRowAction(action, row, $index)"
-              style="margin-right: 5px;"
-            >
-              {{ action.name }}
-            </el-button>
-          </template>
-        </template>
-      </el-table-column>
-    </el-table>
+      @row-action="handleRowAction"
+      @cell-action="handleCellAction"
+    />
 
     <!-- 分页 -->
-    <div class="crud-pagination" v-if="config.table.showPagination">
-      <el-pagination
-        v-model:current-page="pagination.currentPage"
-        v-model:page-size="pagination.pageSize"
-        :page-sizes="[10, 20, 50, 100]"
-        layout="total, sizes, prev, pager, next, jumper"
-        :total="pagination.total"
-        @size-change="handleSizeChange"
-        @current-change="handleCurrentChange"
-      />
-    </div>
+    <CrudPagination
+      v-if="config.table.showPagination"
+      :show-pagination="config.table.showPagination"
+      :initial-current-page="pagination.currentPage"
+      :initial-page-size="pagination.pageSize"
+      :initial-total="pagination.total"
+      @size-change="handleSizeChange"
+      @current-change="handleCurrentChange"
+    />
 
     <!-- 创建对话框 -->
-    <el-dialog
-      v-model="dialogVisible.create"
-      :title="`创建${config.entityName}`"
-      :width="config.form.dialogWidth || '50%'"
+    <CrudDialog
+      v-model:visible="dialogVisible.create"
+      dialog-type="create"
+      :dialog-config="createFormConfig"
+      :entity-name="config.entityName"
+      :dialog-width="config.form.dialogWidth"
       :fullscreen="config.form.fullscreen"
-    >
-      <template #default>
-        <el-form
-          ref="formRef.create"
-          :model="currentData"
-          :rules="createFormConfig?.rules"
-          :label-width="'100px'"
-        >
-          <FormGenerator
-            v-if="createFormConfig"
-            :config="createFormConfig"
-            :model="currentData"
-            :form-ref="formRef.create"
-          />
-        </el-form>
-      </template>
-      <template #footer>
-        <el-button @click="dialogVisible.create = false">取消</el-button>
-        <el-button type="primary" @click="handleCreateSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+      @submit="handleCreateSubmit"
+      @cancel="dialogVisible.create = false"
+    />
 
     <!-- 编辑对话框 -->
-    <el-dialog
-      v-model="dialogVisible.update"
-      :title="`编辑${config.entityName}`"
-      :width="config.form.dialogWidth || '50%'"
+    <CrudDialog
+      v-model:visible="dialogVisible.update"
+      dialog-type="update"
+      :dialog-config="updateFormConfig"
+      :initial-data="currentData"
+      :entity-name="config.entityName"
+      :dialog-width="config.form.dialogWidth"
       :fullscreen="config.form.fullscreen"
-    >
-      <template #default>
-        <el-form
-          ref="formRef.update"
-          :model="currentData"
-          :rules="updateFormConfig?.rules"
-          :label-width="'100px'"
-        >
-          <FormGenerator
-            v-if="updateFormConfig"
-            :config="updateFormConfig"
-            :model="currentData"
-            :form-ref="formRef.update"
-          />
-        </el-form>
-      </template>
-      <template #footer>
-        <el-button @click="dialogVisible.update = false">取消</el-button>
-        <el-button type="primary" @click="handleUpdateSubmit">确定</el-button>
-      </template>
-    </el-dialog>
+      @submit="handleUpdateSubmit"
+      @cancel="dialogVisible.update = false"
+    />
 
     <!-- 查看对话框 -->
-    <el-dialog
-      v-model="dialogVisible.view"
-      :title="`查看${config.entityName}`"
-      :width="config.form.dialogWidth || '50%'"
-    >
-      <template #default>
-        <el-form
-          :model="currentData"
-          :label-width="'100px'"
-          :disabled="true"
-        >
-          <FormGenerator
-            v-if="viewFormConfig"
-            :config="viewFormConfig"
-            :model="currentData"
-            :disabled="true"
-          />
-        </el-form>
-      </template>
-      <template #footer>
-        <el-button @click="dialogVisible.view = false">关闭</el-button>
-      </template>
-    </el-dialog>
+    <CrudDialog
+      v-model:visible="dialogVisible.view"
+      dialog-type="view"
+      :dialog-config="viewFormConfig"
+      :initial-data="currentData"
+      :entity-name="config.entityName"
+      :dialog-width="config.form.dialogWidth"
+      @cancel="dialogVisible.view = false"
+    />
   </div>
 </template>
 
@@ -217,6 +92,7 @@ import { ref, reactive, computed, onMounted, onUnmounted } from 'vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import FormGenerator from './FormGenerator.vue';
 import TableColumnRenderer from './TableColumnRenderer.vue';
+import { CrudToolbar, CrudSearchForm, CrudTable, CrudPagination, CrudDialog } from './crud-components';
 import type { CrudConfig, CrudContext, CrudAction } from '../types/crud';
 import type { TableColumn } from '../types/table';
 import type { FormConfig } from '../types/form';
@@ -241,11 +117,7 @@ const emit = defineEmits<{
 // 表格引用
 const tableRef = ref();
 
-// 表单引用
-const formRef = reactive({
-  create: ref(),
-  update: ref()
-});
+// 组件引用 - 不需要表单引用，由CrudDialog组件内部管理
 
 // 页面状态
 const loading = ref(false);
@@ -271,6 +143,7 @@ const currentData = reactive({});
 
 // 计算属性
 const searchFormConfig = computed(() => props.config.table.searchFormConfig);
+// 搜索表单配置直接使用searchFormConfig
 const createFormConfig = computed(() => props.config.form.createFormConfig);
 const updateFormConfig = computed(() => props.config.form.updateFormConfig);
 const viewFormConfig = computed(() => props.config.form.viewFormConfig);
@@ -279,16 +152,7 @@ const toolbarActions = computed(() => props.config.actions.toolbar);
 const rowActions = computed(() => props.config.actions.tableRow);
 const batchActions = computed(() => props.config.actions.batchActions);
 
-// 初始化默认搜索参数
-const initDefaultSearchParams = () => {
-  if (searchFormConfig.value) {
-    searchFormConfig.value.fields.forEach(field => {
-      if (field.defaultValue !== undefined) {
-        searchParams[field.name] = field.defaultValue;
-      }
-    });
-  }
-};
+// 初始化默认搜索参数由CrudSearchForm组件内部处理
 
 // 加载数据
 const loadData = async () => {
@@ -589,32 +453,14 @@ const handleRefresh = () => {
   emit('refresh');
 };
 
-// 创建提交
-const handleCreateSubmit = async () => {
-  if (formRef.create.value) {
-    try {
-      await formRef.create.value.validate();
-      emit('create', { ...currentData });
-    } catch (error) {
-      return;
-    }
-  } else {
-    emit('create', { ...currentData });
-  }
+// 创建提交 - 从CrudDialog组件接收验证后的数据
+const handleCreateSubmit = async (formData: any) => {
+  emit('create', formData);
 };
 
-// 编辑提交
-const handleUpdateSubmit = async () => {
-  if (formRef.update.value) {
-    try {
-      await formRef.update.value.validate();
-      emit('update', { ...currentData });
-    } catch (error) {
-      return;
-    }
-  } else {
-    emit('update', { ...currentData });
-  }
+// 编辑提交 - 从CrudDialog组件接收验证后的数据
+const handleUpdateSubmit = async (formData: any) => {
+  emit('update', formData);
 };
 
 // 更新数据列表
@@ -650,7 +496,6 @@ defineExpose({
 
 // 生命周期
 onMounted(() => {
-  initDefaultSearchParams();
   loadData();
 });
 </script>
@@ -674,6 +519,14 @@ onMounted(() => {
   padding: 16px;
   background: #f5f7fa;
   border-radius: 4px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+}
+
+.search-buttons {
+  margin-left: auto;
+  margin-bottom: 20px;
 }
 
 .crud-pagination {

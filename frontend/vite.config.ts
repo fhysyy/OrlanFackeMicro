@@ -23,7 +23,7 @@ export default defineConfig({
       dts: true, // 生成类型声明文件
       vueTemplate: true
     }),
-   createDevTools({ linkOptions: { href: "/__vtj__/#/" } }),
+   createDevTools({ linkOptions: { href: "/vtj/" } }),
   
   ],
   
