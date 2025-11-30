@@ -2,137 +2,305 @@
   <div class="messages-container">
     <div class="page-header">
       <h2>消息管理</h2>
-      <el-button type="primary" @click="handleSend">发送消息</el-button>
+      <el-button
+        type="primary"
+        @click="handleSend"
+      >
+        发送消息
+      </el-button>
     </div>
 
     <!-- 消息统计 -->
     <div class="message-stats">
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-statistic title="今日发送" :value="stats.todaySent" />
+          <el-statistic
+            title="今日发送"
+            :value="stats.todaySent"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="待发送" :value="stats.pending" />
+          <el-statistic
+            title="待发送"
+            :value="stats.pending"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="发送成功" :value="stats.sent" />
+          <el-statistic
+            title="发送成功"
+            :value="stats.sent"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="发送失败" :value="stats.failed" />
+          <el-statistic
+            title="发送失败"
+            :value="stats.failed"
+          />
         </el-col>
       </el-row>
     </div>
 
     <!-- 搜索和筛选 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="消息类型">
-          <el-select v-model="searchForm.messageType" placeholder="请选择类型" clearable>
-            <el-option label="系统消息" value="System" />
-            <el-option label="通知" value="Notification" />
-            <el-option label="提醒" value="Reminder" />
-            <el-option label="营销" value="Marketing" />
+          <el-select
+            v-model="searchForm.messageType"
+            placeholder="请选择类型"
+            clearable
+          >
+            <el-option
+              label="系统消息"
+              value="System"
+            />
+            <el-option
+              label="通知"
+              value="Notification"
+            />
+            <el-option
+              label="提醒"
+              value="Reminder"
+            />
+            <el-option
+              label="营销"
+              value="Marketing"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="发送渠道">
-          <el-select v-model="searchForm.channel" placeholder="请选择渠道" clearable>
-            <el-option label="站内信" value="InApp" />
-            <el-option label="邮件" value="Email" />
-            <el-option label="短信" value="SMS" />
-            <el-option label="推送" value="Push" />
+          <el-select
+            v-model="searchForm.channel"
+            placeholder="请选择渠道"
+            clearable
+          >
+            <el-option
+              label="站内信"
+              value="InApp"
+            />
+            <el-option
+              label="邮件"
+              value="Email"
+            />
+            <el-option
+              label="短信"
+              value="SMS"
+            />
+            <el-option
+              label="推送"
+              value="Push"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="草稿" value="Draft" />
-            <el-option label="待发送" value="Pending" />
-            <el-option label="发送中" value="Sending" />
-            <el-option label="已发送" value="Sent" />
-            <el-option label="已送达" value="Delivered" />
-            <el-option label="已读" value="Read" />
-            <el-option label="失败" value="Failed" />
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+          >
+            <el-option
+              label="草稿"
+              value="Draft"
+            />
+            <el-option
+              label="待发送"
+              value="Pending"
+            />
+            <el-option
+              label="发送中"
+              value="Sending"
+            />
+            <el-option
+              label="已发送"
+              value="Sent"
+            />
+            <el-option
+              label="已送达"
+              value="Delivered"
+            />
+            <el-option
+              label="已读"
+              value="Read"
+            />
+            <el-option
+              label="失败"
+              value="Failed"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 消息列表 -->
-      <el-card>
-        <!-- 骨架屏 -->
-        <div v-if="loading" class="skeleton-container">
-          <div v-for="i in 6" :key="i" class="skeleton-message-item">
-            <div class="skeleton-message-main">
-              <EasySkeleton type="line" width="200px" height="20px" />
-              <div class="skeleton-message-meta">
-                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
-                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
-                <EasySkeleton type="rect" rectWidth="80px" rectHeight="24px" />
-              </div>
-              <EasySkeleton type="line" width="90%" height="16px" />
+    <el-card>
+      <!-- 骨架屏 -->
+      <div
+        v-if="loading"
+        class="skeleton-container"
+      >
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="skeleton-message-item"
+        >
+          <div class="skeleton-message-main">
+            <EasySkeleton
+              type="line"
+              width="200px"
+              height="20px"
+            />
+            <div class="skeleton-message-meta">
+              <EasySkeleton
+                type="rect"
+                rect-width="80px"
+                rect-height="24px"
+              />
+              <EasySkeleton
+                type="rect"
+                rect-width="80px"
+                rect-height="24px"
+              />
+              <EasySkeleton
+                type="rect"
+                rect-width="80px"
+                rect-height="24px"
+              />
             </div>
-            <div class="skeleton-message-actions">
-              <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
-              <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
-            </div>
+            <EasySkeleton
+              type="line"
+              width="90%"
+              height="16px"
+            />
+          </div>
+          <div class="skeleton-message-actions">
+            <EasySkeleton
+              type="rect"
+              rect-width="60px"
+              rect-height="32px"
+            />
+            <EasySkeleton
+              type="rect"
+              rect-width="60px"
+              rect-height="32px"
+            />
           </div>
         </div>
+      </div>
 
-        <!-- 实际表格 -->
-        <virtual-scroll-table
-          v-else
-          :data="messageList"
-          :columns="tableColumns"
-          :row-height="50"
-          height="500px"
-        >
-          <template #messageType="{ row }">
-            <el-tag size="small">{{ row.messageType }}</el-tag>
-          </template>
-          <template #channel="{ row }">
-            <el-tag size="small" :type="getChannelType(row.channel)">{{ row.channel }}</el-tag>
-          </template>
-          <template #status="{ row }">
-            <el-tag size="small" :type="getStatusType(row.status)">{{ row.status }}</el-tag>
-          </template>
-          <template #sentAt="{ row }">
-            {{ formatDate(row.sentAt) }}
-          </template>
-          <template #operation="{ row }">
-            <el-button size="small" @click="handleView(row)">查看</el-button>
-            <el-button size="small" type="danger" @click="handleCancel(row)" v-if="row.status === 'Pending'">取消</el-button>
-          </template>
-        </virtual-scroll-table>
+      <!-- 实际表格 -->
+      <virtual-scroll-table
+        v-else
+        :data="messageList"
+        :columns="tableColumns"
+        :row-height="50"
+        height="500px"
+      >
+        <template #messageType="{ row }">
+          <el-tag size="small">
+            {{ row.messageType }}
+          </el-tag>
+        </template>
+        <template #channel="{ row }">
+          <el-tag
+            size="small"
+            :type="getChannelType(row.channel)"
+          >
+            {{ row.channel }}
+          </el-tag>
+        </template>
+        <template #status="{ row }">
+          <el-tag
+            size="small"
+            :type="getStatusType(row.status)"
+          >
+            {{ row.status }}
+          </el-tag>
+        </template>
+        <template #sentAt="{ row }">
+          {{ formatDate(row.sentAt) }}
+        </template>
+        <template #operation="{ row }">
+          <el-button
+            size="small"
+            @click="handleView(row)"
+          >
+            查看
+          </el-button>
+          <el-button
+            v-if="row.status === 'Pending'"
+            size="small"
+            type="danger"
+            @click="handleCancel(row)"
+          >
+            取消
+          </el-button>
+        </template>
+      </virtual-scroll-table>
 
-        <!-- 分页 -->
-        <div class="pagination-container">
-          <el-pagination
-            v-model:current-page="pagination.current"
-            v-model:page-size="pagination.size"
-            :total="pagination.total"
-            :page-sizes="[10, 20, 50, 100]"
-            layout="total, sizes, prev, pager, next, jumper"
-            @size-change="handleSizeChange"
-            @current-change="handleCurrentChange"
-          />
-        </div>
-      </el-card>
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.current"
+          v-model:page-size="pagination.size"
+          :total="pagination.total"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </el-card>
 
     <!-- 消息详情对话框 -->
-    <el-dialog v-model="detailVisible" title="消息详情" width="600px">
-      <el-descriptions :column="2" border>
-        <el-descriptions-item label="消息ID">{{ currentMessage?.id }}</el-descriptions-item>
-        <el-descriptions-item label="标题">{{ currentMessage?.title }}</el-descriptions-item>
-        <el-descriptions-item label="类型">{{ currentMessage?.messageType }}</el-descriptions-item>
-        <el-descriptions-item label="渠道">{{ currentMessage?.channel }}</el-descriptions-item>
-        <el-descriptions-item label="状态">{{ currentMessage?.status }}</el-descriptions-item>
-        <el-descriptions-item label="发送者">{{ currentMessage?.senderId }}</el-descriptions-item>
-        <el-descriptions-item label="接收者">{{ currentMessage?.receiverId }}</el-descriptions-item>
-        <el-descriptions-item label="发送时间">{{ formatDate(currentMessage?.sentAt) }}</el-descriptions-item>
-        <el-descriptions-item label="创建时间">{{ formatDate(currentMessage?.createdAt) }}</el-descriptions-item>
+    <el-dialog
+      v-model="detailVisible"
+      title="消息详情"
+      width="600px"
+    >
+      <el-descriptions
+        :column="2"
+        border
+      >
+        <el-descriptions-item label="消息ID">
+          {{ currentMessage?.id }}
+        </el-descriptions-item>
+        <el-descriptions-item label="标题">
+          {{ currentMessage?.title }}
+        </el-descriptions-item>
+        <el-descriptions-item label="类型">
+          {{ currentMessage?.messageType }}
+        </el-descriptions-item>
+        <el-descriptions-item label="渠道">
+          {{ currentMessage?.channel }}
+        </el-descriptions-item>
+        <el-descriptions-item label="状态">
+          {{ currentMessage?.status }}
+        </el-descriptions-item>
+        <el-descriptions-item label="发送者">
+          {{ currentMessage?.senderId }}
+        </el-descriptions-item>
+        <el-descriptions-item label="接收者">
+          {{ currentMessage?.receiverId }}
+        </el-descriptions-item>
+        <el-descriptions-item label="发送时间">
+          {{ formatDate(currentMessage?.sentAt) }}
+        </el-descriptions-item>
+        <el-descriptions-item label="创建时间">
+          {{ formatDate(currentMessage?.createdAt) }}
+        </el-descriptions-item>
       </el-descriptions>
       
       <el-divider>消息内容</el-divider>
@@ -141,7 +309,9 @@
       </div>
       
       <template #footer>
-        <el-button @click="detailVisible = false">关闭</el-button>
+        <el-button @click="detailVisible = false">
+          关闭
+        </el-button>
       </template>
     </el-dialog>
   </div>

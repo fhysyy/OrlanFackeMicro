@@ -6,9 +6,13 @@ import type {
   DataTransformer,
   DataFilter,
   BindingExpression,
-  DataContext
-} from '@/types/dataBinding'
-import { apiService } from '@/utils/apiService'
+  DataContext,
+  DataBinding as DataBindingInterface,
+  DataSource as DataSourceInterface,
+  BindingContext as BindingContextInterface
+} from '../types/dataBinding'
+// 移除apiService导入，因为我们将使用简单的fetch API替代
+// import { apiService } from '@/utils/apiService'
 import { ElMessage } from 'element-plus'
 
 // 数据绑定服务
@@ -60,17 +64,16 @@ class DataBindingService {
   }
   
   // 编译绑定表达式 - 优化版本
-  @performanceMonitor
   compileExpression(expression: string): CompiledExpression {
     // 检查缓存
     if (this.expressionCache.has(expression)) {
       return this.expressionCache.get(expression)! as CompiledExpression
     }
     
-    // 使用优化的表达式评估器
+    // 直接创建表达式函数
     const compiled: CompiledExpression = {
       expression,
-      evaluate: (context: any) => bindingOptimizer.optimizeExpression(expression, context)
+      evaluate: this.createExpressionFunction(expression)
     }
     
     this.expressionCache.set(expression, compiled)
@@ -82,9 +85,14 @@ class DataBindingService {
     return /^[a-zA-Z_$][a-zA-Z0-9_$]*(\.[a-zA-Z_$][a-zA-Z0-9_$]*|\[\d+\]|\['[^']*'\]|"[^"]*")*$/.test(expression)
   }
   
-  // 评估简单路径表达式 - 使用优化的路径解析器
+  // 评估简单路径表达式 - 直接实现
   private evaluateSimplePath(path: string, context: any): any {
-    return bindingOptimizer.pathParser.getValue(context, path)
+    try {
+      return new Function('ctx', `return ctx.${path}`)(context);
+    } catch (error) {
+      console.error(`Failed to evaluate path: ${path}`, error);
+      return undefined;
+    }
   }
   
   // 创建表达式评估函数
@@ -178,11 +186,11 @@ class DataBindingService {
 }
 
 // 绑定上下文类
-class BindingContext {
+export class BindingContext implements BindingContextInterface {
   private contextId: string
   private data: Reactive<DataContext>
-  private bindings: Map<string, DataBinding> = new Map()
-  private dataSources: Map<string, DataSource> = new Map()
+  private bindings: Map<any, any> = new Map()
+  private dataSources: Map<string, any> = new Map()
   private service: DataBindingService
   private watchers: Map<string, () => void> = new Map()
   private isDestroyed: boolean = false
@@ -191,13 +199,13 @@ class BindingContext {
     this.contextId = contextId
     this.service = service
     
-    // 初始化响应式数据上下文
     this.data = reactive({
       $data: initialData || {},
       $props: {},
       $methods: {},
-      $filters: this.service.globalFilters,
-      $transformers: this.service.globalTransformers
+      $filters: {},
+      $transformers: {}
+      // 不再直接引用service的私有属性，而是通过service的公共方法访问过滤器和转换器
     })
   }
   
@@ -262,12 +270,11 @@ class BindingContext {
   removeBinding(binding: DataBinding): void {
     binding.destroy()
     // 从映射中删除绑定（需要遍历查找，因为我们只有binding对象）
-    for (const [id, b] of this.bindings.entries()) {
+    Array.from(this.bindings.entries()).forEach(([id, b]) => {
       if (b === binding) {
         this.bindings.delete(id)
-        break
       }
-    }
+    })
   }
   
   // 计算表达式
@@ -335,21 +342,21 @@ class BindingContext {
     if (this.isDestroyed) return
     
     // 清理所有绑定
-    for (const binding of this.bindings.values()) {
+    Array.from(this.bindings.values()).forEach(binding => {
       binding.destroy()
-    }
+    })
     this.bindings.clear()
     
     // 清理所有数据源
-    for (const dataSource of this.dataSources.values()) {
+    Array.from(this.dataSources.values()).forEach(dataSource => {
       dataSource.destroy()
-    }
+    })
     this.dataSources.clear()
     
     // 清理所有监听器
-    for (const unwatch of this.watchers.values()) {
+    Array.from(this.watchers.values()).forEach(unwatch => {
       unwatch()
-    }
+    })
     this.watchers.clear()
     
     this.isDestroyed = true
@@ -357,7 +364,7 @@ class BindingContext {
 }
 
 // 数据绑定类
-class DataBinding {
+export class DataBinding implements DataBindingInterface {
   private target: any
   private targetKey: string
   private source: any
@@ -376,22 +383,63 @@ class DataBinding {
     this.expression = expression
     this.options = options
     
-    // 初始化智能更新调度器
-    this.targetUpdateScheduler = bindingOptimizer.createUpdateScheduler({
+    // 初始化简单的更新调度器
+    this.targetUpdateScheduler = this.createSimpleUpdateScheduler({
       debounce: options.debounce,
-      throttle: options.throttle,
-      batchUpdate: options.batchUpdate || false,
-      priority: options.priority || 'medium'
+      throttle: options.throttle
     })
     
-    this.sourceUpdateScheduler = bindingOptimizer.createUpdateScheduler({
+    this.sourceUpdateScheduler = this.createSimpleUpdateScheduler({
       debounce: options.debounce,
-      throttle: options.throttle,
-      batchUpdate: options.batchUpdate || false,
-      priority: options.priority || 'medium'
+      throttle: options.throttle
     })
     
     this.init()
+  }
+  
+  // 创建简单的更新调度器
+  private createSimpleUpdateScheduler(options: { debounce?: number; throttle?: number }) {
+    let timeoutId: number | undefined;
+    let lastExecuteTime = 0;
+    
+    return {
+      schedule: (callback: () => void) => {
+        const now = Date.now();
+        const delay = options.debounce || options.throttle || 0;
+        
+        // 清除现有的超时
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+        
+        // 根据配置执行回调
+        if (options.debounce) {
+          // 防抖：延迟执行，多次调用重新计时
+          timeoutId = window.setTimeout(callback, delay);
+        } else if (options.throttle) {
+          // 节流：限制执行频率
+          if (now - lastExecuteTime >= delay) {
+            callback();
+            lastExecuteTime = now;
+          } else {
+            timeoutId = window.setTimeout(() => {
+              callback();
+              lastExecuteTime = Date.now();
+            }, delay - (now - lastExecuteTime));
+          }
+        } else {
+          // 直接执行
+          callback();
+        }
+      },
+      clear: () => {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+          timeoutId = undefined;
+        }
+      }
+    };
   }
   
   // 初始化绑定
@@ -509,12 +557,37 @@ class DataBinding {
     }
   }
   
-  // 设置源值 - 使用优化的路径解析器
+  // 设置源值 - 使用简单的路径解析器
   private setSourceValue(value: any): void {
-    // 使用高效路径解析器设置值
+    // 使用简单路径解析器设置值
     if (this.expression && this.source) {
-      bindingOptimizer.pathParser.setValue(this.source, this.expression, value)
+      try {
+        this.setPathValue(this.source, this.expression, value)
+      } catch (error) {
+        console.error(`Failed to set value for expression: ${this.expression}`, error)
+      }
     }
+  }
+
+  // 简单的路径设置值方法
+  private setPathValue(obj: any, path: string, value: any): void {
+    if (!path || typeof obj !== 'object' || obj === null) return
+    
+    const keys = path.split('.').filter(key => key.trim() !== '')
+    let current = obj
+    
+    // 遍历路径，直到倒数第二个键
+    for (let i = 0; i < keys.length - 1; i++) {
+      const key = keys[i]
+      if (!(key in current) || typeof current[key] !== 'object') {
+        current[key] = {}
+      }
+      current = current[key]
+    }
+    
+    // 设置最后一个键的值
+    const lastKey = keys[keys.length - 1]
+    current[lastKey] = value
   }
   
   // 同步到目标
@@ -581,7 +654,7 @@ class DataBinding {
 }
 
 // 数据源类
-class DataSource {
+export class DataSource implements DataSourceInterface {
   private config: DataSourceConfig
   private data: any = null
   private updateHandlers: ((data: any) => void)[] = []
@@ -649,7 +722,44 @@ class DataSource {
     const params = this.config.params || {}
     const headers = this.config.headers || {}
     
-    return await apiService[method as keyof typeof apiService](this.config.url, params, headers)
+    // 使用fetch API替代apiService
+    let url = this.config.url;
+    
+    // 处理GET请求的参数
+    if (method === 'get' && Object.keys(params).length > 0) {
+      const searchParams = new URLSearchParams();
+      for (const [key, value] of Object.entries(params)) {
+        searchParams.append(key, value as string);
+      }
+      url += `?${searchParams.toString()}`;
+    }
+    
+    const fetchOptions: RequestInit = {
+      method: method.toUpperCase(),
+      headers: {
+        'Content-Type': 'application/json',
+        ...headers
+      },
+      credentials: 'include' // 包含cookies
+    };
+    
+    // 处理POST, PUT, DELETE等请求的请求体
+    if (method !== 'get' && Object.keys(params).length > 0) {
+      fetchOptions.body = JSON.stringify(params);
+    }
+    
+    try {
+      const response = await fetch(url, fetchOptions);
+      
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}: ${response.statusText}`);
+      }
+      
+      return await response.json();
+    } catch (error) {
+      console.error('API data loading error:', error);
+      throw error;
+    }
   }
   
   // 加载LocalStorage数据
@@ -861,6 +971,8 @@ export interface BindingOptions {
   pollingInterval?: number
   updateEvent?: string
   forceUpdate?: boolean
+  batchUpdate?: boolean
+  priority?: number
 }
 
 export interface CompiledExpression {
@@ -885,37 +997,7 @@ export interface BindingStats {
   globalTransformers: number
 }
 
-export interface DataBinding {
-  refresh: () => void
-  destroy: () => void
-}
-
-export interface DataSource {
-  getData: () => any
-  setData: (data: any) => Promise<void>
-  refresh: () => Promise<void>
-  onUpdate: (handler: (data: any) => void) => () => void
-  destroy: () => void
-}
-
-export interface BindingContext {
-  setData: (data: any) => void
-  getData: <T = any>(path?: string) => T
-  setProps: (props: any) => void
-  setMethods: (methods: Record<string, Function>) => void
-  registerDataSource: (name: string, config: DataSourceConfig) => Promise<void>
-  removeDataSource: (name: string) => void
-  createBinding: (target: any, targetKey: string, sourceExpression: string, options?: BindingOptions) => DataBinding
-  removeBinding: (binding: DataBinding) => void
-  evaluateExpression: <T = any>(expression: string) => T
-  createComputed: <T = any>(expression: string) => Ref<T>
-  watchExpression: (expression: string, callback: (newValue: any, oldValue: any) => void) => () => void
-  createBindings: (bindings: Array<{target: any; targetKey: string; sourceExpression: string; options?: BindingOptions}>) => DataBinding[]
-  applyFilter: (data: any, filter: DataFilter | string, params?: any) => any
-  applyTransformer: (data: any, transformer: DataTransformer | string, params?: any) => any
-  getContext: () => DataContext
-  destroy: () => void
-}
+// 直接使用从类型文件导入的类型，不重新声明
 
 // 导出服务实例
 export const dataBindingService = new DataBindingService()

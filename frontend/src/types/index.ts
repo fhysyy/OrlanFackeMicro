@@ -255,3 +255,12 @@ export type {
   FileResponse,
   StatsResponse
 } from './api'
+
+export type {
+  FormField,
+  FormFieldType,
+  DatabaseDataType,
+  ValidationRule,
+  FormConfig,
+  FormGroup
+} from './form'

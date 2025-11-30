@@ -1,7 +1,10 @@
 <template>
   <div class="data-table-container">
     <!-- 搜索和操作区域 -->
-    <div class="table-header" v-if="showHeader">
+    <div
+      v-if="showHeader"
+      class="table-header"
+    >
       <div class="header-left">
         <slot name="header-left">
           <el-input
@@ -13,7 +16,10 @@
             @input="handleSearch"
           >
             <template #append>
-              <el-button :icon="Search" @click="handleSearch" />
+              <el-button
+                :icon="Search"
+                @click="handleSearch"
+              />
             </template>
           </el-input>
         </slot>
@@ -24,8 +30,8 @@
           <el-button
             v-if="showRefresh"
             :icon="Refresh"
-            @click="handleRefresh"
             :loading="loading"
+            @click="handleRefresh"
           >
             刷新
           </el-button>
@@ -51,9 +57,9 @@
       :height="height"
       :max-height="maxHeight"
       :row-key="rowKey"
+      style="width: 100%"
       @selection-change="handleSelectionChange"
       @sort-change="handleSortChange"
-      style="width: 100%"
     >
       <!-- 选择列 -->
       <el-table-column
@@ -73,7 +79,10 @@
       />
 
       <!-- 数据列 -->
-      <template v-for="column in columns" :key="column.prop">
+      <template
+        v-for="column in columns"
+        :key="column.prop"
+      >
         <el-table-column
           :prop="column.prop"
           :label="column.label"
@@ -85,7 +94,11 @@
           :show-overflow-tooltip="column.showOverflowTooltip"
         >
           <template #default="scope">
-            <slot :name="column.prop" :row="scope.row" :$index="scope.$index">
+            <slot
+              :name="column.prop"
+              :row="scope.row"
+              :$index="scope.$index"
+            >
               <!-- 格式化显示 -->
               <template v-if="column.formatter">
                 {{ column.formatter(scope.row, scope.column, scope.row[column.prop], scope.$index) }}
@@ -119,7 +132,11 @@
         align="center"
       >
         <template #default="scope">
-          <slot name="actions" :row="scope.row" :$index="scope.$index">
+          <slot
+            name="actions"
+            :row="scope.row"
+            :$index="scope.$index"
+          >
             <el-button
               v-if="showEdit"
               link
@@ -155,16 +172,19 @@
     </el-table>
 
     <!-- 分页 -->
-    <div class="table-pagination" v-if="showPagination">
+    <div
+      v-if="showPagination"
+      class="table-pagination"
+    >
       <el-pagination
         v-model:current-page="pagination.current"
         v-model:page-size="pagination.size"
         :total="pagination.total"
         :page-sizes="pageSizes"
         :layout="paginationLayout"
+        style="margin-top: 16px; justify-content: flex-end"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        style="margin-top: 16px; justify-content: flex-end"
       />
     </div>
   </div>

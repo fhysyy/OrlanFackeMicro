@@ -1,5 +1,6 @@
 <template>
   <el-time-picker
+    :id="field.prop"
     v-model="internalValue"
     :placeholder="field.placeholder || '选择时间'"
     :format="field.format || 'HH:mm:ss'"
@@ -14,7 +15,6 @@
     :align="field.align || 'left'"
     :popper-class="field.popperClass"
     :picker-options="field.pickerOptions"
-    :id="field.prop"
     :name="field.prop"
     @change="handleChange"
     @blur="handleBlur"
@@ -23,9 +23,9 @@
 </template>
 
 <script setup lang="ts">
-import { computed, watch } from 'vue';
-import type { BaseFormFieldProps } from './types';
-import { FormFieldType } from '@/types/form';
+import { computed, watch } from 'vue'
+import type { BaseFormFieldProps } from './types'
+import { FormFieldType } from '@/types/form'
 
 // Props
 const props = defineProps<{
@@ -45,7 +45,7 @@ const props = defineProps<{
     pickerOptions?: any;
   };
   disabled?: boolean;
-}>();
+}>()
 
 // Emits
 const emit = defineEmits<{
@@ -53,31 +53,31 @@ const emit = defineEmits<{
   (e: 'change', value: string | null): void;
   (e: 'blur', event: FocusEvent): void;
   (e: 'focus', event: FocusEvent): void;
-}>();
+}>()
 
 // 内部值，用于处理v-model
 const internalValue = computed({
   get: () => props.modelValue,
   set: (val) => {
-    emit('update:modelValue', val);
-    emit('change', val);
+    emit('update:modelValue', val)
+    emit('change', val)
   }
-});
+})
 
 // 处理变化
 const handleChange = (val: string | null) => {
-  emit('change', val);
-};
+  emit('change', val)
+}
 
 // 处理失焦
 const handleBlur = (event: FocusEvent) => {
-  emit('blur', event);
-};
+  emit('blur', event)
+}
 
 // 处理聚焦
 const handleFocus = (event: FocusEvent) => {
-  emit('focus', event);
-};
+  emit('focus', event)
+}
 </script>
 
 <style scoped>

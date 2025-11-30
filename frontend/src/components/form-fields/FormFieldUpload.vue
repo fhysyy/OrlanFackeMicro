@@ -1,7 +1,6 @@
 <template>
   <el-upload
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     :disabled="disabled"
     :action="field.action"
     :headers="field.headers"
@@ -21,14 +20,23 @@
     :list-type="field.listType || 'text'"
     :drag="field.drag || false"
     :accept="field.accept"
+    @update:model-value="$emit('update:modelValue', $event)"
   >
-    <el-icon v-if="field.drag"><upload-filled /></el-icon>
-    <el-button v-else :type="field.buttonType || 'primary'">
+    <el-icon v-if="field.drag">
+      <upload-filled />
+    </el-icon>
+    <el-button
+      v-else
+      :type="field.buttonType || 'primary'"
+    >
       <el-icon><upload /></el-icon>
       {{ field.buttonText || '上传文件' }}
     </el-button>
     <template #tip>
-      <div v-if="field.tip" class="el-upload__tip">
+      <div
+        v-if="field.tip"
+        class="el-upload__tip"
+      >
         {{ field.tip }}
       </div>
     </template>
@@ -36,29 +44,29 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, computed, watch } from 'vue';
-import { BaseFormFieldProps } from './types';
-import { Upload, UploadFilled } from '@element-plus/icons-vue';
+import { defineProps, defineEmits, computed, watch } from 'vue'
+import { BaseFormFieldProps } from './types'
+import { Upload, UploadFilled } from '@element-plus/icons-vue'
 
 // Props
-const props = defineProps<BaseFormFieldProps>();
+const props = defineProps<BaseFormFieldProps>()
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:modelValue', value: any): void;
   (e: 'change', value: any): void;
-}>();
+}>()
 
 // 计算文件列表
 const fileList = computed(() => {
   if (!props.modelValue || Array.isArray(props.modelValue)) {
-    return props.modelValue || [];
+    return props.modelValue || []
   }
-  return [props.modelValue];
-});
+  return [props.modelValue]
+})
 
 // 监听文件列表变化
 watch(fileList, (newVal) => {
-  emit('update:modelValue', props.field.multiple ? newVal : newVal[0]);
-});
+  emit('update:modelValue', props.field.multiple ? newVal : newVal[0])
+})
 </script>

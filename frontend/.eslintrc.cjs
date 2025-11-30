@@ -6,10 +6,14 @@ module.exports = {
     'eslint:recommended',
     'plugin:vue/vue3-recommended'
   ],
-  parser: '@typescript-eslint/parser',
+  parser: 'vue-eslint-parser',
   parserOptions: {
     ecmaVersion: 'latest',
-    parser: '@typescript-eslint/parser',
+    parser: {
+      ts: '@typescript-eslint/parser',
+      js: '@typescript-eslint/parser',
+      '<template>': 'espree'
+    },
     sourceType: 'module'
   },
   plugins: [

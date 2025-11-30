@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <h3>性能监控面板</h3>
-          <el-button size="small" type="info" @click="refreshData">刷新数据</el-button>
+          <el-button
+            size="small"
+            type="info"
+            @click="refreshData"
+          >
+            刷新数据
+          </el-button>
         </div>
       </template>
 
@@ -32,7 +38,10 @@
       </div>
 
       <!-- 资源使用情况 -->
-      <div v-if="currentResourceUsage" class="monitor-section">
+      <div
+        v-if="currentResourceUsage"
+        class="monitor-section"
+      >
         <h4>资源使用情况</h4>
         <div class="resource-grid">
           <div class="resource-item">
@@ -76,48 +85,101 @@
       </div>
 
       <!-- 性能警告 -->
-      <div v-if="performanceWarnings.length > 0" class="monitor-section">
+      <div
+        v-if="performanceWarnings.length > 0"
+        class="monitor-section"
+      >
         <h4>性能警告 <span class="warning-count">({{ performanceWarnings.length }})</span></h4>
-        <el-table :data="performanceWarnings" border stripe size="small">
-          <el-table-column prop="severity" label="级别" width="80">
+        <el-table
+          :data="performanceWarnings"
+          border
+          stripe
+          size="small"
+        >
+          <el-table-column
+            prop="severity"
+            label="级别"
+            width="80"
+          >
             <template #default="scope">
               <el-tag :type="getSeverityType(scope.row.severity)">
-                {{ scope.row.severity === 'high' ? '严重' : scope.row.severity === 'medium' ? '中等' : '低' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="message" label="消息"></el-table-column>
-            <el-table-column prop="timestamp" label="时间" width="160">
-              <template #default="scope">
-                {{ formatTime(scope.row.timestamp) }}</template>
-              </el-table-column>
-            <el-table-column label="操作" width="80">
-              <template #default="scope">
-                <el-button size="small" type="danger" @click="clearWarning(scope.row.id)">清除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
+                {{ scope.row.severity === 'high' ? '严重' : scope.row.severity === 'medium' ? '中等' : '低' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="message"
+            label="消息"
+          />
+          <el-table-column
+            prop="timestamp"
+            label="时间"
+            width="160"
+          >
+            <template #default="scope">
+              {{ formatTime(scope.row.timestamp) }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            label="操作"
+            width="80"
+          >
+            <template #default="scope">
+              <el-button
+                size="small"
+                type="danger"
+                @click="clearWarning(scope.row.id)"
+              >
+                清除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
 
       <!-- 最近操作 -->
       <div class="monitor-section">
         <h4>最近操作</h4>
-        <el-table :data="recentOperations" border stripe size="small">
-          <el-table-column prop="operationName" label="操作名称"></el-table-column>
-          <el-table-column prop="status" label="状态" width="80">
+        <el-table
+          :data="recentOperations"
+          border
+          stripe
+          size="small"
+        >
+          <el-table-column
+            prop="operationName"
+            label="操作名称"
+          />
+          <el-table-column
+            prop="status"
+            label="状态"
+            width="80"
+          >
             <template #default="scope">
               <el-tag :type="getStatusType(scope.row.status)">
-                {{ scope.row.status === 'completed' ? '成功' : scope.row.status === 'failed' ? '失败' : '进行中' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column prop="duration" label="耗时" width="80">
-              <template #default="scope">
-                {{ scope.row.duration ? scope.row.duration + 'ms' : '-' }}</template>
-              </el-table-column>
-            <el-table-column prop="timestamp" label="时间" width="160">
-              <template #default="scope">
-                {{ formatTime(scope.row.startTime) }}</template>
-              </el-table-column>
-          </el-table>
+                {{ scope.row.status === 'completed' ? '成功' : scope.row.status === 'failed' ? '失败' : '进行中' }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="duration"
+            label="耗时"
+            width="80"
+          >
+            <template #default="scope">
+              {{ scope.row.duration ? scope.row.duration + 'ms' : '-' }}
+            </template>
+          </el-table-column>
+          <el-table-column
+            prop="timestamp"
+            label="时间"
+            width="160"
+          >
+            <template #default="scope">
+              {{ formatTime(scope.row.startTime) }}
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </el-card>
   </div>
@@ -188,20 +250,20 @@ const getEventListenerStatus = (count) => {
 // 获取严重程度类型
 const getSeverityType = (severity) => {
   switch (severity) {
-    case 'high': return 'danger'
-    case 'medium': return 'warning'
-    case 'low': return 'info'
-    default: return 'info'
+  case 'high': return 'danger'
+  case 'medium': return 'warning'
+  case 'low': return 'info'
+  default: return 'info'
   }
 }
 
 // 获取状态类型
 const getStatusType = (status) => {
   switch (status) {
-    case 'completed': return 'success'
-    case 'failed': return 'danger'
-    case 'pending': return 'warning'
-    default: return 'info'
+  case 'completed': return 'success'
+  case 'failed': return 'danger'
+  case 'pending': return 'warning'
+  default: return 'info'
   }
 }
 

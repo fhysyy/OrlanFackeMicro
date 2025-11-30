@@ -2,9 +2,9 @@
   <div class="checkbox-group-wrapper">
     <el-checkbox-group
       :model-value="modelValue"
-      @update:model-value="$emit('update:modelValue', $event)"
       :disabled="disabled"
       :class="`checkbox-group-${field.layout || 'horizontal'}`"
+      @update:model-value="$emit('update:modelValue', $event)"
     >
       <el-checkbox
         v-for="option in field.options"
@@ -19,17 +19,17 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
-import { BaseFormFieldProps } from './types';
+import { defineProps, defineEmits } from 'vue'
+import { BaseFormFieldProps } from './types'
 
 // Props
-const props = defineProps<BaseFormFieldProps>();
+const props = defineProps<BaseFormFieldProps>()
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:modelValue', value: any): void;
   (e: 'change', value: any): void;
-}>();
+}>()
 </script>
 
 <style scoped>

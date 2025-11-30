@@ -10,8 +10,8 @@ import { tokenManager } from '@/utils/tokenManager'
 
 export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
-  // 暂时修改为始终返回true，允许所有用户访问
-  const isAuthenticated = computed(() => true)
+  // 正常的认证状态检查
+  const isAuthenticated = computed(() => user.value !== null)
   const userRole = computed(() => user.value?.role || null)
 
   // 登录
@@ -102,11 +102,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 检查权限 - 暂时修改为始终返回true，允许所有权限访问
+  // 检查权限 - 基于角色层级的权限检查
   const hasPermission = (requiredRole: string): boolean => {
-    // 暂时允许所有权限访问
-    return true
-    /*
     if (!user.value) return false
     
     const roleHierarchy = {
@@ -119,7 +116,6 @@ export const useAuthStore = defineStore('auth', () => {
     const requiredRoleLevel = roleHierarchy[requiredRole as UserRole] || 0
     
     return userRoleLevel >= requiredRoleLevel
-    */
   }
 
   // 初始化认证状态

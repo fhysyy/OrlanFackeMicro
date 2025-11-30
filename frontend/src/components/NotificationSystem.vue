@@ -1,5 +1,8 @@
 <template>
-  <div class="notification-container" :class="containerClass">
+  <div
+    class="notification-container"
+    :class="containerClass"
+  >
     <transition-group
       name="notification"
       tag="div"
@@ -21,7 +24,10 @@
         @mouseleave="resumeTimer(notification.id)"
       >
         <!-- 图标 -->
-        <div v-if="notification.icon" class="notification-icon">
+        <div
+          v-if="notification.icon"
+          class="notification-icon"
+        >
           <el-icon :size="notification.iconSize || 20">
             <component :is="notification.icon" />
           </el-icon>
@@ -30,15 +36,24 @@
         <!-- 内容区域 -->
         <div class="notification-content">
           <!-- 标题 -->
-          <div v-if="notification.title" class="notification-title">
+          <div
+            v-if="notification.title"
+            class="notification-title"
+          >
             {{ notification.title }}
           </div>
           
           <!-- 消息内容 -->
-          <div class="notification-message" v-html="formatMessage(notification.message)"></div>
+          <div
+            class="notification-message"
+            v-html="formatMessage(notification.message)"
+          />
           
           <!-- 操作按钮 -->
-          <div v-if="notification.actions && notification.actions.length > 0" class="notification-actions">
+          <div
+            v-if="notification.actions && notification.actions.length > 0"
+            class="notification-actions"
+          >
             <el-button
               v-for="(action, index) in notification.actions"
               :key="index"
@@ -47,15 +62,18 @@
               :icon="action.icon"
               :loading="action.loading"
               :disabled="action.disabled"
-              @click.stop="handleAction(notification.id, action, index)"
               class="notification-action-btn"
+              @click.stop="handleAction(notification.id, action, index)"
             >
               {{ action.text }}
             </el-button>
           </div>
           
           <!-- 进度条 -->
-          <div v-if="notification.showProgress && notification.duration" class="notification-progress">
+          <div
+            v-if="notification.showProgress && notification.duration"
+            class="notification-progress"
+          >
             <el-progress
               :percentage="getProgress(notification)"
               :stroke-width="2"
@@ -71,8 +89,8 @@
           v-if="notification.showClose"
           type="button"
           class="notification-close-btn"
-          @click.stop="closeNotification(notification.id)"
           :aria-label="'关闭通知'"
+          @click.stop="closeNotification(notification.id)"
         >
           <el-icon :size="16">
             <Close />
@@ -211,18 +229,18 @@ const generateId = (): string => {
 // 获取默认图标
 const getDefaultIcon = (type: NotificationType) => {
   switch (type) {
-    case 'success':
-      return Success
-    case 'warning':
-      return Warning
-    case 'info':
-      return Info
-    case 'error':
-      return Error
-    case 'loading':
-      return Loading
-    default:
-      return Info
+  case 'success':
+    return Success
+  case 'warning':
+    return Warning
+  case 'info':
+    return Info
+  case 'error':
+    return Error
+  case 'loading':
+    return Loading
+  default:
+    return Info
   }
 }
 
@@ -538,32 +556,32 @@ const getNotificationStyle = (notification: InternalNotification): Record<string
   
   // 根据位置设置样式
   switch (notification.position) {
-    case 'top-right':
-      style.top = `${verticalOffset}px`
-      style.right = `${notification.offset}px`
-      break
-    case 'top-left':
-      style.top = `${verticalOffset}px`
-      style.left = `${notification.offset}px`
-      break
-    case 'bottom-right':
-      style.bottom = `${verticalOffset}px`
-      style.right = `${notification.offset}px`
-      break
-    case 'bottom-left':
-      style.bottom = `${verticalOffset}px`
-      style.left = `${notification.offset}px`
-      break
-    case 'top-center':
-      style.top = `${verticalOffset}px`
-      style.left = '50%'
-      style.transform = 'translateX(-50%)'
-      break
-    case 'bottom-center':
-      style.bottom = `${verticalOffset}px`
-      style.left = '50%'
-      style.transform = 'translateX(-50%)'
-      break
+  case 'top-right':
+    style.top = `${verticalOffset}px`
+    style.right = `${notification.offset}px`
+    break
+  case 'top-left':
+    style.top = `${verticalOffset}px`
+    style.left = `${notification.offset}px`
+    break
+  case 'bottom-right':
+    style.bottom = `${verticalOffset}px`
+    style.right = `${notification.offset}px`
+    break
+  case 'bottom-left':
+    style.bottom = `${verticalOffset}px`
+    style.left = `${notification.offset}px`
+    break
+  case 'top-center':
+    style.top = `${verticalOffset}px`
+    style.left = '50%'
+    style.transform = 'translateX(-50%)'
+    break
+  case 'bottom-center':
+    style.bottom = `${verticalOffset}px`
+    style.left = '50%'
+    style.transform = 'translateX(-50%)'
+    break
   }
   
   // 如果居中显示

@@ -1,13 +1,23 @@
 <template>
-  <div v-if="hasError" class="error-boundary">
+  <div
+    v-if="hasError"
+    class="error-boundary"
+  >
     <div class="error-container">
-      <el-icon class="error-icon"><WarningFilled /></el-icon>
+      <el-icon class="error-icon">
+        <WarningFilled />
+      </el-icon>
       <h3>组件渲染出错</h3>
       <p>{{ errorMessage }}</p>
-      <el-button type="primary" @click="resetError">重新加载</el-button>
+      <el-button
+        type="primary"
+        @click="resetError"
+      >
+        重新加载
+      </el-button>
     </div>
   </div>
-  <slot v-else></slot>
+  <slot v-else />
 </template>
 
 <script lang="ts" setup>

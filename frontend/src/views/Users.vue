@@ -2,29 +2,68 @@
   <div class="users-container">
     <div class="page-header">
       <h2>用户管理</h2>
-      <el-button type="primary" @click="handleCreate">新增用户</el-button>
+      <el-button
+        type="primary"
+        @click="handleCreate"
+      >
+        新增用户
+      </el-button>
     </div>
 
     <!-- 搜索和筛选 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="用户名">
-          <el-input v-model="searchForm.username" placeholder="请输入用户名" clearable />
+          <el-input
+            v-model="searchForm.username"
+            placeholder="请输入用户名"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="邮箱">
-          <el-input v-model="searchForm.email" placeholder="请输入邮箱" clearable />
+          <el-input
+            v-model="searchForm.email"
+            placeholder="请输入邮箱"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择状态" clearable>
-            <el-option label="待激活" value="Pending" />
-            <el-option label="活跃" value="Active" />
-            <el-option label="禁用" value="Disabled" />
-            <el-option label="锁定" value="Locked" />
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+          >
+            <el-option
+              label="待激活"
+              value="Pending"
+            />
+            <el-option
+              label="活跃"
+              value="Active"
+            />
+            <el-option
+              label="禁用"
+              value="Disabled"
+            />
+            <el-option
+              label="锁定"
+              value="Locked"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -32,53 +71,93 @@
     <!-- 用户列表 -->
     <el-card>
       <!-- 骨架屏 -->
-      <div v-if="loading" class="skeleton-container">
-        <div v-for="i in 6" :key="i" class="skeleton-user-item">
+      <div
+        v-if="loading"
+        class="skeleton-container"
+      >
+        <div
+          v-for="i in 6"
+          :key="i"
+          class="skeleton-user-item"
+        >
           <div class="skeleton-user-info">
-            <EasySkeleton type="line" width="120px" height="20px" />
-            <EasySkeleton type="line" width="180px" height="16px" />
-            <EasySkeleton type="line" width="100px" height="14px" />
+            <EasySkeleton
+              type="line"
+              width="120px"
+              height="20px"
+            />
+            <EasySkeleton
+              type="line"
+              width="180px"
+              height="16px"
+            />
+            <EasySkeleton
+              type="line"
+              width="100px"
+              height="14px"
+            />
           </div>
           <div class="skeleton-user-actions">
-            <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
-            <EasySkeleton type="rect" rectWidth="60px" rectHeight="32px" />
+            <EasySkeleton
+              type="rect"
+              rect-width="60px"
+              rect-height="32px"
+            />
+            <EasySkeleton
+              type="rect"
+              rect-width="60px"
+              rect-height="32px"
+            />
           </div>
         </div>
       </div>
 
       <!-- 实际表格 -->
       <virtual-scroll-table
-      v-else
-      v-model:data="users"
-      :columns="tableColumns"
-      :row-height="50"
-      height="500px"
-    >
-      <template #roles="{ row }">
-        <div class="role-tags">
-          <el-tag 
-            v-for="role in ((row as any).roles || [row.role])" 
-            :key="role"
-            :type="getRoleType(role)"
-            size="small"
-            effect="plain"
-            class="role-tag"
-          >
-            {{ getRoleLabel(role) }}
+        v-else
+        v-model:data="users"
+        :columns="tableColumns"
+        :row-height="50"
+        height="500px"
+      >
+        <template #roles="{ row }">
+          <div class="role-tags">
+            <el-tag 
+              v-for="role in ((row as any).roles || [row.role])" 
+              :key="role"
+              :type="getRoleType(role)"
+              size="small"
+              effect="plain"
+              class="role-tag"
+            >
+              {{ getRoleLabel(role) }}
+            </el-tag>
+          </div>
+        </template>
+        <template #status="{ row }">
+          <el-tag :type="getStatusType(row.status)">
+            {{ row.status }}
           </el-tag>
-        </div>
-      </template>
-      <template #status="{ row }">
-        <el-tag :type="getStatusType(row.status)">{{ row.status }}</el-tag>
-      </template>
-      <template #createdAt="{ row }">
-        {{ formatDate(row.createdAt) }}
-      </template>
-      <template #actions="{ row }">
-        <el-button size="small" @click="handleEdit(row)">编辑</el-button>
-        <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
-      </template>
-    </virtual-scroll-table>
+        </template>
+        <template #createdAt="{ row }">
+          {{ formatDate(row.createdAt) }}
+        </template>
+        <template #actions="{ row }">
+          <el-button
+            size="small"
+            @click="handleEdit(row)"
+          >
+            编辑
+          </el-button>
+          <el-button
+            size="small"
+            type="danger"
+            @click="handleDelete(row)"
+          >
+            删除
+          </el-button>
+        </template>
+      </virtual-scroll-table>
 
       <!-- 分页 -->
       <div class="pagination-container">
@@ -101,40 +180,89 @@
       width="500px"
       @close="handleDialogClose"
     >
-      <el-form ref="userFormRef" :model="userForm" :rules="userRules" label-width="80px">
-        <el-form-item label="用户名" prop="username">
+      <el-form
+        ref="userFormRef"
+        :model="userForm"
+        :rules="userRules"
+        label-width="80px"
+      >
+        <el-form-item
+          label="用户名"
+          prop="username"
+        >
           <el-input v-model="userForm.username" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item
+          label="邮箱"
+          prop="email"
+        >
           <el-input v-model="userForm.email" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
+        <el-form-item
+          label="手机号"
+          prop="phone"
+        >
           <el-input v-model="userForm.phone" />
         </el-form-item>
-        <el-form-item label="角色" prop="roles">
-        <el-select v-model="userForm.roles" placeholder="请选择角色" multiple collapse-tags style="width: 100%">
-          <el-option
-            v-for="role in availableRoles"
-            :key="role.value"
-            :label="role.label"
-            :value="role.value"
-          />
-        </el-select>
-        <div class="form-tip">提示：可选择多个角色，用户将拥有所有选定角色的权限</div>
-      </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-select v-model="userForm.status" placeholder="请选择状态">
-            <el-option label="待激活" value="Pending" />
-            <el-option label="活跃" value="Active" />
-            <el-option label="禁用" value="Disabled" />
-            <el-option label="锁定" value="Locked" />
+        <el-form-item
+          label="角色"
+          prop="roles"
+        >
+          <el-select
+            v-model="userForm.roles"
+            placeholder="请选择角色"
+            multiple
+            collapse-tags
+            style="width: 100%"
+          >
+            <el-option
+              v-for="role in availableRoles"
+              :key="role.value"
+              :label="role.label"
+              :value="role.value"
+            />
+          </el-select>
+          <div class="form-tip">
+            提示：可选择多个角色，用户将拥有所有选定角色的权限
+          </div>
+        </el-form-item>
+        <el-form-item
+          label="状态"
+          prop="status"
+        >
+          <el-select
+            v-model="userForm.status"
+            placeholder="请选择状态"
+          >
+            <el-option
+              label="待激活"
+              value="Pending"
+            />
+            <el-option
+              label="活跃"
+              value="Active"
+            />
+            <el-option
+              label="禁用"
+              value="Disabled"
+            />
+            <el-option
+              label="锁定"
+              value="Locked"
+            />
           </el-select>
         </el-form-item>
       </el-form>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="dialogLoading" @click="handleSubmit">
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="dialogLoading"
+          @click="handleSubmit"
+        >
           确定
         </el-button>
       </template>
@@ -297,32 +425,32 @@ const formatDate = (date: string) => {
 }
 
 // 获取用户列表
-  const fetchUsers = async () => {
-    loading.value = true
-    try {
-      const response = await api.get('/api/admin/users', {
-        params: {
-          username: searchForm.username,
-          email: searchForm.email,
-          status: searchForm.status
-        }
-      })
-      if (response.data && response.data.success) {
-        userList.value = response.data.users
-        pagination.total = response.data.users.length
+const fetchUsers = async () => {
+  loading.value = true
+  try {
+    const response = await api.get('/api/admin/users', {
+      params: {
+        username: searchForm.username,
+        email: searchForm.email,
+        status: searchForm.status
       }
-    } 
-    catch (error) 
-    {
-      console.error('获取用户列表失败:', error)
-      ElMessage.error('获取用户列表失败')
-      
-      // 显示模拟数据作为备选
-      pagination.total = userList.value.length
-    } finally {
-      loading.value = false
+    })
+    if (response.data && response.data.success) {
+      userList.value = response.data.users
+      pagination.total = response.data.users.length
     }
+  } 
+  catch (error) 
+  {
+    console.error('获取用户列表失败:', error)
+    ElMessage.error('获取用户列表失败')
+      
+    // 显示模拟数据作为备选
+    pagination.total = userList.value.length
+  } finally {
+    loading.value = false
   }
+}
 
 // 搜索
 const handleSearch = () => {

@@ -5,7 +5,7 @@
       v-if="isMobile && !isCollapse" 
       class="mobile-mask"
       @click="toggleSidebar"
-    ></div>
+    />
     
     <!-- 侧边栏 -->
     <el-aside 
@@ -14,8 +14,12 @@
       :class="{ 'mobile-sidebar': isMobile }"
     >
       <div class="logo">
-        <h2 v-show="!isCollapse">FakeMicro</h2>
-        <h2 v-show="isCollapse">FM</h2>
+        <h2 v-show="!isCollapse">
+          FakeMicro
+        </h2>
+        <h2 v-show="isCollapse">
+          FM
+        </h2>
       </div>
       
       <el-menu
@@ -29,17 +33,17 @@
           <span>仪表板</span>
         </el-menu-item>
         <!-- v-if="hasPermission('Admin')" -->
-        <el-menu-item index="/users" >
+        <el-menu-item index="/users">
           <el-icon><User /></el-icon>
           <span>用户管理</span>
         </el-menu-item>
-      <!-- v-if="hasPermission('Admin')" -->
-        <el-menu-item index="/roles" >
+        <!-- v-if="hasPermission('Admin')" -->
+        <el-menu-item index="/roles">
           <el-icon><UserFilled /></el-icon>
           <span>角色管理</span>
         </el-menu-item>
         <!-- v-if="hasPermission('SystemAdmin')" -->
-        <el-menu-item index="/permissions" >
+        <el-menu-item index="/permissions">
           <el-icon><Key /></el-icon>
           <span>权限管理</span>
         </el-menu-item>
@@ -54,24 +58,28 @@
           <span>文件管理</span>
         </el-menu-item>
         <!-- v-if="hasPermission('SystemAdmin')" -->
-        <el-menu-item index="/system" >
+        <el-menu-item index="/system">
           <el-icon><Setting /></el-icon>
           <span>系统监控</span>
         </el-menu-item>
         
         <!-- 低代码设计器 - 仅管理员和系统管理员可见v-if="hasPermission('Admin')" -->
-        <el-menu-item index="/__vtj__/#/" >
+        <el-menu-item index="/__vtj__/#/">
           <el-icon><Edit /></el-icon>
           <span>低代码设计器</span>
         </el-menu-item>
         <!-- v-if="hasPermission('Admin')" -->
-        <el-sub-menu  index="/dictionary">
+        <el-sub-menu index="/dictionary">
           <template #title>
             <el-icon><Key /></el-icon>
             <span>字典管理</span>
           </template>
-          <el-menu-item index="/dictionary-types">字典类型</el-menu-item>
-          <el-menu-item index="/dictionary-items">字典项</el-menu-item>
+          <el-menu-item index="/dictionary-types">
+            字典类型
+          </el-menu-item>
+          <el-menu-item index="/dictionary-items">
+            字典项
+          </el-menu-item>
         </el-sub-menu>
         
         <!-- 班级学生成绩管理 -->
@@ -80,10 +88,18 @@
             <el-icon><School /></el-icon>
             <span>教学管理</span>
           </template>
-          <el-menu-item index="/class-management">班级管理</el-menu-item>
-          <el-menu-item index="/student-management">学生管理</el-menu-item>
-          <el-menu-item index="/score-management">成绩管理</el-menu-item>
-          <el-menu-item index="/exam-management">考试管理</el-menu-item>
+          <el-menu-item index="/class-management">
+            班级管理
+          </el-menu-item>
+          <el-menu-item index="/student-management">
+            学生管理
+          </el-menu-item>
+          <el-menu-item index="/score-management">
+            成绩管理
+          </el-menu-item>
+          <el-menu-item index="/exam-management">
+            考试管理
+          </el-menu-item>
         </el-sub-menu>
         
         <!-- 可配置表单 -->
@@ -92,8 +108,12 @@
             <el-icon><Document /></el-icon>
             <span>表单管理</span>
           </template>
-          <el-menu-item index="/form-config-management">表单配置管理</el-menu-item>
-          <el-menu-item index="/configurable-form">创建/编辑表单</el-menu-item>
+          <el-menu-item index="/form-config-management">
+            表单配置管理
+          </el-menu-item>
+          <el-menu-item index="/configurable-form">
+            创建/编辑表单
+          </el-menu-item>
         </el-sub-menu>
       </el-menu>
     </el-aside>
@@ -104,19 +124,22 @@
       <el-header class="header">
         <div class="header-left">
           <el-button
-            :icon="isCollapse ? 'Expand' : 'Fold'"
-            @click="toggleSidebar"
-            text
             v-if="!isMobile"
+            :icon="isCollapse ? 'Expand' : 'Fold'"
+            text
+            @click="toggleSidebar"
           />
           <el-button
-            icon="Menu"
-            @click="toggleSidebar"
-            text
             v-else
+            icon="Menu"
+            text
+            @click="toggleSidebar"
           />
           <el-breadcrumb separator="/">
-            <template v-for="(item, index) in breadcrumbItems" :key="index">
+            <template
+              v-for="(item, index) in breadcrumbItems"
+              :key="index"
+            >
               <el-breadcrumb-item 
                 :to="item.path ? { path: item.path } : undefined"
                 :class="{ 'last-item': index === breadcrumbItems.length - 1 }"
@@ -130,15 +153,27 @@
         <div class="header-right">
           <el-dropdown @command="handleCommand">
             <span class="user-info">
-              <el-avatar :size="32" :src="authStore.user?.avatar" />
+              <el-avatar
+                :size="32"
+                :src="authStore.user?.avatar"
+              />
               <span class="username">{{ authStore.user?.username }}</span>
               <el-icon><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item command="profile">个人资料</el-dropdown-item>
-                <el-dropdown-item command="settings">设置</el-dropdown-item>
-                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item command="profile">
+                  个人资料
+                </el-dropdown-item>
+                <el-dropdown-item command="settings">
+                  设置
+                </el-dropdown-item>
+                <el-dropdown-item
+                  divided
+                  command="logout"
+                >
+                  退出登录
+                </el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>
@@ -148,7 +183,10 @@
       <!-- 页面内容 -->
       <main class="content">
         <router-view v-slot="{ Component }">
-          <transition name="fade" mode="out-in">
+          <transition
+            name="fade"
+            mode="out-in"
+          >
             <component :is="Component" />
           </transition>
         </router-view>
@@ -166,22 +204,44 @@
         <el-form label-width="100px">
           <el-form-item label="主题模式">
             <el-radio-group v-model="themeMode">
-              <el-radio label="light">浅色</el-radio>
-              <el-radio label="dark">深色</el-radio>
-              <el-radio label="auto">自动</el-radio>
+              <el-radio label="light">
+                浅色
+              </el-radio>
+              <el-radio label="dark">
+                深色
+              </el-radio>
+              <el-radio label="auto">
+                自动
+              </el-radio>
             </el-radio-group>
           </el-form-item>
           <el-form-item label="语言">
-            <el-select v-model="language" placeholder="选择语言">
-              <el-option label="中文" value="zh-CN" />
-              <el-option label="English" value="en-US" />
+            <el-select
+              v-model="language"
+              placeholder="选择语言"
+            >
+              <el-option
+                label="中文"
+                value="zh-CN"
+              />
+              <el-option
+                label="English"
+                value="en-US"
+              />
             </el-select>
           </el-form-item>
         </el-form>
       </div>
       <template #footer>
-        <el-button @click="settingsDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="saveSettings">保存</el-button>
+        <el-button @click="settingsDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="saveSettings"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -247,7 +307,7 @@ const toggleSidebar = () => {
 
 // 权限检查
 const hasPermission = (requiredRole: string): boolean => {
-  return true;
+  return true
   try {
     return authStore.hasPermission(requiredRole)
   } catch (error) {
@@ -260,15 +320,15 @@ const hasPermission = (requiredRole: string): boolean => {
 const handleCommand = async (command: string) => {
   try {
     switch (command) {
-      case 'profile':
-        router.push('/profile')
-        break
-      case 'settings':
-        settingsDialogVisible.value = true
-        break
-      case 'logout':
-        await handleLogout()
-        break
+    case 'profile':
+      router.push('/profile')
+      break
+    case 'settings':
+      settingsDialogVisible.value = true
+      break
+    case 'logout':
+      await handleLogout()
+      break
     }
   } catch (error) {
     console.error('处理命令失败:', error)

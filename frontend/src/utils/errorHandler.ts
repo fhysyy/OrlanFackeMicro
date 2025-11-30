@@ -160,37 +160,37 @@ export async function handleApiError(
   
   // 处理特定错误码
   switch (apiError.code) {
-  case 'UNAUTHORIZED':
-    // 未授权处理 - 显示提示但不直接跳转，让应用层处理
-    if (showMessage) {
-      ElMessage.warning('登录已过期，请重新登录')
-    }
-    break
-    
-  case 'FORBIDDEN':
-    // 权限不足处理
-    if (showMessage) {
-      ElMessage.error('您没有权限执行此操作')
-    }
-    break
-    
-  case 'NETWORK_ERROR':
-    // 网络错误处理
-    if (showMessage) {
-      ElMessage.error('网络连接失败，请检查您的网络设置')
-    }
-    break
-    
-  default:
-    // 默认错误处理
-    if (showMessage) {
-      const message = apiError.message || defaultMessage
-      if (showDetail && apiError.details) {
-        ElMessage.error(`${message}: ${JSON.stringify(apiError.details)}`)
-      } else {
-        ElMessage.error(message)
+    case 'UNAUTHORIZED':
+      // 未授权处理 - 显示提示但不直接跳转，让应用层处理
+      if (showMessage) {
+        ElMessage.warning('登录已过期，请重新登录')
       }
-    }
+      break
+      
+    case 'FORBIDDEN':
+      // 权限不足处理
+      if (showMessage) {
+        ElMessage.error('您没有权限执行此操作')
+      }
+      break
+      
+    case 'NETWORK_ERROR':
+      // 网络错误处理
+      if (showMessage) {
+        ElMessage.error('网络连接失败，请检查您的网络设置')
+      }
+      break
+      
+    default:
+      // 默认错误处理
+      if (showMessage) {
+        const message = apiError.message || defaultMessage
+        if (showDetail && apiError.details) {
+          ElMessage.error(`${message}: ${JSON.stringify(apiError.details)}`)
+        } else {
+          ElMessage.error(message)
+        }
+      }
   }
   
   // 处理严重错误

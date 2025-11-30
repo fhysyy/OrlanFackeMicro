@@ -1,4 +1,4 @@
-import { FormField, FormFieldType, DatabaseDataType, ValidationRule } from '@/types';
+import { FormField, FormFieldType, DatabaseDataType, ValidationRule } from '@/types'
 
 // 基础表单字段组件属性接口
 export interface BaseFormFieldProps {
@@ -25,8 +25,8 @@ export const FormFieldComponents: Record<FormFieldType, string> = {
   [FormFieldType.UPLOAD]: 'FormFieldUpload',
   [FormFieldType.CASCADER]: 'FormFieldCascader',
   [FormFieldType.TREE_SELECT]: 'FormFieldTreeSelect',
-  [FormFieldType.TRANSFER]: 'FormFieldTransfer',
-};
+  [FormFieldType.TRANSFER]: 'FormFieldTransfer'
+}
 
 // 表单布局类型
 export type FormLayout = 'vertical' | 'inline' | 'grid' | 'grid-right';

@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>表单配置管理</span>
-          <el-button type="primary" @click="handleAddConfig" icon="el-icon-plus">添加表单配置</el-button>
+          <el-button
+            type="primary"
+            icon="el-icon-plus"
+            @click="handleAddConfig"
+          >
+            添加表单配置
+          </el-button>
         </div>
       </template>
 
@@ -22,12 +28,32 @@
           placeholder="状态筛选"
           style="width: 150px; margin-right: 16px"
         >
-          <el-option label="全部" value="" />
-          <el-option label="启用" :value="true" />
-          <el-option label="禁用" :value="false" />
+          <el-option
+            label="全部"
+            value=""
+          />
+          <el-option
+            label="启用"
+            :value="true"
+          />
+          <el-option
+            label="禁用"
+            :value="false"
+          />
         </el-select>
-        <el-button type="primary" @click="handleSearch" icon="el-icon-search">搜索</el-button>
-        <el-button @click="resetSearch" icon="el-icon-refresh-right">重置</el-button>
+        <el-button
+          type="primary"
+          icon="el-icon-search"
+          @click="handleSearch"
+        >
+          搜索
+        </el-button>
+        <el-button
+          icon="el-icon-refresh-right"
+          @click="resetSearch"
+        >
+          重置
+        </el-button>
       </div>
 
       <!-- 表单配置列表 -->
@@ -37,52 +63,90 @@
         style="width: 100%; margin-top: 20px"
         border
       >
-        <el-table-column prop="formId" label="表单ID" width="120" />
-        <el-table-column prop="name" label="表单名称" min-width="150">
+        <el-table-column
+          prop="formId"
+          label="表单ID"
+          width="120"
+        />
+        <el-table-column
+          prop="name"
+          label="表单名称"
+          min-width="150"
+        >
           <template #default="{row}">
-            <el-link type="primary" @click="handleViewConfig(row)">{{ row.name }}</el-link>
+            <el-link
+              type="primary"
+              @click="handleViewConfig(row)"
+            >
+              {{ row.name }}
+            </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="version" label="版本" width="80" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column
+          prop="description"
+          label="描述"
+          min-width="200"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="version"
+          label="版本"
+          width="80"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="{row}">
             <el-switch
-              v-model="row.status"
+              :model-value="row.status"
               active-text="启用"
               inactive-text="禁用"
-              @change="handleStatusChange(row)"
+              @change="handleStatusChange(row, $event)"
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="180"
+        />
+        <el-table-column
+          prop="updatedAt"
+          label="更新时间"
+          width="180"
+        />
+        <el-table-column
+          label="操作"
+          width="200"
+          fixed="right"
+        >
           <template #default="{row}">
             <el-button
               type="primary"
               size="small"
-              @click="handleEditConfig(row)"
               icon="el-icon-edit"
               style="margin-right: 8px"
+              @click="handleEditConfig(row)"
             >
               编辑
             </el-button>
             <el-button
               type="success"
               size="small"
-              @click="handlePreviewForm(row)"
               icon="el-icon-view"
               style="margin-right: 8px"
+              @click="handlePreviewForm(row)"
             >
               预览
             </el-button>
             <el-button
               type="danger"
               size="small"
-              @click="handleDeleteConfig(row)"
               icon="el-icon-delete"
               :disabled="row.status"
+              @click="handleDeleteConfig(row)"
             >
               删除
             </el-button>
@@ -117,25 +181,37 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="表单名称" prop="name">
-          <el-input v-model="formConfigForm.name" placeholder="请输入表单名称" />
+        <el-form-item
+          label="表单名称"
+          prop="name"
+        >
+          <el-input
+            v-model="formConfigForm.name"
+            placeholder="请输入表单名称"
+          />
         </el-form-item>
         
-        <el-form-item label="表单描述" prop="description">
+        <el-form-item
+          label="表单描述"
+          prop="description"
+        >
           <el-input
             v-model="formConfigForm.description"
             placeholder="请输入表单描述"
             type="textarea"
-            rows="3"
+            :rows="3"
           />
         </el-form-item>
 
-        <el-form-item label="表单配置" prop="fields">
+        <el-form-item
+          label="表单配置"
+          prop="fields"
+        >
           <el-button
             type="primary"
-            @click="openFormBuilder"
             icon="el-icon-edit-outline"
             style="margin-bottom: 16px"
+            @click="openFormBuilder"
           >
             打开表单构建器
           </el-button>
@@ -150,8 +226,15 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSaveConfig">保存</el-button>
+          <el-button @click="dialogVisible = false">
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            @click="handleSaveConfig"
+          >
+            保存
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -167,10 +250,8 @@
     >
       <FormBuilder
         v-if="formBuilderVisible"
-        v-model="formConfigForm.fields"
-        :model="formConfigForm"
+        v-model="formConfigForm"
         @save="handleSaveFormBuilder"
-        @close="formBuilderVisible = false"
       />
     </el-dialog>
 
@@ -183,7 +264,7 @@
     >
       <div v-if="previewFormConfig">
         <FormGenerator
-          :form-config="previewFormConfig"
+          :config="previewFormConfig"
           :model="previewFormData"
           @submit="handlePreviewSubmit"
         />
@@ -191,7 +272,9 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="previewVisible = false">关闭</el-button>
+          <el-button @click="previewVisible = false">
+            关闭
+          </el-button>
         </div>
       </template>
     </el-dialog>
@@ -278,9 +361,9 @@ const formRules = reactive({
 const loadFormConfigs = async () => {
   loading.value = true
   try {
-    const response = await formConfigService.getFormConfigs()
-    formConfigs.value = response.data || []
-    total.value = formConfigs.value.length
+    const response = await formConfigService.getFormConfigList()
+    formConfigs.value = response.list || []
+    total.value = response.total
   } catch (error) {
     ElMessage.error('加载表单配置失败')
     console.error('加载表单配置失败:', error)
@@ -291,9 +374,10 @@ const loadFormConfigs = async () => {
 
 // 处理添加表单配置
 const handleAddConfig = () => {
-  // 重置表单
-  formConfigForm.value = {
+  // 重置表单 - 使用深拷贝创建新对象
+  formConfigForm.value = JSON.parse(JSON.stringify({
     formId: '',
+    id: '', // 确保id字段也存在
     name: '',
     description: '',
     version: 1,
@@ -301,7 +385,7 @@ const handleAddConfig = () => {
     fields: [],
     createdAt: '',
     updatedAt: ''
-  }
+  }))
   dialogTitle.value = '添加表单配置'
   dialogVisible.value = true
 }
@@ -309,7 +393,15 @@ const handleAddConfig = () => {
 // 处理编辑表单配置
 const handleEditConfig = (config: FormConfig) => {
   // 深拷贝，避免直接修改原数据
-  formConfigForm.value = JSON.parse(JSON.stringify(config))
+  const configCopy = JSON.parse(JSON.stringify(config))
+  // 确保id和formId字段都存在
+  if (configCopy.formId && !configCopy.id) {
+    configCopy.id = configCopy.formId
+  }
+  if (configCopy.id && !configCopy.formId) {
+    configCopy.formId = configCopy.id
+  }
+  formConfigForm.value = configCopy
   dialogTitle.value = '编辑表单配置'
   dialogVisible.value = true
 }
@@ -347,21 +439,103 @@ const handleDeleteConfig = async (config: FormConfig) => {
 }
 
 // 处理状态变更
-const handleStatusChange = async (config: FormConfig) => {
+const handleStatusChange = async (config: FormConfig, newStatus: boolean) => {
   try {
-    await formConfigService.updateFormConfig(config.formId, { status: config.status })
-    ElMessage.success(config.status ? '表单已启用' : '表单已禁用')
+    // 找到原始formConfigs数组中的对应项并更新
+    const index = formConfigs.value.findIndex(item => item.formId === config.formId)
+    if (index !== -1) {
+      formConfigs.value[index].status = newStatus
+    }
+    await formConfigService.updateFormConfig(config.formId, { status: newStatus })
+    ElMessage.success(newStatus ? '表单已启用' : '表单已禁用')
   } catch (error) {
     // 回滚状态
-    config.status = !config.status
+    const index = formConfigs.value.findIndex(item => item.formId === config.formId)
+    if (index !== -1) {
+      formConfigs.value[index].status = !newStatus
+    }
     ElMessage.error('更新状态失败')
     console.error('更新表单状态失败:', error)
   }
 }
 
+// 检测循环引用的辅助函数
+function hasCircularReference(obj: any, seen = new Set()): boolean {
+  if (obj === null || typeof obj !== 'object') {
+    return false
+  }
+  
+  if (seen.has(obj)) {
+    return true
+  }
+  
+  seen.add(obj)
+  
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (hasCircularReference(obj[key], seen)) {
+        return true
+      }
+    }
+  }
+  
+  seen.delete(obj)
+  return false
+}
+
+// 安全地复制对象，避免循环引用
+function safeClone(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+  
+  // 如果是数组
+  if (Array.isArray(obj)) {
+    const clonedArray: any[] = []
+    for (let i = 0; i < obj.length; i++) {
+      clonedArray[i] = safeClone(obj[i])
+    }
+    return clonedArray
+  }
+  
+  // 如果是对象
+  const clonedObj: Record<string, any> = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      // 跳过可能导致循环引用的属性
+      if (key === 'fieldValue' && typeof obj[key] === 'object') {
+        continue
+      }
+      clonedObj[key] = safeClone(obj[key])
+    }
+  }
+  return clonedObj
+}
+
 // 打开表单构建器
 const openFormBuilder = () => {
-  formBuilderVisible.value = true
+  try {
+    // 检测并处理循环引用
+    if (hasCircularReference(formConfigForm.value)) {
+      console.warn('检测到循环引用，尝试修复...')
+      // 创建一个不包含循环引用的安全副本
+      const safeForm = safeClone(formConfigForm.value)
+      formConfigForm.value = safeForm
+    }
+    
+    // 确保formConfigForm有正确的id和formId字段
+    if (!formConfigForm.value.formId) {
+      formConfigForm.value.formId = formConfigForm.value.id || ''
+    }
+    if (!formConfigForm.value.id) {
+      formConfigForm.value.id = formConfigForm.value.formId || ''
+    }
+    
+    formBuilderVisible.value = true
+  } catch (error) {
+    console.error('打开表单构建器时出错:', error)
+    ElMessage.error('打开表单构建器失败，请检查表单配置是否正确')
+  }
 }
 
 // 保存表单构建器配置
@@ -405,19 +579,19 @@ const handlePreviewForm = (config: FormConfig) => {
     } else {
       // 根据字段类型设置默认值
       switch (field.type) {
-        case 'checkbox':
-          previewFormData.value[field.fieldKey] = []
-          break
-        case 'number':
-          previewFormData.value[field.fieldKey] = 0
-          break
-        case 'date':
-        case 'datetime':
-        case 'time':
-          previewFormData.value[field.fieldKey] = null
-          break
-        default:
-          previewFormData.value[field.fieldKey] = ''
+      case 'checkbox':
+        previewFormData.value[field.fieldKey] = []
+        break
+      case 'number':
+        previewFormData.value[field.fieldKey] = 0
+        break
+      case 'date':
+      case 'datetime':
+      case 'time':
+        previewFormData.value[field.fieldKey] = null
+        break
+      default:
+        previewFormData.value[field.fieldKey] = ''
       }
     }
   })

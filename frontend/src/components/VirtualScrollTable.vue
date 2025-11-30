@@ -1,7 +1,10 @@
 <template>
   <div class="virtual-scroll-table-container">
     <!-- 搜索和操作区域 -->
-    <div class="table-header" v-if="showHeader">
+    <div
+      v-if="showHeader"
+      class="table-header"
+    >
       <div class="header-left">
         <slot name="header-left">
           <el-input
@@ -13,7 +16,10 @@
             @input="handleSearch"
           >
             <template #append>
-              <el-button :icon="Search" @click="handleSearch" />
+              <el-button
+                :icon="Search"
+                @click="handleSearch"
+              />
             </template>
           </el-input>
         </slot>
@@ -24,8 +30,8 @@
           <el-button
             v-if="showRefresh"
             :icon="Refresh"
-            @click="handleRefresh"
             :loading="loading"
+            @click="handleRefresh"
           >
             刷新
           </el-button>
@@ -44,9 +50,9 @@
 
     <!-- 虚拟滚动容器 -->
     <div 
+      ref="scrollWrapperRef"
       class="virtual-scroll-wrapper"
       :style="{ height: tableHeight }"
-      ref="scrollWrapperRef"
       @scroll="handleScroll"
     >
       <!-- 表头固定 -->
@@ -75,7 +81,10 @@
           />
 
           <!-- 数据列 -->
-          <template v-for="column in columns" :key="column.prop">
+          <template
+            v-for="column in columns"
+            :key="column.prop"
+          >
             <el-table-column
               :prop="column.prop"
               :label="column.label"
@@ -109,7 +118,10 @@
 
         <!-- 可见行 -->
         <div class="visible-data">
-          <table class="virtual-table" :style="{ width: tableWidth }">
+          <table
+            class="virtual-table"
+            :style="{ width: tableWidth }"
+          >
             <tbody>
               <tr 
                 v-for="(row, index) in visibleData" 
@@ -119,26 +131,41 @@
                 @mouseleave="hoveredRowIndex = -1"
               >
                 <!-- 选择列 -->
-                <td v-if="showSelection" class="selection-cell" style="width: 55px; text-align: center;">
+                <td
+                  v-if="showSelection"
+                  class="selection-cell"
+                  style="width: 55px; text-align: center;"
+                >
                   <el-checkbox 
                     v-model="row._selected" 
-                    @change="handleRowSelection(row, $event)"
                     :indeterminate="row._indeterminate"
+                    @change="handleRowSelection(row, $event)"
                   />
                 </td>
 
                 <!-- 序号列 -->
-                <td v-if="showIndex" class="index-cell" style="width: 80px; text-align: center;">
+                <td
+                  v-if="showIndex"
+                  class="index-cell"
+                  style="width: 80px; text-align: center;"
+                >
                   {{ startIndex + index + 1 }}
                 </td>
 
                 <!-- 数据列 -->
-                <template v-for="column in columns" :key="column.prop">
+                <template
+                  v-for="column in columns"
+                  :key="column.prop"
+                >
                   <td 
                     :style="getCellStyle(column)"
                     class="data-cell"
                   >
-                    <slot :name="column.prop" :row="row" :$index="startIndex + index">
+                    <slot
+                      :name="column.prop"
+                      :row="row"
+                      :$index="startIndex + index"
+                    >
                       <!-- 格式化显示 -->
                       <template v-if="column.formatter">
                         {{ column.formatter(row, null, row[column.prop], startIndex + index) }}
@@ -157,7 +184,10 @@
                        
                       <!-- 默认显示 -->
                       <template v-else>
-                        <div v-if="column.showOverflowTooltip" class="tooltip-cell">
+                        <div
+                          v-if="column.showOverflowTooltip"
+                          class="tooltip-cell"
+                        >
                           {{ row[column.prop] }}
                         </div>
                         <template v-else>
@@ -174,7 +204,11 @@
                   class="action-cell" 
                   :style="{ width: actionsWidth + 'px', textAlign: 'center' }"
                 >
-                  <slot name="actions" :row="row" :$index="startIndex + index">
+                  <slot
+                    name="actions"
+                    :row="row"
+                    :$index="startIndex + index"
+                  >
                     <el-button
                       v-if="showEdit"
                       link
@@ -214,21 +248,30 @@
     </div>
 
     <!-- 加载状态 -->
-    <div v-if="loading" class="loading-overlay">
-      <el-loading target=".table-data-wrapper" text="加载中..." />
+    <div
+      v-if="loading"
+      class="loading-overlay"
+    >
+      <el-loading
+        target=".table-data-wrapper"
+        text="加载中..."
+      />
     </div>
 
     <!-- 分页 -->
-    <div class="table-pagination" v-if="showPagination">
+    <div
+      v-if="showPagination"
+      class="table-pagination"
+    >
       <el-pagination
         v-model:current-page="pagination.current"
         v-model:page-size="pagination.size"
         :total="pagination.total"
         :page-sizes="pageSizes"
         :layout="paginationLayout"
+        style="margin-top: 16px; justify-content: flex-end"
         @size-change="handleSizeChange"
         @current-change="handleCurrentChange"
-        style="margin-top: 16px; justify-content: flex-end"
       />
     </div>
   </div>

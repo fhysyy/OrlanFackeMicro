@@ -1,17 +1,33 @@
 <template>
-  <div v-if="debug" class="data-binding-helper debug-info">
+  <div
+    v-if="debug"
+    class="data-binding-helper debug-info"
+  >
     <div class="debug-header">
       <h4>数据绑定调试信息</h4>
-      <button @click="refreshBindings" class="refresh-btn">刷新绑定</button>
+      <button
+        class="refresh-btn"
+        @click="refreshBindings"
+      >
+        刷新绑定
+      </button>
     </div>
     <div class="binding-stats">
       <p>绑定数量: {{ bindings.size }}</p>
       <p>数据源数量: {{ dataSources.size }}</p>
     </div>
-    <div v-if="hasErrors" class="binding-errors">
+    <div
+      v-if="hasErrors"
+      class="binding-errors"
+    >
       <h5>错误信息:</h5>
       <ul>
-        <li v-for="(error, index) in errors" :key="index">{{ error }}</li>
+        <li
+          v-for="(error, index) in errors"
+          :key="index"
+        >
+          {{ error }}
+        </li>
       </ul>
     </div>
   </div>

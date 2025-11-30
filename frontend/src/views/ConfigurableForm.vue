@@ -4,15 +4,23 @@
       <template #header>
         <div class="card-header">
           <h2>可配置表单</h2>
-          <p class="subtitle">基于数据库配置的动态表单生成器</p>
+          <p class="subtitle">
+            基于数据库配置的动态表单生成器
+          </p>
         </div>
       </template>
 
       <!-- 表单控制栏 -->
-      <el-row class="form-controls" :gutter="20">
+      <el-row
+        class="form-controls"
+        :gutter="20"
+      >
         <el-col :span="8">
           <el-button-group>
-            <el-button type="primary" @click="toggleMode">
+            <el-button
+              type="primary"
+              @click="toggleMode"
+            >
               <el-icon><Switch /></el-icon>
               {{ isEditMode ? '切换到预览' : '切换到编辑' }}
             </el-button>
@@ -26,8 +34,15 @@
             </el-button>
           </el-button-group>
         </el-col>
-        <el-col :span="16" class="text-right">
-          <el-button type="success" @click="saveFormConfig" :loading="saving">
+        <el-col
+          :span="16"
+          class="text-right"
+        >
+          <el-button
+            type="success"
+            :loading="saving"
+            @click="saveFormConfig"
+          >
             <el-icon><Download /></el-icon>
             保存配置
           </el-button>
@@ -37,39 +52,52 @@
       <el-divider />
 
       <!-- 编辑模式：表单构建器 -->
-      <div v-if="isEditMode" class="edit-mode">
+      <div
+        v-if="isEditMode"
+        class="edit-mode"
+      >
         <FormBuilder
-          v-model="formConfig"
-          @update:formData="handleFormDataUpdate"
+          v-model="formConfig.value"
         />
       </div>
 
       <!-- 预览模式：表单渲染器 -->
-      <div v-else class="preview-mode">
+      <div
+        v-else
+        class="preview-mode"
+      >
         <el-card class="preview-card">
           <template #header>
             <div class="preview-header">
               <h3>表单预览</h3>
-              <el-tag type="info">{{ formConfig.title || '未命名表单' }}</el-tag>
+              <el-tag type="info">
+                {{ formConfig.value.title || '未命名表单' }}
+              </el-tag>
             </div>
           </template>
 
           <FormGenerator
             ref="formGeneratorRef"
-            :config="formConfig"
-            v-model="formData"
+            v-model="formData.value"
+            :config="formConfig.value"
             @submit="handleFormSubmit"
             @reset="handleFormReset"
-            @fieldChange="handleFieldChange"
+            @field-change="handleFieldChange"
           />
         </el-card>
 
         <!-- 表单数据展示 -->
-        <el-card class="data-card" v-if="Object.keys(formData).length > 0">
+        <el-card
+          v-if="Object.keys(formData).length > 0"
+          class="data-card"
+        >
           <template #header>
             <h3>表单数据</h3>
           </template>
-          <el-descriptions :column="1" border>
+          <el-descriptions
+            :column="1"
+            border
+          >
             <el-descriptions-item 
               v-for="(value, key) in formData" 
               :key="key"
@@ -85,22 +113,22 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import { Switch, RefreshRight, DocumentCopy, Download } from '@element-plus/icons-vue';
-import type { FormConfig, FormField } from '@/types/form';
-import { FormFieldType, DatabaseDataType } from '@/types/form';
-import FormBuilder from '@/components/FormBuilder.vue';
-import FormGenerator from '@/components/FormGenerator.vue';
-import { generateFormConfigFromModel } from '@/services/formService';
+import { ref, reactive, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { Switch, RefreshRight, DocumentCopy, Download } from '@element-plus/icons-vue'
+import type { FormConfig, FormField } from '@/types/form'
+import { FormFieldType, DatabaseDataType } from '@/types/form'
+import FormBuilder from '@/components/FormBuilder.vue'
+import FormGenerator from '@/components/FormGenerator.vue'
+import { generateFormConfigFromModel } from '@/services/formService'
 
 // 表单模式控制
-const isEditMode = ref(true);
-const saving = ref(false);
-const formGeneratorRef = ref();
+const isEditMode = ref(true)
+const saving = ref(false)
+const formGeneratorRef = ref()
 
 // 表单配置
-const formConfig = reactive<FormConfig>({
+const formConfig = ref<FormConfig>({
   id: 'example-form',
   title: '示例表单',
   description: '这是一个基于数据库配置的动态表单示例',
@@ -253,14 +281,14 @@ const formConfig = reactive<FormConfig>({
     }
   ],
   initialData: {}
-});
+})
 
 // 表单数据
-const formData = reactive<Record<string, any>>({});
+const formData = ref<Record<string, any>>({})
 
 // 切换编辑/预览模式
 function toggleMode() {
-  isEditMode.value = !isEditMode.value;
+  isEditMode.value = !isEditMode.value
 }
 
 // 重置表单
@@ -268,99 +296,177 @@ function resetForm() {
   ElMessageBox.confirm('确定要重置表单吗？这将清除所有配置和数据。', '警告', {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
-    type: 'warning',
+    type: 'warning'
   }).then(() => {
     // 重置表单配置
-    formConfig.fields = [];
-    formConfig.title = '未命名表单';
-    formConfig.description = '';
+    formConfig.value.fields = []
+    formConfig.value.title = '未命名表单'
+    formConfig.value.description = ''
     
     // 重置表单数据
-    Object.keys(formData).forEach(key => {
-      delete formData[key];
-    });
+    Object.keys(formData.value).forEach(key => {
+      delete formData.value[key]
+    })
     
-    ElMessage.success('表单已重置');
+    ElMessage.success('表单已重置')
   }).catch(() => {
     // 取消重置
-  });
+  })
 }
 
 // 加载示例数据
 function loadSampleData() {
   // 这里使用我们已经在formConfig中定义的示例字段
-  ElMessage.success('示例数据已加载');
+  ElMessage.success('示例数据已加载')
 }
 
 // 保存表单配置
 async function saveFormConfig() {
-  if (!formConfig.fields || formConfig.fields.length === 0) {
-    ElMessage.warning('表单中没有字段，请先添加字段');
-    return;
+  if (!formConfig.value.fields || formConfig.value.fields.length === 0) {
+    ElMessage.warning('表单中没有字段，请先添加字段')
+    return
   }
   
-  saving.value = true;
+  saving.value = true
   try {
     // 模拟保存操作
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // 生成配置的JSON字符串
-    const configJson = JSON.stringify(formConfig, null, 2);
+    // 生成配置的JSON字符串，处理可能的循环引用
+    const configJson = JSON.stringify(formConfig.value, (key, value) => {
+      // 处理可能导致循环引用的特殊属性
+      if (key === 'fieldValue' && typeof value === 'object' && value !== null) {
+        return { ...value }
+      }
+      return value
+    }, 2)
     
     // 创建下载链接
-    const blob = new Blob([configJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${formConfig.title || 'form-config'}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const blob = new Blob([configJson], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${formConfig.value.title || 'form-config'}.json`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    URL.revokeObjectURL(url)
     
-    ElMessage.success('表单配置已保存');
+    ElMessage.success('表单配置已保存')
   } catch (error) {
-    console.error('保存表单配置失败:', error);
-    ElMessage.error('保存表单配置失败');
+    console.error('保存表单配置失败:', error)
+    // 如果是循环引用错误，尝试使用更安全的方法
+    if (error instanceof Error && error.message.includes('Converting circular structure to JSON')) {
+      try {
+        // 使用深拷贝工具处理循环引用
+        const safeFormConfig = JSON.parse(JSON.stringify(formConfig.value, (key, value) => {
+          if (key === 'fieldValue' || typeof value === 'object' && value !== null) {
+            return { ...value }
+          }
+          return value
+        }))
+        const configJson = JSON.stringify(safeFormConfig, null, 2)
+        
+        const blob = new Blob([configJson], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `${formConfig.value.title || 'form-config'}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+        
+        ElMessage.success('表单配置已保存(已处理循环引用)')
+      } catch (innerError) {
+        console.error('使用安全方法保存也失败:', innerError)
+        ElMessage.error('保存表单配置失败(存在循环引用)')
+      }
+    } else {
+      ElMessage.error('保存表单配置失败')
+    }
   } finally {
-    saving.value = false;
+    saving.value = false
   }
 }
 
 // 处理表单数据更新
 function handleFormDataUpdate(newData: Record<string, any>) {
-  Object.assign(formData, newData);
+  Object.assign(formData.value, newData)
 }
 
 // 处理表单提交
 function handleFormSubmit(data: Record<string, any>) {
-  ElMessage.success('表单提交成功');
-  console.log('表单数据:', data);
+  ElMessage.success('表单提交成功')
+  console.log('表单数据:', data)
 }
 
 // 处理表单重置
 function handleFormReset() {
-  ElMessage.info('表单已重置');
+  ElMessage.info('表单已重置')
 }
 
 // 处理字段值变化
 function handleFieldChange(field: string, value: any) {
-  console.log(`字段 ${field} 值变化:`, value);
+  console.log(`字段 ${field} 值变化:`, value)
 }
 
 // 获取字段标签
 function getFieldLabel(prop: string): string {
-  const field = formConfig.fields?.find(f => f.prop === prop);
-  return field?.label || prop;
+  const field = formConfig.value.fields?.find(f => f.prop === prop)
+  return field?.label || prop
+}
+
+// 检测循环引用的辅助函数
+function hasCircularReference(obj: any, seen = new Set()): boolean {
+  if (obj === null || typeof obj !== 'object') {
+    return false
+  }
+  
+  if (seen.has(obj)) {
+    return true
+  }
+  
+  seen.add(obj)
+  
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (hasCircularReference(obj[key], seen)) {
+        return true
+      }
+    }
+  }
+  
+  seen.delete(obj)
+  return false
 }
 
 // 格式化值显示
 function formatValue(value: any): string {
-  if (value === null || value === undefined) return '空';
+  if (value === null || value === undefined) return '空'
   if (typeof value === 'object') {
-    return JSON.stringify(value, null, 2);
+    try {
+      // 检查是否存在循环引用
+      if (hasCircularReference(value)) {
+        console.warn('检测到循环引用，使用安全序列化...')
+        // 使用自定义的循环引用处理函数
+        return JSON.stringify(value, (key, val) => {
+          if (typeof val === 'object' && val !== null) {
+            if (key === 'fieldValue') {
+              return '{...fieldValue}'
+            }
+          }
+          return val
+        }, 2)
+      } else {
+        return JSON.stringify(value, null, 2)
+      }
+    } catch (error) {
+      console.error('格式化值时出错:', error)
+      return '无法显示(循环引用)'
+    }
   }
-  return String(value);
+  return String(value)
 }
 </script>
 

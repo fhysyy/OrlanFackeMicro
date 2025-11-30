@@ -74,7 +74,33 @@ class TokenManager {
    */
   isTokenValid(): boolean {
     const token = this.getAccessToken()
-    return !!token
+    if (!token) {
+      return false
+    }
+    
+    try {
+      const expiry = this.getTokenExpiry()
+      if (!expiry) {
+        return false
+      }
+      
+      // 检查令牌是否过期（提前5分钟刷新）
+      const now = Date.now()
+      const expiresIn = expiry - now
+      
+      // 如果令牌将在5分钟内过期，尝试刷新
+      if (expiresIn > 0 && expiresIn < 5 * 60 * 1000 && !this.refreshPromise) {
+        // 使用单例模式确保同时只有一个刷新请求
+        this.refreshPromise = this.refreshAccessToken().finally(() => {
+          this.refreshPromise = null
+        })
+      }
+      
+      return expiresIn > 0
+    } catch (error) {
+      console.error('检查令牌有效性时发生错误:', error)
+      return false
+    }
   }
 
   /**
@@ -113,6 +139,8 @@ class TokenManager {
     }
   }
 
+  private refreshPromise: Promise<boolean> | null = null
+
   /**
    * 刷新访问 token
    * 这个方法需要在 API 调用中使用
@@ -120,16 +148,33 @@ class TokenManager {
   async refreshAccessToken(): Promise<boolean> {
     const refreshToken = this.getRefreshToken()
     if (!refreshToken) {
+      this.clearTokens()
       return false
     }
 
     try {
-      // 这里应该调用实际的刷新 API
-      // 暂时返回 false，需要在实际实现中完成
-      console.warn('Token refresh not implemented yet')
+      // 调用刷新token的API
+      const response = await import('axios').then(m => m.default).post('/api/auth/refresh', {
+        refresh_token: refreshToken
+      }, {
+        // 不使用请求拦截器，避免循环调用
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const { access_token, refresh_token: newRefreshToken } = response.data
+      
+      if (access_token && newRefreshToken) {
+        // 存储新的token
+        this.setTokens(access_token, newRefreshToken)
+        return true
+      }
+
+      this.clearTokens()
       return false
     } catch (error) {
-      console.error('Failed to refresh token:', error)
+      console.error('刷新令牌失败:', error)
       this.clearTokens()
       return false
     }

@@ -89,37 +89,37 @@ export const formService = {
     options?: Partial<FormField>
   ): FormField {
     // 根据数据库类型映射到表单字段类型
-    let formFieldType: FormFieldType;
+    let formFieldType: FormFieldType
     switch (databaseType) {
-      case DatabaseDataType.STRING:
-      case DatabaseDataType.TEXT:
-        formFieldType = databaseLength && databaseLength > 255 ? FormFieldType.TEXTAREA : FormFieldType.INPUT;
-        break;
-      case DatabaseDataType.INT:
-      case DatabaseDataType.BIGINT:
-      case DatabaseDataType.DECIMAL:
-      case DatabaseDataType.FLOAT:
-      case DatabaseDataType.DOUBLE:
-        formFieldType = FormFieldType.INPUT_NUMBER;
-        break;
-      case DatabaseDataType.BOOLEAN:
-        formFieldType = FormFieldType.SWITCH;
-        break;
-      case DatabaseDataType.DATE:
-        formFieldType = FormFieldType.DATE_PICKER;
-        break;
-      case DatabaseDataType.TIME:
-        formFieldType = FormFieldType.TIME_PICKER;
-        break;
-      case DatabaseDataType.DATETIME:
-      case DatabaseDataType.TIMESTAMP:
-        formFieldType = FormFieldType.DATETIME_PICKER;
-        break;
-      case DatabaseDataType.ENUM:
-        formFieldType = FormFieldType.SELECT;
-        break;
-      default:
-        formFieldType = FormFieldType.INPUT;
+    case DatabaseDataType.STRING:
+    case DatabaseDataType.TEXT:
+      formFieldType = databaseLength && databaseLength > 255 ? FormFieldType.TEXTAREA : FormFieldType.INPUT
+      break
+    case DatabaseDataType.INT:
+    case DatabaseDataType.BIGINT:
+    case DatabaseDataType.DECIMAL:
+    case DatabaseDataType.FLOAT:
+    case DatabaseDataType.DOUBLE:
+      formFieldType = FormFieldType.INPUT_NUMBER
+      break
+    case DatabaseDataType.BOOLEAN:
+      formFieldType = FormFieldType.SWITCH
+      break
+    case DatabaseDataType.DATE:
+      formFieldType = FormFieldType.DATE_PICKER
+      break
+    case DatabaseDataType.TIME:
+      formFieldType = FormFieldType.TIME_PICKER
+      break
+    case DatabaseDataType.DATETIME:
+    case DatabaseDataType.TIMESTAMP:
+      formFieldType = FormFieldType.DATETIME_PICKER
+      break
+    case DatabaseDataType.ENUM:
+      formFieldType = FormFieldType.SELECT
+      break
+    default:
+      formFieldType = FormFieldType.INPUT
     }
 
     // 生成验证规则
@@ -128,82 +128,82 @@ export const formService = {
       databaseLength,
       databasePrecision,
       databaseScale
-    );
+    )
 
     // 根据字段类型创建不同的表单字段
-    let field: FormField;
+    let field: FormField
     switch (formFieldType) {
-      case FormFieldType.INPUT:
-        field = this.createInputField(prop, label, {
-          databaseType,
-          databaseLength,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.TEXTAREA:
-        field = this.createTextareaField(prop, label, {
-          databaseType,
-          databaseLength,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.INPUT_NUMBER:
-        field = this.createInputNumberField(prop, label, {
-          databaseType,
-          databaseLength: databasePrecision,
-          databaseScale,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.SWITCH:
-        field = this.createSwitchField(prop, label, {
-          databaseType,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.DATE_PICKER:
-        field = this.createDateField(prop, label, {
-          databaseType,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.TIME_PICKER:
-        field = this.createTimeField(prop, label, {
-          databaseType,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.DATETIME_PICKER:
-        field = this.createDateTimePickerField(prop, label, {
-          databaseType,
-          validationRules,
-          ...options
-        });
-        break;
-      case FormFieldType.SELECT:
-        field = this.createSelectField(prop, label, options?.options || [], {
-          databaseType,
-          databaseLength,
-          validationRules,
-          ...options
-        });
-        break;
-      default:
-        field = this.createInputField(prop, label, {
-          databaseType,
-          databaseLength,
-          validationRules,
-          ...options
-        });
+    case FormFieldType.INPUT:
+      field = this.createInputField(prop, label, {
+        databaseType,
+        databaseLength,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.TEXTAREA:
+      field = this.createTextareaField(prop, label, {
+        databaseType,
+        databaseLength,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.INPUT_NUMBER:
+      field = this.createInputNumberField(prop, label, {
+        databaseType,
+        databaseLength: databasePrecision,
+        databaseScale,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.SWITCH:
+      field = this.createSwitchField(prop, label, {
+        databaseType,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.DATE_PICKER:
+      field = this.createDateField(prop, label, {
+        databaseType,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.TIME_PICKER:
+      field = this.createTimeField(prop, label, {
+        databaseType,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.DATETIME_PICKER:
+      field = this.createDateTimePickerField(prop, label, {
+        databaseType,
+        validationRules,
+        ...options
+      })
+      break
+    case FormFieldType.SELECT:
+      field = this.createSelectField(prop, label, options?.options || [], {
+        databaseType,
+        databaseLength,
+        validationRules,
+        ...options
+      })
+      break
+    default:
+      field = this.createInputField(prop, label, {
+        databaseType,
+        databaseLength,
+        validationRules,
+        ...options
+      })
     }
 
-    return field;
+    return field
   },
 
   /**
@@ -229,10 +229,6 @@ export const formService = {
   /**
    * 创建文本域字段
    */
-
-  /**
-   * 创建文本域字段
-   */
   createTextareaField(prop: string, label: string, options?: Partial<FormField>): FormField {
     return {
       prop,
@@ -248,10 +244,6 @@ export const formService = {
   // 重定向到直接导出的函数
   createSelectField,
   
-  /**
-   * 创建单选框字段
-   */
-
   /**
    * 创建单选框字段
    */
@@ -407,35 +399,40 @@ export const formService = {
    * 获取表单模板列表
    */
   async getFormTemplates(): Promise<ApiResponse<FormTemplate[]>> {
-    return api.get<ApiResponse<FormTemplate[]>>('/api/form-templates')
+    const response = await api.get<ApiResponse<FormTemplate[]>>('/api/form-templates')
+    return response
   },
 
   /**
    * 获取表单模板详情
    */
   async getFormTemplate(id: string): Promise<ApiResponse<FormTemplate>> {
-    return api.get<ApiResponse<FormTemplate>>(`/api/form-templates/${id}`)
+    const response = await api.get<ApiResponse<FormTemplate>>(`/api/form-templates/${id}`)
+    return response
   },
 
   /**
    * 创建表单模板
    */
   async createFormTemplate(template: Omit<FormTemplate, 'id' | 'createdAt' | 'updatedAt'>): Promise<ApiResponse<FormTemplate>> {
-    return api.post<ApiResponse<FormTemplate>>('/api/form-templates', template)
+    const response = await api.post<ApiResponse<FormTemplate>>('/api/form-templates', template)
+    return response
   },
 
   /**
    * 更新表单模板
    */
   async updateFormTemplate(id: string, template: Partial<FormTemplate>): Promise<ApiResponse<FormTemplate>> {
-    return api.put<ApiResponse<FormTemplate>>(`/api/form-templates/${id}`, template)
+    const response = await api.put<ApiResponse<FormTemplate>>(`/api/form-templates/${id}`, template)
+    return response
   },
 
   /**
    * 删除表单模板
    */
   async deleteFormTemplate(id: string): Promise<ApiResponse<void>> {
-    return api.delete<ApiResponse<void>>(`/api/form-templates/${id}`)
+    const response = await api.delete<ApiResponse<void>>(`/api/form-templates/${id}`)
+    return response
   },
 
   /**

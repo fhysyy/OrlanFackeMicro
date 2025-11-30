@@ -1,7 +1,6 @@
 <template>
   <el-slider
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     :disabled="disabled"
     :min="field.min || 0"
     :max="field.max || 100"
@@ -15,25 +14,26 @@
     :format-tooltip="field.formatTooltip"
     :marks="field.marks"
     :debounce="field.debounce || 300"
+    @update:model-value="$emit('update:modelValue', $event)"
     @change="handleChange"
   />
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
-import { BaseFormFieldProps } from './types';
+import { defineProps, defineEmits } from 'vue'
+import { BaseFormFieldProps } from './types'
 
 // Props
-const props = defineProps<BaseFormFieldProps>();
+const props = defineProps<BaseFormFieldProps>()
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:modelValue', value: any): void;
   (e: 'change', value: any): void;
-}>();
+}>()
 
 // 处理值变化
 const handleChange = (value: any) => {
-  emit('change', value);
-};
+  emit('change', value)
+}
 </script>

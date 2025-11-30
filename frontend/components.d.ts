@@ -11,12 +11,6 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
-    CrudDialog: typeof import('./src/components/crud-components/CrudDialog.vue')['default']
-    CrudPagination: typeof import('./src/components/crud-components/CrudPagination.vue')['default']
-    CrudSearchForm: typeof import('./src/components/crud-components/CrudSearchForm.vue')['default']
-    CrudTable: typeof import('./src/components/crud-components/CrudTable.vue')['default']
-    CrudTemplate: typeof import('./src/components/CrudTemplate.vue')['default']
-    CrudToolbar: typeof import('./src/components/crud-components/CrudToolbar.vue')['default']
     DataBindingHelper: typeof import('./src/components/DataBindingHelper.vue')['default']
     DataTable: typeof import('./src/components/DataTable.vue')['default']
     EasySkeleton: typeof import('./src/components/EasySkeleton.vue')['default']

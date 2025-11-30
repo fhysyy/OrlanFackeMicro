@@ -1,12 +1,18 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { resolve } from 'path'
+import { fileURLToPath } from 'url'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import AutoImport from 'unplugin-auto-import/vite'
 import { createDevTools } from '@vtj/pro/vite'
+
+// 获取当前文件路径
+const __filename = fileURLToPath(import.meta.url)
+// 获取当前目录路径
+const __dirname = resolve(__filename, '..')
 // https://vitejs.dev/config/
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   plugins: [
     vue(),
     Components({
@@ -23,8 +29,12 @@ export default defineConfig({
       dts: true, // 生成类型声明文件
       vueTemplate: true
     }),
-   createDevTools({ linkOptions: { href: "/vtj/" } }),
-  
+    // 条件性添加VTJ开发工具插件
+    // 只有在开发环境中才使用该插件，并且使用简单配置
+    // 使用process.env.NODE_ENV代替import.meta.env.MODE在配置文件中
+    ...(process.env.NODE_ENV === 'development' ? [createDevTools({
+      linkOptions: { href: '/_vtj_/#' }
+    })] : [])
   ],
   
   resolve: {
@@ -49,12 +59,12 @@ export default defineConfig({
   
   build: {
     outDir: 'dist',
-    sourcemap: process.env.NODE_ENV !== 'production',
+    sourcemap: command !== 'build',
     chunkSizeWarningLimit: 2000,
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: process.env.NODE_ENV === 'production',
+        drop_console: command === 'build',
         drop_debugger: true
       },
       // 保留类名，避免类构造函数调用错误
@@ -70,7 +80,6 @@ export default defineConfig({
           ui: ['element-plus', '@element-plus/icons-vue'],
           utils: ['axios', 'dayjs', 'lodash'],
           charts: ['echarts', 'vue-echarts']
-
         }
       }
     }
@@ -106,7 +115,6 @@ export default defineConfig({
   
   // 配置环境变量
   define: {
-    'process.env': process.env,
     '__VUE_PROD_HYDRATION_MISMATCH_DETAILS__': false
   }
-})
+}))

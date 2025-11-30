@@ -8,25 +8,46 @@
       <!-- 个人信息 -->
       <el-col :span="16">
         <el-card header="基本信息">
-          <el-form :model="profileForm" :rules="profileRules" ref="profileFormRef" label-width="100px">
-            <el-form-item label="用户名" prop="username">
-              <el-input v-model="profileForm.username" disabled />
+          <el-form
+            ref="profileFormRef"
+            :model="profileForm"
+            :rules="profileRules"
+            label-width="100px"
+          >
+            <el-form-item
+              label="用户名"
+              prop="username"
+            >
+              <el-input
+                v-model="profileForm.username"
+                disabled
+              />
             </el-form-item>
             
-            <el-form-item label="邮箱" prop="email">
+            <el-form-item
+              label="邮箱"
+              prop="email"
+            >
               <el-input v-model="profileForm.email" />
             </el-form-item>
             
-            <el-form-item label="手机号" prop="phone">
+            <el-form-item
+              label="手机号"
+              prop="phone"
+            >
               <el-input v-model="profileForm.phone" />
             </el-form-item>
             
             <el-form-item label="角色">
-              <el-tag :type="getRoleType(profileForm.role)">{{ profileForm.role }}</el-tag>
+              <el-tag :type="getRoleType(profileForm.role)">
+                {{ profileForm.role }}
+              </el-tag>
             </el-form-item>
             
             <el-form-item label="状态">
-              <el-tag :type="getStatusType(profileForm.status)">{{ profileForm.status }}</el-tag>
+              <el-tag :type="getStatusType(profileForm.status)">
+                {{ profileForm.status }}
+              </el-tag>
             </el-form-item>
             
             <el-form-item label="注册时间">
@@ -38,7 +59,11 @@
             </el-form-item>
             
             <el-form-item>
-              <el-button type="primary" @click="handleSaveProfile" :loading="saving">
+              <el-button
+                type="primary"
+                :loading="saving"
+                @click="handleSaveProfile"
+              >
                 保存修改
               </el-button>
             </el-form-item>
@@ -49,33 +74,83 @@
       <!-- 头像和密码 -->
       <el-col :span="8">
         <!-- 头像设置 -->
-        <el-card header="头像设置" class="avatar-card">
+        <el-card
+          header="头像设置"
+          class="avatar-card"
+        >
           <div class="avatar-section">
-            <el-avatar :size="100" :src="avatarUrl" />
+            <el-avatar
+              :size="100"
+              :src="avatarUrl"
+            />
             <div class="avatar-actions">
-              <el-button size="small" @click="handleUploadAvatar">上传头像</el-button>
-              <el-button size="small" type="danger" @click="handleRemoveAvatar">移除头像</el-button>
+              <el-button
+                size="small"
+                @click="handleUploadAvatar"
+              >
+                上传头像
+              </el-button>
+              <el-button
+                size="small"
+                type="danger"
+                @click="handleRemoveAvatar"
+              >
+                移除头像
+              </el-button>
             </div>
           </div>
         </el-card>
 
         <!-- 密码修改 -->
-        <el-card header="修改密码" class="password-card">
-          <el-form :model="passwordForm" :rules="passwordRules" ref="passwordFormRef" label-width="100px">
-            <el-form-item label="当前密码" prop="currentPassword">
-              <el-input v-model="passwordForm.currentPassword" type="password" show-password />
+        <el-card
+          header="修改密码"
+          class="password-card"
+        >
+          <el-form
+            ref="passwordFormRef"
+            :model="passwordForm"
+            :rules="passwordRules"
+            label-width="100px"
+          >
+            <el-form-item
+              label="当前密码"
+              prop="currentPassword"
+            >
+              <el-input
+                v-model="passwordForm.currentPassword"
+                type="password"
+                show-password
+              />
             </el-form-item>
             
-            <el-form-item label="新密码" prop="newPassword">
-              <el-input v-model="passwordForm.newPassword" type="password" show-password />
+            <el-form-item
+              label="新密码"
+              prop="newPassword"
+            >
+              <el-input
+                v-model="passwordForm.newPassword"
+                type="password"
+                show-password
+              />
             </el-form-item>
             
-            <el-form-item label="确认密码" prop="confirmPassword">
-              <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
+            <el-form-item
+              label="确认密码"
+              prop="confirmPassword"
+            >
+              <el-input
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                show-password
+              />
             </el-form-item>
             
             <el-form-item>
-              <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">
+              <el-button
+                type="primary"
+                :loading="changingPassword"
+                @click="handleChangePassword"
+              >
                 修改密码
               </el-button>
             </el-form-item>
@@ -83,13 +158,19 @@
         </el-card>
 
         <!-- 安全设置 -->
-        <el-card header="安全设置" class="security-card">
+        <el-card
+          header="安全设置"
+          class="security-card"
+        >
           <div class="security-item">
             <div class="security-info">
               <h4>双重认证</h4>
               <p>启用双重认证提高账户安全性</p>
             </div>
-            <el-switch v-model="twoFactorEnabled" @change="handleToggleTwoFactor" />
+            <el-switch
+              v-model="twoFactorEnabled"
+              @change="handleToggleTwoFactor"
+            />
           </div>
           
           <div class="security-item">
@@ -97,14 +178,21 @@
               <h4>登录通知</h4>
               <p>有新设备登录时发送邮件通知</p>
             </div>
-            <el-switch v-model="loginNotificationEnabled" @change="handleToggleLoginNotification" />
+            <el-switch
+              v-model="loginNotificationEnabled"
+              @change="handleToggleLoginNotification"
+            />
           </div>
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 头像上传对话框 -->
-    <el-dialog v-model="avatarDialogVisible" title="上传头像" width="400px">
+    <el-dialog
+      v-model="avatarDialogVisible"
+      title="上传头像"
+      width="400px"
+    >
       <el-upload
         class="avatar-uploader"
         action="/api/files/upload"
@@ -112,13 +200,29 @@
         :before-upload="beforeAvatarUpload"
         :on-success="handleAvatarSuccess"
       >
-        <img v-if="avatarImageUrl" :src="avatarImageUrl" class="avatar" />
-        <el-icon v-else class="avatar-uploader-icon"><Plus /></el-icon>
+        <img
+          v-if="avatarImageUrl"
+          :src="avatarImageUrl"
+          class="avatar"
+        >
+        <el-icon
+          v-else
+          class="avatar-uploader-icon"
+        >
+          <Plus />
+        </el-icon>
       </el-upload>
       
       <template #footer>
-        <el-button @click="avatarDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="confirmAvatar">确定</el-button>
+        <el-button @click="avatarDialogVisible = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmAvatar"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>

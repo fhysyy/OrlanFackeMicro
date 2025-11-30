@@ -1,36 +1,66 @@
 <template>
   <div class="form-builder">
     <!-- 表单构建器头部 -->
-    <el-card shadow="never" class="builder-header">
+    <el-card
+      shadow="never"
+      class="builder-header"
+    >
       <template #header>
         <div class="builder-header-content">
-          <h2 class="builder-title">{{ title || '表单构建器' }}</h2>
+          <h2 class="builder-title">
+            {{ title || '表单构建器' }}
+          </h2>
           <el-button-group>
-            <el-button type="primary" @click="saveConfig">保存配置</el-button>
-            <el-button @click="resetConfig">重置</el-button>
-            <el-button @click="previewForm = !previewForm">{{ previewForm ? '编辑' : '预览' }}</el-button>
+            <el-button
+              type="primary"
+              @click="saveConfig"
+            >
+              保存配置
+            </el-button>
+            <el-button @click="resetConfig">
+              重置
+            </el-button>
+            <el-button @click="previewForm = !previewForm">
+              {{ previewForm ? '编辑' : '预览' }}
+            </el-button>
           </el-button-group>
         </div>
       </template>
       
       <!-- 表单基本配置 -->
-      <el-form :model="formConfig" label-position="top" class="basic-config">
+      <el-form
+        :model="formConfig"
+        label-position="top"
+        class="basic-config"
+      >
         <el-row :gutter="20">
           <el-col :span="8">
             <el-form-item label="表单名称">
-              <el-input v-model="formConfig.name" placeholder="请输入表单名称" />
+              <el-input
+                v-model="formConfig.name"
+                placeholder="请输入表单名称"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="表单描述">
-              <el-input v-model="formConfig.description" placeholder="请输入表单描述" />
+              <el-input
+                v-model="formConfig.description"
+                placeholder="请输入表单描述"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="表单状态">
               <el-select v-model="formConfig.status">
-                <el-option label="草稿" value="draft" />
-                <el-option label="已发布" value="published" />
+                <el-option
+                  label="草稿"
+                  value="draft"
+                />
+                <el-option
+                  label="已发布"
+                  value="published"
+                />
               </el-select>
             </el-form-item>
           </el-col>
@@ -40,22 +70,35 @@
           <el-col :span="8">
             <el-form-item label="标签位置">
               <el-radio-group v-model="formConfig.labelPosition">
-                <el-radio label="left">左对齐</el-radio>
-                <el-radio label="right">右对齐</el-radio>
-                <el-radio label="top">顶部</el-radio>
+                <el-radio label="left">
+                  左对齐
+                </el-radio>
+                <el-radio label="right">
+                  右对齐
+                </el-radio>
+                <el-radio label="top">
+                  顶部
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="标签宽度">
-              <el-input v-model="formConfig.labelWidth" placeholder="如：120px" />
+              <el-input
+                v-model="formConfig.labelWidth"
+                placeholder="如：120px"
+              />
             </el-form-item>
           </el-col>
           <el-col :span="8">
             <el-form-item label="表单布局">
               <el-radio-group v-model="formConfig.layout">
-                <el-radio label="horizontal">水平</el-radio>
-                <el-radio label="vertical">垂直</el-radio>
+                <el-radio label="horizontal">
+                  水平
+                </el-radio>
+                <el-radio label="vertical">
+                  垂直
+                </el-radio>
               </el-radio-group>
             </el-form-item>
           </el-col>
@@ -65,17 +108,22 @@
 
     <!-- 预览模式 -->
     <template v-if="previewForm">
-      <el-card shadow="never" class="preview-section">
+      <el-card
+        shadow="never"
+        class="preview-section"
+      >
         <template #header>
           <div class="preview-header">
             <h3>表单预览</h3>
           </div>
         </template>
         <FormGenerator 
-          :fields="formConfig.fields" 
-          :label-position="formConfig.labelPosition" 
-          :label-width="formConfig.labelWidth"
-          :layout="formConfig.layout"
+          :config="{
+            fields: formConfig.fields,
+            labelPosition: formConfig.labelPosition,
+            labelWidth: formConfig.labelWidth,
+            layout: formConfig.layout
+          }"
           @submit="handlePreviewSubmit"
         />
       </el-card>
@@ -84,7 +132,10 @@
     <!-- 编辑模式 -->
     <template v-else>
       <!-- 字段工具箱 -->
-      <el-card shadow="never" class="toolbox-section">
+      <el-card
+        shadow="never"
+        class="toolbox-section"
+      >
         <template #header>
           <div class="toolbox-header">
             <h3>字段工具箱</h3>
@@ -105,7 +156,10 @@
       </el-card>
 
       <!-- 表单画布 -->
-      <el-card shadow="never" class="canvas-section">
+      <el-card
+        shadow="never"
+        class="canvas-section"
+      >
         <template #header>
           <div class="canvas-header">
             <h3>表单画布</h3>
@@ -115,7 +169,10 @@
         
         <div class="canvas-fields">
           <!-- 空状态 -->
-          <div v-if="formConfig.fields.length === 0" class="empty-canvas">
+          <div
+            v-if="formConfig.fields.length === 0"
+            class="empty-canvas"
+          >
             <el-empty description="从左侧工具箱添加字段" />
           </div>
           
@@ -130,20 +187,27 @@
               <div class="field-item-title">
                 <el-icon><component :is="getFieldIcon(field.type)" /></el-icon>
                 <span>{{ field.label || '未命名字段' }}</span>
-                <el-tag v-if="field.required" size="small" type="danger" effect="plain">必填</el-tag>
+                <el-tag
+                  v-if="field.required"
+                  size="small"
+                  type="danger"
+                  effect="plain"
+                >
+                  必填
+                </el-tag>
               </div>
               <div class="field-item-actions">
                 <el-button 
                   size="small" 
-                  @click="moveField(index, index - 1)"
                   :disabled="index === 0"
+                  @click="moveField(index, index - 1)"
                 >
                   <el-icon><ArrowUp /></el-icon>
                 </el-button>
                 <el-button 
                   size="small" 
-                  @click="moveField(index, index + 1)"
                   :disabled="index === formConfig.fields.length - 1"
+                  @click="moveField(index, index + 1)"
                 >
                   <el-icon><ArrowDown /></el-icon>
                 </el-button>
@@ -164,8 +228,10 @@
             </div>
             <div class="field-item-preview">
               <FormGenerator 
-                :fields="[field]" 
-                :label-position="'top'" 
+                :config="{
+                  fields: [field],
+                  labelPosition: 'top'
+                }"
                 :disabled="true"
               />
             </div>
@@ -175,9 +241,9 @@
 
       <!-- 字段配置面板 -->
       <el-card 
-        shadow="never" 
+        v-if="selectedFieldIndex !== -1 && formConfig.fields[selectedFieldIndex]" 
+        shadow="never"
         class="config-panel-section"
-        v-if="selectedFieldIndex !== -1 && formConfig.fields[selectedFieldIndex]"
       >
         <template #header>
           <div class="config-panel-header">
@@ -187,29 +253,50 @@
         </template>
         
         <div class="config-panel-content">
-          <el-form :model="selectedField" label-position="top" class="field-config-form">
+          <el-form
+            :model="selectedField"
+            label-position="top"
+            class="field-config-form"
+          >
             <!-- 基本信息 -->
             <el-collapse v-model="activeConfigPanels">
-              <el-collapse-item name="basic" title="基本信息">
+              <el-collapse-item
+                name="basic"
+                title="基本信息"
+              >
                 <el-row :gutter="20">
                   <el-col :span="24">
                     <el-form-item label="字段标签">
-                      <el-input v-model="selectedField.label" placeholder="请输入字段标签" />
+                      <el-input
+                        v-model="selectedField.label"
+                        placeholder="请输入字段标签"
+                      />
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
                     <el-form-item label="字段属性名">
-                      <el-input v-model="selectedField.prop" placeholder="请输入字段属性名（英文）" />
+                      <el-input
+                        v-model="selectedField.prop"
+                        placeholder="请输入字段属性名（英文）"
+                      />
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
                     <el-form-item label="占位符">
-                      <el-input v-model="selectedField.placeholder" placeholder="请输入占位符文本" />
+                      <el-input
+                        v-model="selectedField.placeholder"
+                        placeholder="请输入占位符文本"
+                      />
                     </el-form-item>
                   </el-col>
                   <el-col :span="24">
                     <el-form-item label="帮助文本">
-                      <el-input v-model="selectedField.helpText" placeholder="请输入帮助文本" type="textarea" :rows="2" />
+                      <el-input
+                        v-model="selectedField.helpText"
+                        placeholder="请输入帮助文本"
+                        type="textarea"
+                        :rows="2"
+                      />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
@@ -236,23 +323,35 @@
                   </el-col>
                   <el-col :span="12">
                     <el-form-item label="字段长度">
-                      <el-input-number v-model="selectedField.databaseLength" :min="1" />
+                      <el-input-number
+                        v-model="selectedField.databaseLength"
+                        :min="1"
+                      />
                     </el-form-item>
                   </el-col>
                 </el-row>
               </el-collapse-item>
 
               <!-- 验证规则 -->
-              <el-collapse-item name="validation" title="验证规则">
+              <el-collapse-item
+                name="validation"
+                title="验证规则"
+              >
                 <div class="validation-rules">
                   <div 
                     v-for="(rule, ruleIndex) in selectedField.validationRules" 
                     :key="ruleIndex"
                     class="validation-rule-item"
                   >
-                    <el-row :gutter="10" align="middle">
+                    <el-row
+                      :gutter="10"
+                      align="middle"
+                    >
                       <el-col :span="8">
-                        <el-select v-model="rule.type" placeholder="选择验证类型">
+                        <el-select
+                          v-model="rule.type"
+                          placeholder="选择验证类型"
+                        >
                           <el-option 
                             v-for="ruleType in validationRuleTypes" 
                             :key="ruleType.value" 
@@ -269,10 +368,22 @@
                         />
                       </el-col>
                       <el-col :span="6">
-                        <el-select v-model="rule.trigger" placeholder="触发方式">
-                          <el-option label="失去焦点" value="blur" />
-                          <el-option label="内容变更" value="change" />
-                          <el-option label="获取焦点" value="focus" />
+                        <el-select
+                          v-model="rule.trigger"
+                          placeholder="触发方式"
+                        >
+                          <el-option
+                            label="失去焦点"
+                            value="blur"
+                          />
+                          <el-option
+                            label="内容变更"
+                            value="change"
+                          />
+                          <el-option
+                            label="获取焦点"
+                            value="focus"
+                          />
                         </el-select>
                       </el-col>
                       <el-col :span="2">
@@ -292,23 +403,38 @@
                     />
                   </div>
                   
-                  <el-button type="primary" plain @click="addValidationRule" class="add-rule-btn">
+                  <el-button
+                    type="primary"
+                    plain
+                    class="add-rule-btn"
+                    @click="addValidationRule"
+                  >
                     <el-icon><Plus /></el-icon> 添加验证规则
                   </el-button>
                 </div>
               </el-collapse-item>
 
               <!-- 高级配置 -->
-              <el-collapse-item name="advanced" title="高级配置">
+              <el-collapse-item
+                name="advanced"
+                title="高级配置"
+              >
                 <el-row :gutter="20">
                   <el-col :span="12">
                     <el-form-item label="栅格列数">
-                      <el-input-number v-model="selectedField.span" :min="1" :max="24" />
+                      <el-input-number
+                        v-model="selectedField.span"
+                        :min="1"
+                        :max="24"
+                      />
                     </el-form-item>
                   </el-col>
                   <el-col :span="12">
                     <el-form-item label="字段宽度">
-                      <el-input v-model="selectedField.width" placeholder="如：300px" />
+                      <el-input
+                        v-model="selectedField.width"
+                        placeholder="如：300px"
+                      />
                     </el-form-item>
                   </el-col>
                   
@@ -317,18 +443,39 @@
                     <el-col :span="24">
                       <el-form-item label="输入框类型">
                         <el-select v-model="selectedField.inputType">
-                          <el-option label="文本" value="text" />
-                          <el-option label="密码" value="password" />
-                          <el-option label="邮箱" value="email" />
-                          <el-option label="URL" value="url" />
-                          <el-option label="手机号" value="tel" />
-                          <el-option label="数字" value="number" />
+                          <el-option
+                            label="文本"
+                            value="text"
+                          />
+                          <el-option
+                            label="密码"
+                            value="password"
+                          />
+                          <el-option
+                            label="邮箱"
+                            value="email"
+                          />
+                          <el-option
+                            label="URL"
+                            value="url"
+                          />
+                          <el-option
+                            label="手机号"
+                            value="tel"
+                          />
+                          <el-option
+                            label="数字"
+                            value="number"
+                          />
                         </el-select>
                       </el-form-item>
                     </el-col>
                     <el-col :span="12">
                       <el-form-item label="最大长度">
-                        <el-input-number v-model="selectedField.maxlength" :min="1" />
+                        <el-input-number
+                          v-model="selectedField.maxlength"
+                          :min="1"
+                        />
                       </el-form-item>
                     </el-col>
                     <el-col :span="12">
@@ -341,7 +488,10 @@
                   <template v-if="['date-picker', 'datetime-picker'].includes(selectedField.type)">
                     <el-col :span="24">
                       <el-form-item label="日期格式">
-                        <el-input v-model="selectedField.format" placeholder="如：YYYY-MM-DD" />
+                        <el-input
+                          v-model="selectedField.format"
+                          placeholder="如：YYYY-MM-DD"
+                        />
                       </el-form-item>
                     </el-col>
                   </template>
@@ -358,6 +508,7 @@
 <script lang="ts" setup>
 import { ref, reactive, computed, watch, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
+import { ArrowUp, ArrowDown, Edit, Delete, Plus } from '@element-plus/icons-vue'
 import FormGenerator from './FormGenerator.vue'
 import type { CompleteFormConfig, FormField, ValidationRule } from '../types/formConfig'
 import { FormFieldType } from '../types/form'
@@ -380,6 +531,7 @@ const emit = defineEmits<{
 // 响应式数据
 const formConfig = reactive<CompleteFormConfig>({
   id: '',
+  formId: '', // 添加formId字段以兼容FormConfigManagement.vue中的使用
   name: '未命名表单',
   description: '',
   type: 'default',
@@ -415,7 +567,7 @@ const fieldTypes = [
   { label: '时间选择', value: FormFieldType.TIME_PICKER, icon: 'Timer' },
   { label: '日期时间选择', value: FormFieldType.DATETIME_PICKER, icon: 'Bell' },
   { label: '评分', value: FormFieldType.RATE, icon: 'StarFilled' },
-  { label: '滑块', value: FormFieldType.SLIDER, icon: 'Operation' },
+  { label: '滑块', value: FormFieldType.SLIDER, icon: 'Operation' }
 ]
 
 // 数据库类型配置
@@ -431,7 +583,7 @@ const databaseTypes = [
   { label: '日期时间', value: 'datetime' },
   { label: '时间戳', value: 'timestamp' },
   { label: 'JSON', value: 'json' },
-  { label: '枚举', value: 'enum' },
+  { label: '枚举', value: 'enum' }
 ]
 
 // 验证规则类型配置
@@ -446,7 +598,7 @@ const validationRuleTypes = [
   { label: '不含中文', value: 'noChinese' },
   { label: '包含数字', value: 'hasNumber' },
   { label: '包含特殊字符', value: 'hasSpecialChar' },
-  { label: '正则表达式', value: 'pattern' },
+  { label: '正则表达式', value: 'pattern' }
 ]
 
 // 计算属性
@@ -455,19 +607,103 @@ const selectedField = computed({
     if (selectedFieldIndex.value === -1 || !formConfig.fields[selectedFieldIndex.value]) {
       return {} as FormField
     }
-    return formConfig.fields[selectedFieldIndex.value]
+    // 返回字段的深拷贝，避免直接修改只读对象
+    return JSON.parse(JSON.stringify(formConfig.fields[selectedFieldIndex.value]))
   },
   set: (value) => {
     if (selectedFieldIndex.value !== -1) {
-      formConfig.fields[selectedFieldIndex.value] = value
+      // 使用深拷贝替换整个字段对象，而不是直接修改属性
+      formConfig.fields.splice(selectedFieldIndex.value, 1, JSON.parse(JSON.stringify(value)))
     }
   }
 })
 
-// 方法
+// 检测循环引用的辅助函数
+function hasCircularReference(obj: any, seen = new Set()): boolean {
+  if (obj === null || typeof obj !== 'object') {
+    return false
+  }
+  
+  if (seen.has(obj)) {
+    return true
+  }
+  
+  seen.add(obj)
+  
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (hasCircularReference(obj[key], seen)) {
+        return true
+      }
+    }
+  }
+  
+  seen.delete(obj)
+  return false
+}
+
+// 安全地复制对象，避免循环引用
+function safeClone(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+  
+  // 如果是数组
+  if (Array.isArray(obj)) {
+    const clonedArray: any[] = []
+    for (let i = 0; i < obj.length; i++) {
+      clonedArray[i] = safeClone(obj[i])
+    }
+    return clonedArray
+  }
+  
+  // 如果是对象
+  const clonedObj: Record<string, any> = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      // 跳过可能导致循环引用的属性
+      if (key === 'fieldValue' && typeof obj[key] === 'object') {
+        continue
+      }
+      clonedObj[key] = safeClone(obj[key])
+    }
+  }
+  return clonedObj
+}
+
+// 初始化表单配置
 const initFormConfig = () => {
   if (props.modelValue) {
-    Object.assign(formConfig, props.modelValue)
+    try {
+      // 检测并处理循环引用
+      if (hasCircularReference(props.modelValue)) {
+        console.warn('检测到循环引用，尝试修复...')
+        // 使用安全的深拷贝避免循环引用
+        const configCopy = safeClone(props.modelValue)
+        // 确保id和formId字段都存在
+        if (configCopy.formId && !configCopy.id) {
+          configCopy.id = configCopy.formId
+        }
+        if (configCopy.id && !configCopy.formId) {
+          configCopy.formId = configCopy.id
+        }
+        Object.assign(formConfig, configCopy)
+      } else {
+        // 使用标准深拷贝
+        const configCopy = JSON.parse(JSON.stringify(props.modelValue))
+        // 确保id和formId字段都存在
+        if (configCopy.formId && !configCopy.id) {
+          configCopy.id = configCopy.formId
+        }
+        if (configCopy.id && !configCopy.formId) {
+          configCopy.formId = configCopy.id
+        }
+        Object.assign(formConfig, configCopy)
+      }
+    } catch (error) {
+      console.error('初始化表单配置时出错:', error)
+      ElMessage.error('初始化表单配置失败，请检查表单配置是否正确')
+    }
   }
 }
 
@@ -479,50 +715,50 @@ const addField = (fieldType: FormFieldType) => {
   
   // 根据字段类型创建不同的字段
   switch (fieldType) {
-    case FormFieldType.INPUT:
-      break
-    case FormFieldType.TEXTAREA:
-      newField.type = FormFieldType.TEXTAREA
-      break
-    case FormFieldType.INPUT_NUMBER:
-      newField.type = FormFieldType.INPUT_NUMBER
-      break
-    case FormFieldType.SELECT:
-      newField.type = FormFieldType.SELECT
-      newField.options = []
-      break
-    case FormFieldType.RADIO:
-      newField.type = FormFieldType.RADIO
-      newField.options = []
-      break
-    case FormFieldType.CHECKBOX:
-      newField.type = FormFieldType.CHECKBOX
-      newField.options = []
-      break
-    case FormFieldType.SWITCH:
-      newField.type = FormFieldType.SWITCH
-      break
-    case FormFieldType.DATE_PICKER:
-      newField.type = FormFieldType.DATE_PICKER
-      newField.pickerType = 'date'
-      newField.format = 'YYYY-MM-DD'
-      break
-    case FormFieldType.TIME_PICKER:
-      newField.type = FormFieldType.TIME_PICKER
-      newField.pickerType = 'time'
-      newField.format = 'HH:mm:ss'
-      break
-    case FormFieldType.DATETIME_PICKER:
-      newField.type = FormFieldType.DATETIME_PICKER
-      newField.pickerType = 'datetime'
-      newField.format = 'YYYY-MM-DD HH:mm:ss'
-      break
-    case FormFieldType.RATE:
-      newField.type = FormFieldType.RATE
-      break
-    case FormFieldType.SLIDER:
-      newField.type = FormFieldType.SLIDER
-      break
+  case FormFieldType.INPUT:
+    break
+  case FormFieldType.TEXTAREA:
+    newField.type = FormFieldType.TEXTAREA
+    break
+  case FormFieldType.INPUT_NUMBER:
+    newField.type = FormFieldType.INPUT_NUMBER
+    break
+  case FormFieldType.SELECT:
+    newField.type = FormFieldType.SELECT
+    newField.options = []
+    break
+  case FormFieldType.RADIO:
+    newField.type = FormFieldType.RADIO
+    newField.options = []
+    break
+  case FormFieldType.CHECKBOX:
+    newField.type = FormFieldType.CHECKBOX
+    newField.options = []
+    break
+  case FormFieldType.SWITCH:
+    newField.type = FormFieldType.SWITCH
+    break
+  case FormFieldType.DATE_PICKER:
+    newField.type = FormFieldType.DATE_PICKER
+    newField.pickerType = 'date'
+    newField.format = 'YYYY-MM-DD'
+    break
+  case FormFieldType.TIME_PICKER:
+    newField.type = FormFieldType.TIME_PICKER
+    newField.pickerType = 'time'
+    newField.format = 'HH:mm:ss'
+    break
+  case FormFieldType.DATETIME_PICKER:
+    newField.type = FormFieldType.DATETIME_PICKER
+    newField.pickerType = 'datetime'
+    newField.format = 'YYYY-MM-DD HH:mm:ss'
+    break
+  case FormFieldType.RATE:
+    newField.type = FormFieldType.RATE
+    break
+  case FormFieldType.SLIDER:
+    newField.type = FormFieldType.SLIDER
+    break
   }
   
   formConfig.fields.push(newField)
@@ -642,7 +878,38 @@ onMounted(() => {
 // 监听属性变化
 watch(() => props.modelValue, (newValue) => {
   if (newValue) {
-    Object.assign(formConfig, newValue)
+    try {
+      // 检测并处理循环引用
+      if (hasCircularReference(newValue)) {
+        console.warn('检测到循环引用，尝试修复...')
+        // 使用安全的深拷贝避免循环引用
+        const configCopy = safeClone(newValue)
+        // 确保id和formId字段都存在
+        if (configCopy.formId && !configCopy.id) {
+          configCopy.id = configCopy.formId
+        }
+        if (configCopy.id && !configCopy.formId) {
+          configCopy.formId = configCopy.id
+        }
+        Object.assign(formConfig, configCopy)
+      } else {
+        // 使用标准深拷贝
+        const configCopy = JSON.parse(JSON.stringify(newValue))
+        // 确保id和formId字段都存在
+        if (configCopy.formId && !configCopy.id) {
+          configCopy.id = configCopy.formId
+        }
+        if (configCopy.id && !configCopy.formId) {
+          configCopy.formId = configCopy.id
+        }
+        Object.assign(formConfig, configCopy)
+      }
+      // 重置选中的字段索引
+      selectedFieldIndex.value = -1
+    } catch (error) {
+      console.error('处理modelValue变化时出错:', error)
+      ElMessage.error('处理表单配置变化失败，请检查表单配置是否正确')
+    }
   }
 }, { deep: true })
 </script>

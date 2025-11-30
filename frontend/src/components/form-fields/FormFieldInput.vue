@@ -22,38 +22,50 @@
     @change="handleChange"
   >
     <!-- 自定义前缀 -->
-    <template v-if="field.prefix" #prefix>
+    <template
+      v-if="field.prefix"
+      #prefix
+    >
       {{ field.prefix }}
     </template>
     
     <!-- 自定义后缀 -->
-    <template v-if="field.suffix" #suffix>
+    <template
+      v-if="field.suffix"
+      #suffix
+    >
       {{ field.suffix }}
     </template>
     
     <!-- 自定义输入框内容 -->
-    <template v-if="field.prepend" #prepend>
+    <template
+      v-if="field.prepend"
+      #prepend
+    >
       {{ field.prepend }}
     </template>
     
     <!-- 自定义输入框内容 -->
-    <template v-if="field.append" #append>
+    <template
+      v-if="field.append"
+      #append
+    >
       {{ field.append }}
     </template>
   </el-input>
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits } from 'vue';
-import { BaseFormFieldProps } from './types';
-import type { FormField } from '@/types';
+import { computed, defineProps, defineEmits } from 'vue'
+import { BaseFormFieldProps } from './types'
+import type { FormField } from '@/types'
 
 // Props
 const props = defineProps<{
   field: FormField;
   modelValue: any;
   disabled?: boolean;
-}>();
+}>()
 
 // Emits
 const emit = defineEmits<{
@@ -61,30 +73,30 @@ const emit = defineEmits<{
   (e: 'change', value: any): void;
   (e: 'blur', event: FocusEvent): void;
   (e: 'focus', event: FocusEvent): void;
-}>();
+}>()
 
 // 内部值，用于处理v-model
 const internalValue = computed({
   get: () => props.modelValue,
   set: (val) => {
-    emit('update:modelValue', val);
+    emit('update:modelValue', val)
   }
-});
+})
 
 // 处理值变化
 const handleChange = (value: any) => {
-  emit('change', value);
-};
+  emit('change', value)
+}
 
 // 处理失焦
 const handleBlur = (event: FocusEvent) => {
-  emit('blur', event);
-};
+  emit('blur', event)
+}
 
 // 处理聚焦
 const handleFocus = (event: FocusEvent) => {
-  emit('focus', event);
-};
+  emit('focus', event)
+}
 </script>
 
 <style scoped>

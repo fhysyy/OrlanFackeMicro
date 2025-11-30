@@ -1,7 +1,6 @@
 <template>
   <el-select
     :model-value="modelValue"
-    @update:model-value="$emit('update:modelValue', $event)"
     :placeholder="field.placeholder || `请选择${field.label}`"
     :disabled="disabled"
     :multiple="field.multiple"
@@ -11,6 +10,7 @@
     :remote-method="field.remoteMethod"
     :loading="field.loading"
     :style="{ width: field.width || '100%' }"
+    @update:model-value="$emit('update:modelValue', $event)"
     @change="handleChange"
   >
     <el-option
@@ -24,24 +24,24 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue';
-import { BaseFormFieldProps } from './types';
+import { defineProps, defineEmits } from 'vue'
+import { BaseFormFieldProps } from './types'
 
 // Props
 const props = defineProps<BaseFormFieldProps & {
   modelValue: any;
-}>();
+}>()
 
 // Emits
 const emit = defineEmits<{
   (e: 'update:modelValue', value: any): void;
   (e: 'change', value: any): void;
-}>();
+}>()
 
 // 处理值变化
 const handleChange = (value: any) => {
-  emit('change', value);
-};
+  emit('change', value)
+}
 </script>
 
 <style scoped>

@@ -1,19 +1,36 @@
 // 事件处理器类型
-export type EventHandler<T = unknown> = (data: T) => void | Promise<void>
+export type EventHandler<T = unknown> = (data: T, context?: EventContext) => void | Promise<void>
 
 // 事件配置
 export interface EventConfig<T = unknown> {
+  id: string
   name: string
-  handler: EventHandler<T>
+  handler?: EventHandler<T>
+  handlers?: EventHandler<T>[]
+  actions?: ActionConfig[]
+  filters?: EventFilter<T>[]
+  transformers?: EventTransformer<T>[]
   once?: boolean
   priority?: number
+  condition?: string
+  enabled?: boolean
 }
 
 // 动作配置
 export interface ActionConfig<T = unknown> {
   type: string
+  name?: string
   payload?: T
   target?: string
+  config?: {
+    url?: string
+    method?: string
+    params?: any
+    message?: string
+    type?: string
+    path?: string
+    componentId?: string
+  }
 }
 
 // 事件上下文
@@ -25,10 +42,36 @@ export interface EventContext {
 }
 
 // 事件过滤器
-export type EventFilter<T = unknown> = (data: T) => boolean
+export type EventFilter<T = unknown> = (data: T, context: EventContext) => boolean
 
 // 事件转换器
-export type EventTransformer<T = unknown, R = unknown> = (data: T) => R
+export type EventTransformer<T = unknown, R = unknown> = (data: T, context: EventContext) => R
+
+// 创建事件过滤器
+export function createFilter(expression: string): EventFilter {
+  return (data: any, context: EventContext) => {
+    try {
+      const filterFn = new Function('data', 'context', `return ${expression}`)
+      return filterFn(data, context)
+    } catch (error) {
+      console.error('Error in event filter:', error)
+      return false
+    }
+  }
+}
+
+// 创建事件转换器
+export function createTransformer(expression: string): EventTransformer {
+  return (data: any, context: EventContext) => {
+    try {
+      const transformFn = new Function('data', 'context', `return ${expression}`)
+      return transformFn(data, context)
+    } catch (error) {
+      console.error('Error in event transformer:', error)
+      return data
+    }
+  }
+}
 
 // 事件拦截器
 export interface EventInterceptor<T = unknown> {

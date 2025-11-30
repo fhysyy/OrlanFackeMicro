@@ -1,5 +1,8 @@
 <template>
-  <div class="skeleton-container" :class="containerClass">
+  <div
+    class="skeleton-container"
+    :class="containerClass"
+  >
     <!-- 自定义内容区域 -->
     <template v-if="$slots.default">
       <slot />
@@ -7,10 +10,22 @@
     <!-- 预定义类型的骨架屏 -->
     <template v-else>
       <!-- 卡片类型 -->
-      <div v-if="type === 'card'" class="skeleton-card">
-        <div v-if="cardConfig.showHeader" class="skeleton-card-header">
-          <div v-if="cardConfig.showAvatar" class="skeleton-avatar"></div>
-          <div v-if="cardConfig.showTitle" class="skeleton-card-title"></div>
+      <div
+        v-if="type === 'card'"
+        class="skeleton-card"
+      >
+        <div
+          v-if="cardConfig.showHeader"
+          class="skeleton-card-header"
+        >
+          <div
+            v-if="cardConfig.showAvatar"
+            class="skeleton-avatar"
+          />
+          <div
+            v-if="cardConfig.showTitle"
+            class="skeleton-card-title"
+          />
         </div>
         <div class="skeleton-card-content">
           <div
@@ -18,46 +33,67 @@
             :key="i"
             class="skeleton-line"
             :class="{ 'skeleton-line-last': i === cardConfig.lineCount }"
-          ></div>
+          />
         </div>
-        <div v-if="cardConfig.showFooter" class="skeleton-card-footer">
-          <div class="skeleton-button"></div>
-          <div class="skeleton-button"></div>
+        <div
+          v-if="cardConfig.showFooter"
+          class="skeleton-card-footer"
+        >
+          <div class="skeleton-button" />
+          <div class="skeleton-button" />
         </div>
       </div>
 
       <!-- 列表类型 -->
-      <div v-else-if="type === 'list'" class="skeleton-list">
+      <div
+        v-else-if="type === 'list'"
+        class="skeleton-list"
+      >
         <div
           v-for="i in listConfig.itemCount"
           :key="i"
           class="skeleton-list-item"
           :class="{ 'skeleton-list-item-last': i === listConfig.itemCount }"
         >
-          <div v-if="listConfig.showAvatar" class="skeleton-avatar"></div>
+          <div
+            v-if="listConfig.showAvatar"
+            class="skeleton-avatar"
+          />
           <div class="skeleton-list-content">
-            <div v-if="listConfig.showTitle" class="skeleton-list-title"></div>
+            <div
+              v-if="listConfig.showTitle"
+              class="skeleton-list-title"
+            />
             <div
               v-for="j in listConfig.lineCount"
               :key="j"
               class="skeleton-line"
               :class="{ 'skeleton-line-last': j === listConfig.lineCount }"
-            ></div>
+            />
           </div>
-          <div v-if="listConfig.showAction" class="skeleton-list-action">
-            <div class="skeleton-button"></div>
+          <div
+            v-if="listConfig.showAction"
+            class="skeleton-list-action"
+          >
+            <div class="skeleton-button" />
           </div>
         </div>
       </div>
 
       <!-- 表格类型 -->
-      <div v-else-if="type === 'table'" class="skeleton-table">
-        <div v-if="tableConfig.showHeader" class="skeleton-table-header">
+      <div
+        v-else-if="type === 'table'"
+        class="skeleton-table"
+      >
+        <div
+          v-if="tableConfig.showHeader"
+          class="skeleton-table-header"
+        >
           <div
             v-for="i in tableConfig.columnCount"
             :key="i"
             class="skeleton-table-header-cell"
-          ></div>
+          />
         </div>
         <div class="skeleton-table-body">
           <div
@@ -71,40 +107,79 @@
               class="skeleton-table-cell"
               :class="getTableCellClass(j, tableConfig.cellTypes[j - 1])"
             >
-              <div v-if="tableConfig.cellTypes[j - 1] === 'avatar'" class="skeleton-avatar-small"></div>
-              <div v-else-if="tableConfig.cellTypes[j - 1] === 'button'" class="skeleton-button-small"></div>
-              <div v-else-if="tableConfig.cellTypes[j - 1] === 'switch'" class="skeleton-switch"></div>
-              <div v-else class="skeleton-table-cell-content"></div>
+              <div
+                v-if="tableConfig.cellTypes[j - 1] === 'avatar'"
+                class="skeleton-avatar-small"
+              />
+              <div
+                v-else-if="tableConfig.cellTypes[j - 1] === 'button'"
+                class="skeleton-button-small"
+              />
+              <div
+                v-else-if="tableConfig.cellTypes[j - 1] === 'switch'"
+                class="skeleton-switch"
+              />
+              <div
+                v-else
+                class="skeleton-table-cell-content"
+              />
             </div>
           </div>
         </div>
       </div>
 
       <!-- 表单类型 -->
-      <div v-else-if="type === 'form'" class="skeleton-form">
+      <div
+        v-else-if="type === 'form'"
+        class="skeleton-form"
+      >
         <div
           v-for="i in formConfig.itemCount"
           :key="i"
           class="skeleton-form-item"
         >
-          <div class="skeleton-form-label"></div>
-          <div v-if="formConfig.fieldTypes[i - 1] === 'select'" class="skeleton-select"></div>
-          <div v-else-if="formConfig.fieldTypes[i - 1] === 'checkbox'" class="skeleton-checkbox"></div>
-          <div v-else-if="formConfig.fieldTypes[i - 1] === 'radio'" class="skeleton-radio"></div>
-          <div v-else-if="formConfig.fieldTypes[i - 1] === 'slider'" class="skeleton-slider"></div>
-          <div v-else class="skeleton-input"></div>
+          <div class="skeleton-form-label" />
+          <div
+            v-if="formConfig.fieldTypes[i - 1] === 'select'"
+            class="skeleton-select"
+          />
+          <div
+            v-else-if="formConfig.fieldTypes[i - 1] === 'checkbox'"
+            class="skeleton-checkbox"
+          />
+          <div
+            v-else-if="formConfig.fieldTypes[i - 1] === 'radio'"
+            class="skeleton-radio"
+          />
+          <div
+            v-else-if="formConfig.fieldTypes[i - 1] === 'slider'"
+            class="skeleton-slider"
+          />
+          <div
+            v-else
+            class="skeleton-input"
+          />
         </div>
         <div class="skeleton-form-actions">
-          <div class="skeleton-button"></div>
-          <div class="skeleton-button"></div>
+          <div class="skeleton-button" />
+          <div class="skeleton-button" />
         </div>
       </div>
 
       <!-- 详情页类型 -->
-      <div v-else-if="type === 'detail'" class="skeleton-detail">
-        <div v-if="detailConfig.showHeader" class="skeleton-detail-header">
-          <div class="skeleton-detail-title"></div>
-          <div v-if="detailConfig.showMeta" class="skeleton-detail-meta"></div>
+      <div
+        v-else-if="type === 'detail'"
+        class="skeleton-detail"
+      >
+        <div
+          v-if="detailConfig.showHeader"
+          class="skeleton-detail-header"
+        >
+          <div class="skeleton-detail-title" />
+          <div
+            v-if="detailConfig.showMeta"
+            class="skeleton-detail-meta"
+          />
         </div>
         <div class="skeleton-detail-content">
           <div
@@ -112,26 +187,29 @@
             :key="i"
             class="skeleton-detail-section"
           >
-            <div class="skeleton-detail-section-title"></div>
+            <div class="skeleton-detail-section-title" />
             <div
               v-for="j in detailConfig.fieldCountPerSection"
               :key="j"
               class="skeleton-detail-field"
             >
-              <div class="skeleton-detail-field-label"></div>
-              <div class="skeleton-detail-field-value"></div>
+              <div class="skeleton-detail-field-label" />
+              <div class="skeleton-detail-field-value" />
             </div>
           </div>
         </div>
       </div>
 
       <!-- 默认骨架屏 -->
-      <div v-else class="skeleton-default">
-        <div class="skeleton-avatar"></div>
-        <div class="skeleton-title"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line"></div>
-        <div class="skeleton-line skeleton-line-last"></div>
+      <div
+        v-else
+        class="skeleton-default"
+      >
+        <div class="skeleton-avatar" />
+        <div class="skeleton-title" />
+        <div class="skeleton-line" />
+        <div class="skeleton-line" />
+        <div class="skeleton-line skeleton-line-last" />
       </div>
     </template>
   </div>
@@ -319,7 +397,7 @@ const performanceData = ref({
 const getTableCellClass = (index: number, type: string) => {
   return {
     [`skeleton-table-cell-${type}`]: true,
-    [`skeleton-table-cell-last`]: index === tableConfig.value.columnCount
+    ['skeleton-table-cell-last']: index === tableConfig.value.columnCount
   }
 }
 

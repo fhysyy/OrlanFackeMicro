@@ -3,13 +3,23 @@
     <div class="page-header">
       <h2>系统监控</h2>
       <div class="header-actions">
-        <el-button @click="refreshStats">刷新</el-button>
-        <el-button type="primary" @click="exportReport">导出报告</el-button>
+        <el-button @click="refreshStats">
+          刷新
+        </el-button>
+        <el-button
+          type="primary"
+          @click="exportReport"
+        >
+          导出报告
+        </el-button>
       </div>
     </div>
 
     <!-- 系统概览 -->
-    <el-row :gutter="20" class="system-overview">
+    <el-row
+      :gutter="20"
+      class="system-overview"
+    >
       <el-col :span="6">
         <el-card class="metric-card">
           <div class="metric-content">
@@ -17,8 +27,12 @@
               <el-icon><Cpu /></el-icon>
             </div>
             <div class="metric-info">
-              <div class="metric-value">{{ systemStats.cpuUsage }}%</div>
-              <div class="metric-label">CPU使用率</div>
+              <div class="metric-value">
+                {{ systemStats.cpuUsage }}%
+              </div>
+              <div class="metric-label">
+                CPU使用率
+              </div>
             </div>
           </div>
           <el-progress 
@@ -36,8 +50,12 @@
               <el-icon><DataBoard /></el-icon>
             </div>
             <div class="metric-info">
-              <div class="metric-value">{{ systemStats.memoryUsage }}%</div>
-              <div class="metric-label">内存使用率</div>
+              <div class="metric-value">
+                {{ systemStats.memoryUsage }}%
+              </div>
+              <div class="metric-label">
+                内存使用率
+              </div>
             </div>
           </div>
           <el-progress 
@@ -55,8 +73,12 @@
               <el-icon><HardDisk /></el-icon>
             </div>
             <div class="metric-info">
-              <div class="metric-value">{{ systemStats.diskUsage }}%</div>
-              <div class="metric-label">磁盘使用率</div>
+              <div class="metric-value">
+                {{ systemStats.diskUsage }}%
+              </div>
+              <div class="metric-label">
+                磁盘使用率
+              </div>
             </div>
           </div>
           <el-progress 
@@ -74,8 +96,12 @@
               <el-icon><Clock /></el-icon>
             </div>
             <div class="metric-info">
-              <div class="metric-value">{{ systemStats.uptime }}</div>
-              <div class="metric-label">系统运行时间</div>
+              <div class="metric-value">
+                {{ systemStats.uptime }}
+              </div>
+              <div class="metric-label">
+                系统运行时间
+              </div>
             </div>
           </div>
         </el-card>
@@ -83,18 +109,38 @@
     </el-row>
 
     <!-- 服务状态 -->
-    <el-card class="services-card" header="服务状态">
-      <el-table :data="serviceStatus" v-loading="loading">
-        <el-table-column prop="name" label="服务名称" />
-        <el-table-column prop="status" label="状态" width="100">
+    <el-card
+      class="services-card"
+      header="服务状态"
+    >
+      <el-table
+        v-loading="loading"
+        :data="serviceStatus"
+      >
+        <el-table-column
+          prop="name"
+          label="服务名称"
+        />
+        <el-table-column
+          prop="status"
+          label="状态"
+          width="100"
+        >
           <template #default="{ row }">
             <el-tag :type="row.status === 'Running' ? 'success' : 'danger'">
               {{ row.status }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="uptime" label="运行时间" />
-        <el-table-column prop="cpu" label="CPU使用率" width="120">
+        <el-table-column
+          prop="uptime"
+          label="运行时间"
+        />
+        <el-table-column
+          prop="cpu"
+          label="CPU使用率"
+          width="120"
+        >
           <template #default="{ row }">
             <el-progress 
               :percentage="row.cpu" 
@@ -104,7 +150,11 @@
             <span style="margin-left: 8px">{{ row.cpu }}%</span>
           </template>
         </el-table-column>
-        <el-table-column prop="memory" label="内存使用" width="120">
+        <el-table-column
+          prop="memory"
+          label="内存使用"
+          width="120"
+        >
           <template #default="{ row }">
             <el-progress 
               :percentage="row.memory" 
@@ -114,12 +164,15 @@
             <span style="margin-left: 8px">{{ row.memory }}%</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="120">
+        <el-table-column
+          label="操作"
+          width="120"
+        >
           <template #default="{ row }">
             <el-button 
               size="small" 
-              @click="restartService(row.name)"
               :disabled="row.status !== 'Running'"
+              @click="restartService(row.name)"
             >
               重启
             </el-button>
@@ -129,30 +182,65 @@
     </el-card>
 
     <!-- 性能图表 -->
-    <el-row :gutter="20" class="charts-row">
+    <el-row
+      :gutter="20"
+      class="charts-row"
+    >
       <el-col :span="12">
         <el-card header="CPU使用率趋势">
-          <div ref="cpuChartRef" style="height: 300px;"></div>
+          <div
+            ref="cpuChartRef"
+            style="height: 300px;"
+          />
         </el-card>
       </el-col>
       <el-col :span="12">
         <el-card header="内存使用趋势">
-          <div ref="memoryChartRef" style="height: 300px;"></div>
+          <div
+            ref="memoryChartRef"
+            style="height: 300px;"
+          />
         </el-card>
       </el-col>
     </el-row>
 
     <!-- 系统日志 -->
-    <el-card class="logs-card" header="系统日志">
+    <el-card
+      class="logs-card"
+      header="系统日志"
+    >
       <div class="logs-controls">
-        <el-select v-model="logLevel" placeholder="日志级别" style="width: 120px">
-          <el-option label="全部" value="all" />
-          <el-option label="信息" value="info" />
-          <el-option label="警告" value="warn" />
-          <el-option label="错误" value="error" />
+        <el-select
+          v-model="logLevel"
+          placeholder="日志级别"
+          style="width: 120px"
+        >
+          <el-option
+            label="全部"
+            value="all"
+          />
+          <el-option
+            label="信息"
+            value="info"
+          />
+          <el-option
+            label="警告"
+            value="warn"
+          />
+          <el-option
+            label="错误"
+            value="error"
+          />
         </el-select>
-        <el-button @click="clearLogs">清空日志</el-button>
-        <el-button type="primary" @click="refreshLogs">刷新</el-button>
+        <el-button @click="clearLogs">
+          清空日志
+        </el-button>
+        <el-button
+          type="primary"
+          @click="refreshLogs"
+        >
+          刷新
+        </el-button>
       </div>
       
       <div class="logs-content">
@@ -164,7 +252,10 @@
             :type="getLogType(log.level)"
           >
             <div class="log-item">
-              <span class="log-level" :class="`level-${log.level}`">{{ log.level }}</span>
+              <span
+                class="log-level"
+                :class="`level-${log.level}`"
+              >{{ log.level }}</span>
               <span class="log-message">{{ log.message }}</span>
             </div>
           </el-timeline-item>

@@ -13,8 +13,12 @@
             <el-icon><User /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ stats.userCount || 0 }}</div>
-            <div class="stat-label">总用户数</div>
+            <div class="stat-value">
+              {{ stats.userCount || 0 }}
+            </div>
+            <div class="stat-label">
+              总用户数
+            </div>
           </div>
         </div>
       </el-card>
@@ -25,8 +29,12 @@
             <el-icon><Message /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ stats.messageCount || 0 }}</div>
-            <div class="stat-label">总消息数</div>
+            <div class="stat-value">
+              {{ stats.messageCount || 0 }}
+            </div>
+            <div class="stat-label">
+              总消息数
+            </div>
           </div>
         </div>
       </el-card>
@@ -37,8 +45,12 @@
             <el-icon><Folder /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ stats.fileCount || 0 }}</div>
-            <div class="stat-label">文件数量</div>
+            <div class="stat-value">
+              {{ stats.fileCount || 0 }}
+            </div>
+            <div class="stat-label">
+              文件数量
+            </div>
           </div>
         </div>
       </el-card>
@@ -49,8 +61,12 @@
             <el-icon><Monitor /></el-icon>
           </div>
           <div class="stat-info">
-            <div class="stat-value">{{ stats.activeUsers || 0 }}</div>
-            <div class="stat-label">活跃用户</div>
+            <div class="stat-value">
+              {{ stats.activeUsers || 0 }}
+            </div>
+            <div class="stat-label">
+              活跃用户
+            </div>
           </div>
         </div>
       </el-card>
@@ -61,12 +77,18 @@
       <el-row :gutter="20">
         <el-col :span="12">
           <el-card header="用户增长趋势">
-            <div ref="userChartRef" style="height: 300px;"></div>
+            <div
+              ref="userChartRef"
+              style="height: 300px;"
+            />
           </el-card>
         </el-col>
         <el-col :span="12">
           <el-card header="消息发送统计">
-            <div ref="messageChartRef" style="height: 300px;"></div>
+            <div
+              ref="messageChartRef"
+              style="height: 300px;"
+            />
           </el-card>
         </el-col>
       </el-row>
@@ -237,8 +259,8 @@ const fetchRecentActivities = async () => {
         id: activity.id,
         timestamp: activity.timestamp,
         type: activity.type === 'Error' ? 'danger' : 
-              activity.type === 'Create' ? 'success' : 
-              activity.type === 'Update' ? 'warning' : 'primary',
+          activity.type === 'Create' ? 'success' : 
+            activity.type === 'Update' ? 'warning' : 'primary',
         content: activity.details
       }))
     }

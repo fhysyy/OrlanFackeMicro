@@ -1,7 +1,10 @@
 <template>
   <div class="easy-skeleton">
     <!-- 简单的骨架屏实现 -->
-    <div class="skeleton-line" :style="{ width, height }"></div>
+    <div
+      class="skeleton-line"
+      :style="{ width, height }"
+    />
   </div>
 </template>
 

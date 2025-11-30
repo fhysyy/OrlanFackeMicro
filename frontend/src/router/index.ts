@@ -68,16 +68,7 @@ const mainLayoutRoute: RouteRecordRaw = {
         icon: 'el-icon-edit'
       }
     },
-    {
-      path: 'custom-crud',
-      name: 'CustomCrud',
-      component: () => import('@/views/CustomCrudPage.vue'),
-      meta: {
-        requiresAuth: true,
-        title: '自定义CRUD页面',
-        icon: 'el-icon-setting'
-      }
-    },
+
     {
       path: 'configurable-form',
       name: 'ConfigurableForm',
@@ -146,12 +137,10 @@ function convertToRouteRecord(route: DynamicRouteConfig): RouteRecordRaw {
  */
 async function loadDynamicRoutes() {
   try {
-    // 暂时移除token验证，允许在未登录状态下加载动态路由
-    /*
+    // 验证token是否有效
     if (!tokenManager.isTokenValid()) {
       return false
     }
-    */
 
     try {
       // 从后端获取路由配置
@@ -182,11 +171,8 @@ async function loadDynamicRoutes() {
   }
 }
 
-// 检查用户是否有权限访问路由 - 暂时注释掉权限检查，允许所有访问
+// 检查用户是否有权限访问路由
 function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolean {
-  // 暂时允许所有访问
-  return true
-  /*
   // 如果没有定义权限要求，默认允许访问
   if (!route.meta?.permission) {
     return true
@@ -201,10 +187,9 @@ function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolea
   
   // 检查用户角色是否在允许列表中
   return roles.length === 0 || (userRole && roles.includes(userRole))
-  */
 }
 
-// 路由守卫 - 暂时注释掉鉴权逻辑
+// 路由守卫
 router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuardNext) => {
   const authStore = useAuthStore()
   
@@ -215,8 +200,6 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
     document.title = 'Orleans管理系统'
   }
   
-  // 暂时注释掉认证检查，允许所有访问
-  /*
   // 检查是否需要认证
   if (to.meta.requiresAuth && !tokenManager.isTokenValid()) {
     ElMessage.warning('请先登录')
@@ -229,11 +212,9 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
     next({ name: 'Dashboard' })
     return
   }
-  */
   
   // 如果已认证且未加载动态路由，则加载动态路由
-  // 暂时修改为不检查token，直接加载动态路由
-  if (to.meta.requiresAuth && !dynamicRoutesLoaded) {
+  if (to.meta.requiresAuth && tokenManager.isTokenValid() && !dynamicRoutesLoaded) {
     const loaded = await loadDynamicRoutes()
     // 如果路由加载成功，重新导航到目标路由，确保路由正确匹配
     if (loaded) {
@@ -242,8 +223,6 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
     }
   }
   
-  // 暂时注释掉细粒度权限检查
-  /*
   // 细粒度权限检查
   if (to.meta.requiresAuth && tokenManager.isTokenValid()) {
     const authStore = useAuthStore()
@@ -257,7 +236,6 @@ router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuar
       return
     }
   }
-  */
   
   next()
 })

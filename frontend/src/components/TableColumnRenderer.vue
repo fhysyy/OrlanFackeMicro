@@ -11,17 +11,20 @@
     :formatter="column.formatter"
   >
     <!-- 自定义渲染 -->
-    <template v-if="hasCustomRender" #default="{ row, column: tableColumn, $index }">
+    <template
+      v-if="hasCustomRender"
+      #default="{ row, column: tableColumn, $index }"
+    >
       <!-- 自定义组件渲染 -->
       <component
-        v-if="column.component"
         :is="column.component.name"
+        v-if="column.component"
         v-bind="column.component.props"
         v-model="row[column.prop || '']"
-        v-on="column.component.events"
         :row-data="row"
         :column-data="tableColumn"
         :row-index="$index"
+        v-on="column.component.events"
       />
       <!-- 渲染函数 -->
       <template v-else-if="column.renderCell">
@@ -41,8 +44,8 @@
           :icon="action.icon"
           :size="'small'"
           :disabled="isActionDisabled(action, row)"
-          @click="handleAction(action, row, $index)"
           style="margin-right: 5px;"
+          @click="handleAction(action, row, $index)"
         >
           {{ action.name }}
         </el-button>
@@ -62,47 +65,47 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { ElMessageBox } from 'element-plus';
-import type { TableColumn } from '../types/table';
+import { computed } from 'vue'
+import { ElMessageBox } from 'element-plus'
+import type { TableColumn } from '../types/table'
 
 // Props定义
 const props = defineProps<{
   column: TableColumn;
-}>();
+}>()
 
 // Emits定义
 const emit = defineEmits<{
   (e: 'cell-action', action: any, row: any): void;
-}>();
+}>()
 
 // 计算属性
-const isHidden = computed(() => props.column.hidden || false);
+const isHidden = computed(() => props.column.hidden || false)
 
 const hasCustomRender = computed(() => {
   return props.column.component || 
          props.column.renderCell || 
-         (props.column.actions && props.column.actions.length > 0);
-});
+         (props.column.actions && props.column.actions.length > 0)
+})
 
 const visibleActions = computed(() => {
-  if (!props.column.actions) return [];
+  if (!props.column.actions) return []
   
   return props.column.actions.filter(action => {
     if (typeof action.show === 'function') {
-      return action.show();
+      return action.show()
     }
-    return action.show !== false;
-  });
-});
+    return action.show !== false
+  })
+})
 
 // 判断操作是否禁用
 const isActionDisabled = (action: any, row: any): boolean => {
   if (typeof action.disabled === 'function') {
-    return action.disabled(row);
+    return action.disabled(row)
   }
-  return action.disabled || false;
-};
+  return action.disabled || false
+}
 
 // 处理操作点击
 const handleAction = async (action: any, row: any, index: number) => {
@@ -117,20 +120,20 @@ const handleAction = async (action: any, row: any, index: number) => {
           cancelButtonText: '取消',
           type: action.confirm.type || 'warning'
         }
-      );
+      )
     } catch {
-      return;
+      return
     }
   }
 
   // 触发操作事件
-  emit('cell-action', action, row);
-};
+  emit('cell-action', action, row)
+}
 
 // 处理单元格操作
 const handleCellAction = (action: any, row: any) => {
-  emit('cell-action', action, row);
-};
+  emit('cell-action', action, row)
+}
 
 // 渲染函数组件
 const RenderFunction = {
@@ -153,9 +156,9 @@ const RenderFunction = {
     }
   },
   render() {
-    return this.render(this.row, this.column, this.index);
+    return this.render(this.row, this.column, this.index)
   }
-};
+}
 </script>
 
 <style scoped>

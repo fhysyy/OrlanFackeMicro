@@ -6,53 +6,114 @@
         <p>微服务管理平台</p> -->
       </div>
 
-      <el-form ref="loginFormRef" :model="loginForm" :rules="loginRules" class="login-form-content"
-        @submit.prevent="handleLogin">
+      <el-form
+        ref="loginFormRef"
+        :model="loginForm"
+        :rules="loginRules"
+        class="login-form-content"
+        @submit.prevent="handleLogin"
+      >
         <el-form-item prop="usernameOrEmail">
-          <el-input v-model="loginForm.usernameOrEmail" placeholder="用户名或邮箱" size="large" prefix-icon="User" />
+          <el-input
+            v-model="loginForm.usernameOrEmail"
+            placeholder="用户名或邮箱"
+            size="large"
+            prefix-icon="User"
+          />
         </el-form-item>
 
         <el-form-item prop="password">
-          <el-input v-model="loginForm.password" type="password" placeholder="密码" size="large" prefix-icon="Lock"
-            show-password />
+          <el-input
+            v-model="loginForm.password"
+            type="password"
+            placeholder="密码"
+            size="large"
+            prefix-icon="Lock"
+            show-password
+          />
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" size="large" class="login-button" :loading="loading" @click="handleLogin">
+          <el-button
+            type="primary"
+            size="large"
+            class="login-button"
+            :loading="loading"
+            @click="handleLogin"
+          >
             {{ loading ? '登录中...' : '登录' }}
           </el-button>
         </el-form-item>
 
         <div class="login-links">
-          <el-link type="primary" @click="showRegister = true">注册账号</el-link>
-          <el-link type="info">忘记密码？</el-link>
+          <el-link
+            type="primary"
+            @click="showRegister = true"
+          >
+            注册账号
+          </el-link>
+          <el-link type="info">
+            忘记密码？
+          </el-link>
         </div>
       </el-form>
     </div>
 
     <!-- 注册对话框 -->
-    <el-dialog v-model="showRegister" title="注册账号" width="400px" :before-close="handleCloseRegister">
-      <el-form ref="registerFormRef" :model="registerForm" :rules="registerRules" label-width="80px">
-        <el-form-item label="用户名" prop="username">
+    <el-dialog
+      v-model="showRegister"
+      title="注册账号"
+      width="400px"
+      :before-close="handleCloseRegister"
+    >
+      <el-form
+        ref="registerFormRef"
+        :model="registerForm"
+        :rules="registerRules"
+        label-width="80px"
+      >
+        <el-form-item
+          label="用户名"
+          prop="username"
+        >
           <el-input v-model="registerForm.username" />
         </el-form-item>
 
-        <el-form-item label="邮箱" prop="email">
+        <el-form-item
+          label="邮箱"
+          prop="email"
+        >
           <el-input v-model="registerForm.email" />
         </el-form-item>
 
-        <el-form-item label="密码" prop="password">
-          <el-input v-model="registerForm.password" type="password" show-password />
+        <el-form-item
+          label="密码"
+          prop="password"
+        >
+          <el-input
+            v-model="registerForm.password"
+            type="password"
+            show-password
+          />
         </el-form-item>
 
-        <el-form-item label="手机号" prop="phone">
+        <el-form-item
+          label="手机号"
+          prop="phone"
+        >
           <el-input v-model="registerForm.phone" />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="showRegister = false">取消</el-button>
-        <el-button type="primary" :loading="registerLoading" @click="handleRegister">
+        <el-button @click="showRegister = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          :loading="registerLoading"
+          @click="handleRegister"
+        >
           注册
         </el-button>
       </template>

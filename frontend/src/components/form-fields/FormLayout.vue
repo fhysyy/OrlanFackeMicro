@@ -1,5 +1,8 @@
 <template>
-  <div class="form-layout" :class="`form-layout-${layout}`">
+  <div
+    class="form-layout"
+    :class="`form-layout-${layout}`"
+  >
     <!-- 栅格布局 -->
     <template v-if="layout === 'grid' || layout === 'grid-right'">
       <el-row
@@ -18,7 +21,10 @@
           :class="['form-col', item.className]"
           :style="{ minWidth: minColWidth }"
         >
-          <slot :name="`item-${index}`" :item="item">
+          <slot
+            :name="`item-${index}`"
+            :item="item"
+          >
             {{ item }}
           </slot>
         </el-col>
@@ -26,57 +32,78 @@
     </template>
 
     <!-- 水平布局 -->
-    <div v-else-if="layout === 'horizontal'" class="form-horizontal">
+    <div
+      v-else-if="layout === 'horizontal'"
+      class="form-horizontal"
+    >
       <div
         v-for="(item, index) in children"
         :key="index"
         class="form-horizontal-item"
         :class="item.className"
       >
-        <slot :name="`item-${index}`" :item="item">
+        <slot
+          :name="`item-${index}`"
+          :item="item"
+        >
           {{ item }}
         </slot>
       </div>
     </div>
 
     <!-- 垂直布局 -->
-    <div v-else-if="layout === 'vertical'" class="form-vertical">
+    <div
+      v-else-if="layout === 'vertical'"
+      class="form-vertical"
+    >
       <div
         v-for="(item, index) in children"
         :key="index"
         class="form-vertical-item"
         :class="item.className"
       >
-        <slot :name="`item-${index}`" :item="item">
+        <slot
+          :name="`item-${index}`"
+          :item="item"
+        >
           {{ item }}
         </slot>
       </div>
     </div>
 
     <!-- 内联布局 -->
-    <div v-else-if="layout === 'inline'" class="form-inline">
+    <div
+      v-else-if="layout === 'inline'"
+      class="form-inline"
+    >
       <div
         v-for="(item, index) in children"
         :key="index"
         class="form-inline-item"
         :class="item.className"
       >
-        <slot :name="`item-${index}`" :item="item">
+        <slot
+          :name="`item-${index}`"
+          :item="item"
+        >
           {{ item }}
         </slot>
       </div>
     </div>
 
     <!-- 默认布局 -->
-    <div v-else class="form-default">
-      <slot></slot>
+    <div
+      v-else
+      class="form-default"
+    >
+      <slot />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue';
-import { FormLayout } from './types';
+import { defineProps } from 'vue'
+import { FormLayout } from './types'
 
 // Props
 const props = defineProps<{
@@ -94,7 +121,7 @@ const props = defineProps<{
   xl?: number;
   // 最小列宽
   minColWidth?: string;
-}>();
+}>()
 </script>
 
 <style scoped>

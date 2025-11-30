@@ -1,15 +1,15 @@
-  <template>
+<template>
   <div 
+    ref="scrollContainer"
     class="virtual-scroll-container"
     :style="containerStyle"
     @scroll="handleScroll"
-    ref="scrollContainer"
   >
     <!-- 占位元素，保持滚动条高度 -->
     <div 
       class="virtual-scroll-placeholder"
       :style="{ height: `${totalHeight}px` }"
-    ></div>
+    />
     
     <!-- 可视区域内容 -->
     <div 
@@ -18,20 +18,25 @@
     >
       <template v-if="visibleItems.length > 0">
         <component
+          :is="itemComponent"
           v-for="(item, index) in visibleItems"
           :key="getItemKey(item, index)"
-          :is="itemComponent"
           :item="item"
           :index="startIndex + index"
           :data-key="getItemKey(item, index)"
           v-bind="componentProps"
-          v-on="componentEvents"
           class="virtual-scroll-item"
           :style="getItemStyle(item, index)"
+          v-on="componentEvents"
         />
       </template>
-      <div v-else class="virtual-scroll-empty">
-        <slot name="empty">暂无数据</slot>
+      <div
+        v-else
+        class="virtual-scroll-empty"
+      >
+        <slot name="empty">
+          暂无数据
+        </slot>
       </div>
     </div>
     
@@ -41,7 +46,11 @@
       class="virtual-scroll-loading"
     >
       <slot name="loading">
-        <el-skeleton animated :rows="1" style="width: 80%" />
+        <el-skeleton
+          animated
+          :rows="1"
+          style="width: 80%"
+        />
       </slot>
     </div>
     
@@ -51,8 +60,17 @@
       class="virtual-scroll-error"
     >
       <slot name="error">
-        <el-empty description="加载失败" :image-size="60">
-          <el-button type="primary" size="small" @click="refresh">重试</el-button>
+        <el-empty
+          description="加载失败"
+          :image-size="60"
+        >
+          <el-button
+            type="primary"
+            size="small"
+            @click="refresh"
+          >
+            重试
+          </el-button>
         </el-empty>
       </slot>
     </div>
@@ -62,7 +80,9 @@
       v-if="hasReachedEnd && !loading && !error" 
       class="virtual-scroll-end"
     >
-      <slot name="end">已加载全部数据</slot>
+      <slot name="end">
+        已加载全部数据
+      </slot>
     </div>
   </div>
 </template>

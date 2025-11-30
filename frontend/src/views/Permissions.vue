@@ -3,22 +3,48 @@
     <div class="page-header">
       <h2>权限管理</h2>
       <div>
-        <el-button type="primary" @click="handleCreatePermission">新增权限</el-button>
-        <el-button type="success" @click="handleCreateGroup" style="margin-left: 10px;">新增分组</el-button>
+        <el-button
+          type="primary"
+          @click="handleCreatePermission"
+        >
+          新增权限
+        </el-button>
+        <el-button
+          type="success"
+          style="margin-left: 10px;"
+          @click="handleCreateGroup"
+        >
+          新增分组
+        </el-button>
       </div>
     </div>
 
     <!-- 搜索和筛选 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="权限名称">
-          <el-input v-model="searchForm.name" placeholder="请输入权限名称" clearable />
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入权限名称"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="权限编码">
-          <el-input v-model="searchForm.code" placeholder="请输入权限编码" clearable />
+          <el-input
+            v-model="searchForm.code"
+            placeholder="请输入权限编码"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="权限分组">
-          <el-select v-model="searchForm.groupId" placeholder="请选择权限分组" clearable>
+          <el-select
+            v-model="searchForm.groupId"
+            placeholder="请选择权限分组"
+            clearable
+          >
             <el-option 
               v-for="group in permissionGroups" 
               :key="group.id" 
@@ -28,8 +54,15 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -46,37 +79,62 @@
           :expand-on-click-node="false"
         >
           <template #default="{ node, data }">
-            <div class="tree-node-content" :class="{ 'group-node': data.type === 'group' }">
-              <span v-if="data.type === 'group'" class="node-title group-title">{{ data.name }}</span>
-              <span v-else class="node-title permission-title">
+            <div
+              class="tree-node-content"
+              :class="{ 'group-node': data.type === 'group' }"
+            >
+              <span
+                v-if="data.type === 'group'"
+                class="node-title group-title"
+              >{{ data.name }}</span>
+              <span
+                v-else
+                class="node-title permission-title"
+              >
                 <span>{{ data.name }}</span>
-                <el-tag size="small" type="info" class="code-tag">{{ data.code }}</el-tag>
+                <el-tag
+                  size="small"
+                  type="info"
+                  class="code-tag"
+                >{{ data.code }}</el-tag>
               </span>
               
               <div class="node-actions">
-                <span v-if="data.type === 'group'" class="node-description">
+                <span
+                  v-if="data.type === 'group'"
+                  class="node-description"
+                >
                   {{ data.description || '暂无描述' }}
                 </span>
-                <span v-else class="node-description">
+                <span
+                  v-else
+                  class="node-description"
+                >
                   {{ data.description || '暂无描述' }}
                 </span>
                 
                 <template v-if="!data.isSystem">
                   <el-button 
-                    size="small" 
+                    v-if="data.type === 'group'" 
+                    size="small"
                     @click="() => handleEdit(data.type === 'group' ? 'group' : 'permission', data)"
-                    v-if="data.type === 'group'"
-                  >编辑分组</el-button>
+                  >
+                    编辑分组
+                  </el-button>
                   <el-button 
-                    size="small" 
+                    v-else 
+                    size="small"
                     @click="() => handleEdit('permission', data)"
-                    v-else
-                  >编辑</el-button>
+                  >
+                    编辑
+                  </el-button>
                   <el-button 
                     size="small" 
                     type="danger" 
                     @click="() => handleDelete(data.type === 'group' ? 'group' : 'permission', data)"
-                  >删除</el-button>
+                  >
+                    删除
+                  </el-button>
                 </template>
               </div>
             </div>
@@ -92,18 +150,45 @@
       width="600px"
       @close="handlePermissionDialogClose"
     >
-      <el-form ref="permissionFormRef" :model="permissionForm" :rules="permissionRules" label-width="100px">
-        <el-form-item label="权限名称" prop="name">
+      <el-form
+        ref="permissionFormRef"
+        :model="permissionForm"
+        :rules="permissionRules"
+        label-width="100px"
+      >
+        <el-form-item
+          label="权限名称"
+          prop="name"
+        >
           <el-input v-model="permissionForm.name" />
         </el-form-item>
-        <el-form-item label="权限编码" prop="code">
-          <el-input v-model="permissionForm.code" :disabled="isPermissionEdit" />
+        <el-form-item
+          label="权限编码"
+          prop="code"
+        >
+          <el-input
+            v-model="permissionForm.code"
+            :disabled="isPermissionEdit"
+          />
         </el-form-item>
-        <el-form-item label="权限描述" prop="description">
-          <el-input v-model="permissionForm.description" type="textarea" :rows="3" />
+        <el-form-item
+          label="权限描述"
+          prop="description"
+        >
+          <el-input
+            v-model="permissionForm.description"
+            type="textarea"
+            :rows="3"
+          />
         </el-form-item>
-        <el-form-item label="所属分组" prop="groupId">
-          <el-select v-model="permissionForm.groupId" placeholder="请选择权限分组">
+        <el-form-item
+          label="所属分组"
+          prop="groupId"
+        >
+          <el-select
+            v-model="permissionForm.groupId"
+            placeholder="请选择权限分组"
+          >
             <el-option 
               v-for="group in permissionGroups" 
               :key="group.id" 
@@ -115,7 +200,9 @@
       </el-form>
       
       <template #footer>
-        <el-button @click="permissionDialogVisible = false">取消</el-button>
+        <el-button @click="permissionDialogVisible = false">
+          取消
+        </el-button>
         <el-button 
           type="primary" 
           :loading="permissionDialogLoading" 
@@ -133,23 +220,50 @@
       width="500px"
       @close="handleGroupDialogClose"
     >
-      <el-form ref="groupFormRef" :model="groupForm" :rules="groupRules" label-width="100px">
-        <el-form-item label="分组名称" prop="name">
+      <el-form
+        ref="groupFormRef"
+        :model="groupForm"
+        :rules="groupRules"
+        label-width="100px"
+      >
+        <el-form-item
+          label="分组名称"
+          prop="name"
+        >
           <el-input v-model="groupForm.name" />
         </el-form-item>
-        <el-form-item label="分组ID" prop="id">
-          <el-input v-model="groupForm.id" :disabled="isGroupEdit" placeholder="仅允许使用字母、数字、下划线" />
-          <div v-if="!isGroupEdit" class="form-tip">
+        <el-form-item
+          label="分组ID"
+          prop="id"
+        >
+          <el-input
+            v-model="groupForm.id"
+            :disabled="isGroupEdit"
+            placeholder="仅允许使用字母、数字、下划线"
+          />
+          <div
+            v-if="!isGroupEdit"
+            class="form-tip"
+          >
             提示：分组ID一旦创建不可修改，建议使用有意义的标识符
           </div>
         </el-form-item>
-        <el-form-item label="分组描述" prop="description">
-          <el-input v-model="groupForm.description" type="textarea" :rows="3" />
+        <el-form-item
+          label="分组描述"
+          prop="description"
+        >
+          <el-input
+            v-model="groupForm.description"
+            type="textarea"
+            :rows="3"
+          />
         </el-form-item>
       </el-form>
       
       <template #footer>
-        <el-button @click="groupDialogVisible = false">取消</el-button>
+        <el-button @click="groupDialogVisible = false">
+          取消
+        </el-button>
         <el-button 
           type="primary" 
           :loading="groupDialogLoading" 

@@ -3,9 +3,18 @@
     <!-- 顶部工具栏 -->
     <div class="designer-header">
       <div class="header-left">
-        <el-button type="primary" @click="savePage">保存页面</el-button>
-        <el-button @click="previewPage">预览</el-button>
-        <el-button @click="exportPage">导出</el-button>
+        <el-button
+          type="primary"
+          @click="savePage"
+        >
+          保存页面
+        </el-button>
+        <el-button @click="previewPage">
+          预览
+        </el-button>
+        <el-button @click="exportPage">
+          导出
+        </el-button>
         <el-upload
           class="upload-demo"
           action
@@ -37,10 +46,16 @@
       
       <div class="header-right">
         <el-button-group>
-          <el-button :icon="isMobile ? 'el-icon-refresh-left' : 'el-icon-mobile'" @click="toggleDevice">
+          <el-button
+            :icon="isMobile ? 'el-icon-refresh-left' : 'el-icon-mobile'"
+            @click="toggleDevice"
+          >
             {{ isMobile ? '桌面' : '手机' }}
           </el-button>
-          <el-button icon="el-icon-s-tools" @click="showSettings = !showSettings">
+          <el-button
+            icon="el-icon-s-tools"
+            @click="showSettings = !showSettings"
+          >
             设置
           </el-button>
         </el-button-group>
@@ -81,7 +96,10 @@
       
       <!-- 中间设计区域 -->
       <div class="design-area">
-        <div class="device-frame" :class="{ 'mobile': isMobile }">
+        <div
+          class="device-frame"
+          :class="{ 'mobile': isMobile }"
+        >
           <div 
             class="preview-container"
             @dragover.prevent
@@ -97,7 +115,10 @@
         </div>
         
         <!-- 悬浮的操作按钮 -->
-        <div v-if="selectedComponentPath" class="component-actions">
+        <div
+          v-if="selectedComponentPath"
+          class="component-actions"
+        >
           <el-tooltip content="添加子组件">
             <el-button
               size="mini"
@@ -129,13 +150,20 @@
           <h3>属性配置</h3>
         </div>
         <div class="panel-content">
-          <div v-if="!selectedComponentPath" class="empty-properties">
+          <div
+            v-if="!selectedComponentPath"
+            class="empty-properties"
+          >
             请选择一个组件进行配置
           </div>
           
           <div v-else-if="selectedComponentConfig">
             <!-- 组件基本信息 -->
-            <el-descriptions :column="1" :border="true" class="component-info">
+            <el-descriptions
+              :column="1"
+              :border="true"
+              class="component-info"
+            >
               <el-descriptions-item label="组件类型">
                 {{ selectedComponentConfig.name }}
               </el-descriptions-item>
@@ -145,10 +173,19 @@
             </el-descriptions>
             
             <!-- 属性表单 -->
-            <el-form :model="componentProps" label-width="100px">
-              <template v-for="prop in selectedComponentConfig.props" :key="prop.name">
+            <el-form
+              :model="componentProps"
+              label-width="100px"
+            >
+              <template
+                v-for="prop in selectedComponentConfig.props"
+                :key="prop.name"
+              >
                 <!-- 字符串输入 -->
-                <el-form-item v-if="prop.type === 'string'" :label="prop.label">
+                <el-form-item
+                  v-if="prop.type === 'string'"
+                  :label="prop.label"
+                >
                   <el-input
                     v-model="componentProps[prop.name]"
                     :placeholder="`请输入${prop.label}`"
@@ -157,7 +194,10 @@
                 </el-form-item>
                 
                 <!-- 数值输入 -->
-                <el-form-item v-else-if="prop.type === 'number'" :label="prop.label">
+                <el-form-item
+                  v-else-if="prop.type === 'number'"
+                  :label="prop.label"
+                >
                   <el-input-number
                     v-model="componentProps[prop.name]"
                     :min="prop.min"
@@ -167,7 +207,10 @@
                 </el-form-item>
                 
                 <!-- 布尔值选择 -->
-                <el-form-item v-else-if="prop.type === 'boolean'" :label="prop.label">
+                <el-form-item
+                  v-else-if="prop.type === 'boolean'"
+                  :label="prop.label"
+                >
                   <el-switch
                     v-model="componentProps[prop.name]"
                     @change="updateComponentProps"
@@ -175,7 +218,10 @@
                 </el-form-item>
                 
                 <!-- 下拉选择 -->
-                <el-form-item v-else-if="prop.type === 'select'" :label="prop.label">
+                <el-form-item
+                  v-else-if="prop.type === 'select'"
+                  :label="prop.label"
+                >
                   <el-select
                     v-model="componentProps[prop.name]"
                     placeholder="请选择"
@@ -191,7 +237,10 @@
                 </el-form-item>
                 
                 <!-- 文本域 -->
-                <el-form-item v-else-if="prop.type === 'textarea'" :label="prop.label">
+                <el-form-item
+                  v-else-if="prop.type === 'textarea'"
+                  :label="prop.label"
+                >
                   <el-input
                     v-model="componentProps[prop.name]"
                     type="textarea"
@@ -202,7 +251,10 @@
                 </el-form-item>
                 
                 <!-- 对象编辑器 -->
-                <el-form-item v-else-if="prop.type === 'object'" :label="prop.label">
+                <el-form-item
+                  v-else-if="prop.type === 'object'"
+                  :label="prop.label"
+                >
                   <el-input
                     v-model="componentProps[prop.name]"
                     type="textarea"
@@ -210,22 +262,37 @@
                     placeholder="JSON格式"
                     @change="updateComponentProps"
                   />
-                  <div class="form-hint">请输入JSON格式的对象</div>
+                  <div class="form-hint">
+                    请输入JSON格式的对象
+                  </div>
                 </el-form-item>
               </template>
             </el-form>
             
             <!-- 事件配置 -->
-            <div v-if="selectedComponentConfig.events && selectedComponentConfig.events.length > 0" class="event-config">
+            <div
+              v-if="selectedComponentConfig.events && selectedComponentConfig.events.length > 0"
+              class="event-config"
+            >
               <h4>事件配置</h4>
-              <div v-for="event in selectedComponentConfig.events" :key="event.name" class="event-item">
+              <div
+                v-for="event in selectedComponentConfig.events"
+                :key="event.name"
+                class="event-item"
+              >
                 <div class="event-header">
                   <span>{{ event.label }}</span>
-                  <el-button size="mini" @click="showEventEditor(event)">
+                  <el-button
+                    size="mini"
+                    @click="showEventEditor(event)"
+                  >
                     编辑
                   </el-button>
                 </div>
-                <div v-if="componentEvents[event.name]" class="event-code">
+                <div
+                  v-if="componentEvents[event.name]"
+                  class="event-code"
+                >
                   <pre>{{ componentEvents[event.name] }}</pre>
                 </div>
               </div>
@@ -241,26 +308,49 @@
       title="页面设置"
       width="600px"
     >
-      <el-form :model="currentPageMetadata" label-width="100px">
+      <el-form
+        :model="currentPageMetadata"
+        label-width="100px"
+      >
         <el-form-item label="页面ID">
-          <el-input v-model="currentPageMetadata.id" disabled />
+          <el-input
+            v-model="currentPageMetadata.id"
+            disabled
+          />
         </el-form-item>
         <el-form-item label="页面名称">
-          <el-input v-model="currentPageMetadata.name" @change="updatePageName" />
+          <el-input
+            v-model="currentPageMetadata.name"
+            @change="updatePageName"
+          />
         </el-form-item>
         <el-form-item label="路由路径">
-          <el-input v-model="currentPageMetadata.route.path" @change="updatePagePath" />
+          <el-input
+            v-model="currentPageMetadata.route.path"
+            @change="updatePagePath"
+          />
         </el-form-item>
         <el-form-item label="页面描述">
-          <el-input v-model="currentPageMetadata.description" type="textarea" :rows="2" />
+          <el-input
+            v-model="currentPageMetadata.description"
+            type="textarea"
+            :rows="2"
+          />
         </el-form-item>
         <el-form-item label="显示在菜单">
           <el-switch v-model="currentPageMetadata.route.meta.showInMenu" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="showSettings = false">取消</el-button>
-        <el-button type="primary" @click="savePageSettings">保存</el-button>
+        <el-button @click="showSettings = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="savePageSettings"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
     
@@ -275,7 +365,10 @@
         placeholder="选择组件类型"
         style="width: 100%"
       >
-        <template v-for="(components, category) in componentCategories" :key="category">
+        <template
+          v-for="(components, category) in componentCategories"
+          :key="category"
+        >
           <el-option-group :label="category">
             <el-option
               v-for="component in components"
@@ -287,8 +380,15 @@
         </template>
       </el-select>
       <template #footer>
-        <el-button @click="showAddComponent = false">取消</el-button>
-        <el-button type="primary" @click="confirmAddComponent">确定</el-button>
+        <el-button @click="showAddComponent = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="confirmAddComponent"
+        >
+          确定
+        </el-button>
       </template>
     </el-dialog>
     
@@ -302,7 +402,10 @@
       <el-tabs v-model="activeConfigTab">
         <el-tab-pane label="属性">
           <!-- 这里显示的内容与右侧属性面板相同 -->
-          <el-form :model="componentProps" label-width="100px">
+          <el-form
+            :model="componentProps"
+            label-width="100px"
+          >
             <!-- 属性表单内容... -->
           </el-form>
         </el-tab-pane>
@@ -316,13 +419,19 @@
             :rows="20"
             placeholder="组件JSON配置"
           />
-          <el-button type="primary" @click="updateComponentFromJson" style="margin-top: 20px">
+          <el-button
+            type="primary"
+            style="margin-top: 20px"
+            @click="updateComponentFromJson"
+          >
             应用配置
           </el-button>
         </el-tab-pane>
       </el-tabs>
       <template #footer>
-        <el-button @click="showComponentConfig = false">关闭</el-button>
+        <el-button @click="showComponentConfig = false">
+          关闭
+        </el-button>
       </template>
     </el-dialog>
     
@@ -335,11 +444,36 @@
     >
       <div class="event-editor">
         <div class="editor-toolbar">
-          <el-button size="mini" @click="insertCodeSnippet('this.')">this.</el-button>
-          <el-button size="mini" @click="insertCodeSnippet('$event')">$event</el-button>
-          <el-button size="mini" @click="insertCodeSnippet('arguments')">arguments</el-button>
-          <el-button size="mini" @click="insertCodeSnippet('api.')">api.</el-button>
-          <el-button size="mini" @click="insertCodeSnippet('ElMessage.')">ElMessage.</el-button>
+          <el-button
+            size="mini"
+            @click="insertCodeSnippet('this.')"
+          >
+            this.
+          </el-button>
+          <el-button
+            size="mini"
+            @click="insertCodeSnippet('$event')"
+          >
+            $event
+          </el-button>
+          <el-button
+            size="mini"
+            @click="insertCodeSnippet('arguments')"
+          >
+            arguments
+          </el-button>
+          <el-button
+            size="mini"
+            @click="insertCodeSnippet('api.')"
+          >
+            api.
+          </el-button>
+          <el-button
+            size="mini"
+            @click="insertCodeSnippet('ElMessage.')"
+          >
+            ElMessage.
+          </el-button>
         </div>
         <el-input
           v-model="eventCode"
@@ -359,46 +493,53 @@
         </div>
       </div>
       <template #footer>
-        <el-button @click="showEventEditorDialog = false">取消</el-button>
-        <el-button type="primary" @click="saveEventCode">保存</el-button>
+        <el-button @click="showEventEditorDialog = false">
+          取消
+        </el-button>
+        <el-button
+          type="primary"
+          @click="saveEventCode"
+        >
+          保存
+        </el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import DynamicPage from '../components/DynamicPage.vue';
-import { PageBuilderService } from '../services/pageBuilderService';
-import { MetadataService } from '../services/metadataService';
-import { getComponentCategories, getComponentConfig } from '../services/componentRegistry';
-import type { PageMetadata, ComponentConfig } from '../types/page';
+import { ref, reactive, computed, onMounted, nextTick, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import DynamicPage from '../components/DynamicPage.vue'
+import { PageBuilderService } from '../services/pageBuilderService'
+import { MetadataService } from '../services/metadataService'
+import { getComponentCategories, getComponentConfig } from '../services/componentRegistry'
+import type { PageMetadata, ComponentConfig } from '../types/page'
 
 // 路由和导航
-const route = useRoute();
-const router = useRouter();
+const route = useRoute()
+const router = useRouter()
 
 // 动态页面组件引用
-const dynamicPage = ref<any>(null);
+const dynamicPage = ref<any>(null)
 
 // 响应式数据
-const isMobile = ref(false);
-const showSettings = ref(false);
-const showAddComponent = ref(false);
-const showComponentConfig = ref(false);
-const showEventEditorDialog = ref(false);
-const activeCategory = ref('基础');
-const activeConfigTab = ref('属性');
-const hoverComponent = ref<string | null>(null);
-const selectedComponentPath = ref('');
-const selectedComponentType = ref('');
-const currentEvent = ref<any>(null);
-const eventCode = ref('');
-const componentProps = ref<any>({});
-const componentEvents = ref<Record<string, string>>({});
-const selectedComponentJson = ref('');
+const isMobile = ref(false)
+const showSettings = ref(false)
+const showAddComponent = ref(false)
+const showComponentConfig = ref(false)
+const showEventEditorDialog = ref(false)
+const activeCategory = ref('基础')
+const activeConfigTab = ref('属性')
+const hoverComponent = ref<string | null>(null)
+const selectedComponentPath = ref('')
+const selectedComponentType = ref('')
+const currentEvent = ref<any>(null)
+const eventCode = ref('')
+const componentProps = ref<any>({})
+const componentEvents = ref<Record<string, string>>({})
+const selectedComponentJson = ref('')
 
 // 页面数据
 const currentPageMetadata = ref<PageMetadata>({
@@ -431,97 +572,97 @@ const currentPageMetadata = ref<PageMetadata>({
       children: []
     }
   ]
-});
+})
 
 // 计算属性
 const currentPageName = computed({
   get: () => currentPageMetadata.value.name,
   set: (value) => {
-    currentPageMetadata.value.name = value;
+    currentPageMetadata.value.name = value
     if (currentPageMetadata.value.route?.meta) {
-      currentPageMetadata.value.route.meta.title = value;
+      currentPageMetadata.value.route.meta.title = value
     }
   }
-});
+})
 
 const currentPagePath = computed({
   get: () => currentPageMetadata.value.route?.path || '',
   set: (value) => {
     if (!currentPageMetadata.value.route) {
-      currentPageMetadata.value.route = {} as any;
+      currentPageMetadata.value.route = {} as any
     }
-    currentPageMetadata.value.route.path = value;
+    currentPageMetadata.value.route.path = value
   }
-});
+})
 
 const componentCategories = computed(() => {
-  return getComponentCategories();
-});
+  return getComponentCategories()
+})
 
 const selectedComponentConfig = computed(() => {
-  if (!selectedComponentPath.value) return null;
+  if (!selectedComponentPath.value) return null
   
   // 获取选中的组件类型
-  const component = findComponentByPath(selectedComponentPath.value);
-  if (!component) return null;
+  const component = findComponentByPath(selectedComponentPath.value)
+  if (!component) return null
   
-  return getComponentConfig(component.type);
-});
+  return getComponentConfig(component.type)
+})
 
 // 初始化
 onMounted(async () => {
   // 加载页面数据
-  const pageId = route.params.pageId as string;
+  const pageId = route.params.pageId as string
   if (pageId) {
     try {
-      const metadata = await MetadataService.getMetadata(pageId);
+      const metadata = await MetadataService.getMetadata(pageId)
       if (metadata) {
-        currentPageMetadata.value = metadata;
+        currentPageMetadata.value = metadata
       }
     } catch (error) {
-      console.error('加载页面失败:', error);
-      ElMessage.error('加载页面失败');
+      console.error('加载页面失败:', error)
+      ElMessage.error('加载页面失败')
     }
   }
-});
+})
 
 // 监听选中的组件变化
 watch(selectedComponentPath, () => {
   if (selectedComponentPath.value) {
-    loadComponentProps();
+    loadComponentProps()
   }
-});
+})
 
 // 方法定义
 
 // 保存页面
 const savePage = async () => {
   try {
-    await MetadataService.saveMetadata(currentPageMetadata.value);
-    ElMessage.success('页面保存成功');
+    await MetadataService.saveMetadata(currentPageMetadata.value)
+    ElMessage.success('页面保存成功')
   } catch (error) {
-    console.error('保存页面失败:', error);
-    ElMessage.error('保存页面失败');
+    console.error('保存页面失败:', error)
+    ElMessage.error('保存页面失败')
   }
-};
+}
 
 // 预览页面
 const previewPage = () => {
-  const previewWindow = window.open('', '_blank');
+  const previewWindow = window.open('', '_blank')
   if (previewWindow) {
-      // 创建预览页面内容 - 使用变量和字符串拼接，完全避免HTML标签被Vue编译器解析
-      const lt = '\u003c';
-      const gt = '\u003e';
-      const slash = '/';
-      const metadata = JSON.stringify(currentPageMetadata.value);
+    // 创建预览页面内容 - 使用变量和字符串拼接，完全避免HTML标签被Vue编译器解析
+    const lt = '\u003c'
+    const gt = '\u003e'
+    const slash = '/'
+    const metadata = JSON.stringify(currentPageMetadata.value)
       
-      const html = 
+    const html = 
         lt + '!DOCTYPE html' + gt + '\n' +
         lt + 'html lang="zh-CN"' + gt + '\n' +
         lt + 'head' + gt + '\n' +
         '  ' + lt + 'meta charset="UTF-8"' + gt + '\n' +
         '  ' + lt + 'meta name="viewport" content="width=device-width, initial-scale=1.0"' + gt + '\n' +
-        '  ' + lt + 'title' + gt + '预览 - ' + currentPageName + lt + slash + 'title' + gt + '\n' +
+        '  ' + lt + 'title' + gt + '预览 - ' + currentPageName.value + lt + slash + 'title' + gt + '\n' +
         '  ' + lt + 'style' + gt + 'body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }' + lt + slash + 'style' + gt + '\n' +
         lt + slash + 'head' + gt + '\n' +
         lt + 'body' + gt + '\n' +
@@ -529,204 +670,204 @@ const previewPage = () => {
         '  ' + lt + 'script' + gt + 'window.__PAGE_METADATA__ = ' + metadata + ';' + lt + slash + 'script' + gt + '\n' +
         '  ' + lt + 'script src="/preview.js"' + gt + lt + slash + 'script' + gt + '\n' +
         lt + slash + 'body' + gt + '\n' +
-        lt + slash + 'html' + gt;
+        lt + slash + 'html' + gt
     
-    previewWindow.document.open();
-    previewWindow.document.write(html);
-    previewWindow.document.close();
+    previewWindow.document.open()
+    previewWindow.document.write(html)
+    previewWindow.document.close()
   }
-};
+}
 
 // 导出页面
 const exportPage = () => {
   try {
-    const content = MetadataService.exportMetadata(currentPageMetadata.value);
-    const blob = new Blob([content], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${currentPageMetadata.value.name || 'page'}_${Date.now()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    ElMessage.success('导出成功');
+    const content = MetadataService.exportMetadata(currentPageMetadata.value)
+    const blob = new Blob([content], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `${currentPageMetadata.value.name || 'page'}_${Date.now()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    ElMessage.success('导出成功')
   } catch (error) {
-    console.error('导出失败:', error);
-    ElMessage.error('导出失败');
+    console.error('导出失败:', error)
+    ElMessage.error('导出失败')
   }
-};
+}
 
 // 导入页面
 const handleImport = (file: any) => {
-  const reader = new FileReader();
+  const reader = new FileReader()
   reader.onload = (e) => {
     try {
-      const content = e.target?.result as string;
-      const metadata = MetadataService.importMetadata(content);
-      currentPageMetadata.value = metadata;
-      ElMessage.success('导入成功');
+      const content = e.target?.result as string
+      const metadata = MetadataService.importMetadata(content)
+      currentPageMetadata.value = metadata
+      ElMessage.success('导入成功')
     } catch (error) {
-      console.error('导入失败:', error);
-      ElMessage.error('导入失败，请检查文件格式');
+      console.error('导入失败:', error)
+      ElMessage.error('导入失败，请检查文件格式')
     }
-  };
-  reader.readAsText(file.raw);
-};
+  }
+  reader.readAsText(file.raw)
+}
 
 // 切换设备预览模式
 const toggleDevice = () => {
-  isMobile.value = !isMobile.value;
-};
+  isMobile.value = !isMobile.value
+}
 
 // 保存页面设置
 const savePageSettings = () => {
-  savePage();
-  showSettings.value = false;
-};
+  savePage()
+  showSettings.value = false
+}
 
 // 处理拖拽开始
 const handleDragStart = (event: DragEvent, componentType: string) => {
   if (event.dataTransfer) {
-    event.dataTransfer.setData('componentType', componentType);
-    event.dataTransfer.effectAllowed = 'copy';
+    event.dataTransfer.setData('componentType', componentType)
+    event.dataTransfer.effectAllowed = 'copy'
   }
-};
+}
 
 // 处理拖拽放下
 const handleDrop = (event: DragEvent) => {
-  event.preventDefault();
+  event.preventDefault()
   
   if (event.dataTransfer) {
-    const componentType = event.dataTransfer.getData('componentType');
+    const componentType = event.dataTransfer.getData('componentType')
     if (componentType) {
-      const targetElement = event.target as HTMLElement;
-      const targetPath = findComponentPathFromElement(targetElement);
+      const targetElement = event.target as HTMLElement
+      const targetPath = findComponentPathFromElement(targetElement)
       
       // 创建新组件配置
       const componentConfig: ComponentConfig = {
         type: componentType,
         props: getDefaultProps(componentType),
         children: []
-      };
+      }
       
       // 添加组件
       if (targetPath) {
-        dynamicPage.value.addComponent(targetPath, componentConfig);
+        dynamicPage.value.addComponent(targetPath, componentConfig)
       } else {
         // 如果没有找到目标，添加到根组件
-        dynamicPage.value.addComponent('components[0]', componentConfig);
+        dynamicPage.value.addComponent('components[0]', componentConfig)
       }
     }
   }
-};
+}
 
 // 获取组件默认属性
 const getDefaultProps = (componentType: string): any => {
-  const config = getComponentConfig(componentType);
-  if (!config) return {};
+  const config = getComponentConfig(componentType)
+  if (!config) return {}
   
-  const props: any = {};
+  const props: any = {}
   config.props.forEach((prop: any) => {
-    props[prop.name] = prop.default;
-  });
-  return props;
-};
+    props[prop.name] = prop.default
+  })
+  return props
+}
 
 // 查找组件路径
 const findComponentPathFromElement = (element: HTMLElement): string | null => {
   // 这里简化实现，实际需要根据元素层级计算路径
-  return 'components[0].children';
-};
+  return 'components[0].children'
+}
 
 // 查找组件
 const findComponentByPath = (path: string): ComponentConfig | null => {
   // 简化实现，实际需要根据路径解析组件
-  const pathParts = path.split('.');
-  let current: any = currentPageMetadata.value;
+  const pathParts = path.split('.')
+  let current: any = currentPageMetadata.value
   
   try {
     pathParts.forEach(part => {
-      const match = part.match(/^(\w+)\[(\d+)\]$/);
+      const match = part.match(/^(\w+)\[(\d+)\]$/)
       if (match) {
-        const [, key, index] = match;
-        current = current[key][parseInt(index)];
+        const [, key, index] = match
+        current = current[key][parseInt(index)]
       } else {
-        current = current[part];
+        current = current[part]
       }
-    });
-    return current;
+    })
+    return current
   } catch (error) {
-    console.error('查找组件失败:', error);
-    return null;
+    console.error('查找组件失败:', error)
+    return null
   }
-};
+}
 
 // 加载组件属性
 const loadComponentProps = () => {
-  const component = findComponentByPath(selectedComponentPath.value);
-  if (!component) return;
+  const component = findComponentByPath(selectedComponentPath.value)
+  if (!component) return
   
-  componentProps.value = { ...component.props };
+  componentProps.value = { ...component.props }
   
   // 加载事件配置
-  componentEvents.value = {};
+  componentEvents.value = {}
   if (component.events) {
     component.events.forEach((event: any) => {
-      componentEvents.value[event.name] = event.body || '';
-    });
+      componentEvents.value[event.name] = event.body || ''
+    })
   }
   
   // 加载JSON配置
-  selectedComponentJson.value = JSON.stringify(component, null, 2);
-};
+  selectedComponentJson.value = JSON.stringify(component, null, 2)
+}
 
 // 更新组件属性
 const updateComponentProps = () => {
-  if (!selectedComponentPath.value) return;
+  if (!selectedComponentPath.value) return
   
   dynamicPage.value.updateComponent(selectedComponentPath.value, {
     props: componentProps.value
-  });
-};
+  })
+}
 
 // 更新页面名称
 const updatePageName = () => {
-  currentPageMetadata.value.updatedAt = new Date().toISOString();
-};
+  currentPageMetadata.value.updatedAt = new Date().toISOString()
+}
 
 // 更新页面路径
 const updatePagePath = () => {
-  currentPageMetadata.value.updatedAt = new Date().toISOString();
-};
+  currentPageMetadata.value.updatedAt = new Date().toISOString()
+}
 
 // 显示添加组件对话框
 const showAddComponentDialog = () => {
-  showAddComponent.value = true;
-};
+  showAddComponent.value = true
+}
 
 // 确认添加组件
 const confirmAddComponent = () => {
   if (!selectedComponentType.value) {
-    ElMessage.warning('请选择组件类型');
-    return;
+    ElMessage.warning('请选择组件类型')
+    return
   }
   
   const componentConfig: ComponentConfig = {
     type: selectedComponentType.value,
     props: getDefaultProps(selectedComponentType.value),
     children: []
-  };
+  }
   
-  dynamicPage.value.addComponent(selectedComponentPath.value, componentConfig);
-  showAddComponent.value = false;
-  selectedComponentType.value = '';
-};
+  dynamicPage.value.addComponent(selectedComponentPath.value, componentConfig)
+  showAddComponent.value = false
+  selectedComponentType.value = ''
+}
 
 // 显示组件配置对话框
 const showComponentConfigDialog = () => {
-  showComponentConfig.value = true;
-};
+  showComponentConfig.value = true
+}
 
 // 删除选中的组件
 const deleteSelectedComponent = () => {
@@ -735,69 +876,69 @@ const deleteSelectedComponent = () => {
     cancelButtonText: '取消',
     type: 'warning'
   }).then(() => {
-    dynamicPage.value.removeComponent(selectedComponentPath.value);
-    selectedComponentPath.value = '';
-    ElMessage.success('删除成功');
-  }).catch(() => {});
-};
+    dynamicPage.value.removeComponent(selectedComponentPath.value)
+    selectedComponentPath.value = ''
+    ElMessage.success('删除成功')
+  }).catch(() => {})
+}
 
 // 显示事件编辑器
 const showEventEditor = (event: any) => {
-  currentEvent.value = event;
-  eventCode.value = componentEvents.value[event.name] || '';
-  showEventEditorDialog.value = true;
-};
+  currentEvent.value = event
+  eventCode.value = componentEvents.value[event.name] || ''
+  showEventEditorDialog.value = true
+}
 
 // 保存事件代码
 const saveEventCode = () => {
-  if (!currentEvent.value) return;
+  if (!currentEvent.value) return
   
-  componentEvents.value[currentEvent.value.name] = eventCode.value;
+  componentEvents.value[currentEvent.value.name] = eventCode.value
   
   // 更新组件事件
   const events = Object.entries(componentEvents.value).map(([name, body]) => ({
     name,
     body
-  }));
+  }))
   
   dynamicPage.value.updateComponent(selectedComponentPath.value, {
     events
-  });
+  })
   
-  showEventEditorDialog.value = false;
-  ElMessage.success('事件保存成功');
-};
+  showEventEditorDialog.value = false
+  ElMessage.success('事件保存成功')
+}
 
 // 插入代码片段
 const insertCodeSnippet = (snippet: string) => {
-  const input = document.querySelector('.el-textarea__inner') as HTMLTextAreaElement;
+  const input = document.querySelector('.el-textarea__inner') as HTMLTextAreaElement
   if (input) {
-    const start = input.selectionStart;
-    const end = input.selectionEnd;
-    const value = input.value;
-    input.value = value.substring(0, start) + snippet + value.substring(end);
-    input.focus();
-    input.setSelectionRange(start + snippet.length, start + snippet.length);
-    eventCode.value = input.value;
+    const start = input.selectionStart
+    const end = input.selectionEnd
+    const value = input.value
+    input.value = value.substring(0, start) + snippet + value.substring(end)
+    input.focus()
+    input.setSelectionRange(start + snippet.length, start + snippet.length)
+    eventCode.value = input.value
   }
-};
+}
 
 // 更新组件从JSON
 const updateComponentFromJson = () => {
   try {
-    const component = JSON.parse(selectedComponentJson.value);
-    dynamicPage.value.updateComponent(selectedComponentPath.value, component);
-    ElMessage.success('配置更新成功');
+    const component = JSON.parse(selectedComponentJson.value)
+    dynamicPage.value.updateComponent(selectedComponentPath.value, component)
+    ElMessage.success('配置更新成功')
   } catch (error) {
-    console.error('JSON格式错误:', error);
-    ElMessage.error('JSON格式错误');
+    console.error('JSON格式错误:', error)
+    ElMessage.error('JSON格式错误')
   }
-};
+}
 
 // 处理元数据更新
 const handleMetadataUpdate = (metadata: PageMetadata) => {
-  currentPageMetadata.value = metadata;
-};
+  currentPageMetadata.value = metadata
+}
 </script>
 
 <style scoped>

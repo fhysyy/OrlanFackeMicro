@@ -1,5 +1,5 @@
-import type { ValidationRule } from '../types/form';
-import type { FormItemRule } from 'element-plus';
+import type { ValidationRule } from '../types/form'
+import type { FormItemRule } from 'element-plus'
 
 /**
  * 常用正则表达式
@@ -17,7 +17,7 @@ export const regexPatterns = {
   hasNumber: /\d/,
   // 包含特殊字符正则
   hasSpecialChar: /[!@#$%^&*(),.?":{}|<>]/
-};
+}
 
 /**
  * 验证函数集合
@@ -27,138 +27,138 @@ export const validators = {
    * 验证必填
    */
   required: (value: any): boolean => {
-    if (value === null || value === undefined) return false;
-    if (typeof value === 'string') return value.trim() !== '';
-    if (Array.isArray(value)) return value.length > 0;
-    return true;
+    if (value === null || value === undefined) return false
+    if (typeof value === 'string') return value.trim() !== ''
+    if (Array.isArray(value)) return value.length > 0
+    return true
   },
 
   /**
    * 验证最小长度
    */
   min: (value: string, min: number): boolean => {
-    return value.length >= min;
+    return value.length >= min
   },
 
   /**
    * 验证最大长度
    */
   max: (value: string, max: number): boolean => {
-    return value.length <= max;
+    return value.length <= max
   },
 
   /**
    * 验证固定长度
    */
   len: (value: string, len: number): boolean => {
-    return value.length === len;
+    return value.length === len
   },
 
   /**
    * 验证邮箱格式
    */
   email: (value: string): boolean => {
-    return regexPatterns.email.test(value);
+    return regexPatterns.email.test(value)
   },
 
   /**
    * 验证手机号格式（中国大陆）
    */
   phone: (value: string): boolean => {
-    return regexPatterns.phone.test(value);
+    return regexPatterns.phone.test(value)
   },
 
   /**
    * 验证身份证号格式（中国大陆18位）
    */
   idcard: (value: string): boolean => {
-    return regexPatterns.idcard.test(value);
+    return regexPatterns.idcard.test(value)
   },
 
   /**
    * 验证不含中文
    */
   noChinese: (value: string): boolean => {
-    return regexPatterns.noChinese.test(value);
+    return regexPatterns.noChinese.test(value)
   },
 
   /**
    * 验证包含数字
    */
   hasNumber: (value: string): boolean => {
-    return regexPatterns.hasNumber.test(value);
+    return regexPatterns.hasNumber.test(value)
   },
 
   /**
    * 验证包含特殊字符
    */
   hasSpecialChar: (value: string): boolean => {
-    return regexPatterns.hasSpecialChar.test(value);
+    return regexPatterns.hasSpecialChar.test(value)
   },
 
   /**
    * 验证正则表达式
    */
   pattern: (value: string, pattern: RegExp): boolean => {
-    return pattern.test(value);
+    return pattern.test(value)
   }
-};
+}
 
 /**
  * 将可视化验证规则转换为Element Plus的表单验证规则
  */
 export function convertValidationRules(validationRules?: ValidationRule[]): FormItemRule[] {
   if (!validationRules || validationRules.length === 0) {
-    return [];
+    return []
   }
 
   return validationRules.map(rule => {
     const formRule: FormItemRule = {
       message: rule.message,
       trigger: rule.trigger || 'blur'
-    };
-
-    switch (rule.type) {
-      case 'required':
-        formRule.required = true;
-        break;
-      case 'min':
-        formRule.min = rule.value;
-        formRule.type = 'string';
-        break;
-      case 'max':
-        formRule.max = rule.value;
-        formRule.type = 'string';
-        break;
-      case 'len':
-        formRule.len = rule.value;
-        formRule.type = 'string';
-        break;
-      case 'email':
-        formRule.type = 'email';
-        break;
-      case 'pattern':
-        formRule.pattern = rule.value;
-        break;
-      default:
-        // 对于自定义验证规则，使用validator函数
-        formRule.validator = (rule: any, value: any, callback: any) => {
-          if (!value && rule.type !== 'required') {
-            callback();
-            return;
-          }
-
-          const isValid = validators[rule.type as keyof typeof validators](value, rule.value);
-          if (isValid) {
-            callback();
-          } else {
-            callback(new Error(rule.message));
-          }
-        };
     }
 
-    return formRule;
-  });
+    switch (rule.type) {
+    case 'required':
+      formRule.required = true
+      break
+    case 'min':
+      formRule.min = rule.value
+      formRule.type = 'string'
+      break
+    case 'max':
+      formRule.max = rule.value
+      formRule.type = 'string'
+      break
+    case 'len':
+      formRule.len = rule.value
+      formRule.type = 'string'
+      break
+    case 'email':
+      formRule.type = 'email'
+      break
+    case 'pattern':
+      formRule.pattern = rule.value
+      break
+    default:
+      // 对于自定义验证规则，使用validator函数
+      formRule.validator = (rule: any, value: any, callback: any) => {
+        if (!value && rule.type !== 'required') {
+          callback()
+          return
+        }
+
+        const isValid = validators[rule.type as keyof typeof validators](value, rule.value)
+        if (isValid) {
+          callback()
+        } else {
+          callback(new Error(rule.message))
+        }
+      }
+    }
+
+    return formRule
+  })
 }
 
 /**
@@ -170,7 +170,7 @@ export function generateValidationRulesFromDatabase(
   precision?: number,
   scale?: number
 ): ValidationRule[] {
-  const rules: ValidationRule[] = [];
+  const rules: ValidationRule[] = []
 
   // 为所有字段添加必填验证（可选）
   // rules.push({
@@ -180,68 +180,68 @@ export function generateValidationRulesFromDatabase(
   // });
 
   switch (databaseType) {
-    case 'varchar':
-    case 'text':
-      if (length) {
-        rules.push({
-          type: 'max',
-          value: length,
-          message: `最多允许输入${length}个字符`,
-          trigger: 'blur'
-        });
-      }
-      break;
-
-    case 'int':
-    case 'bigint':
+  case 'varchar':
+  case 'text':
+    if (length) {
       rules.push({
-        type: 'pattern',
-        value: /^\d*$/,
-        message: '请输入有效的整数',
+        type: 'max',
+        value: length,
+        message: `最多允许输入${length}个字符`,
         trigger: 'blur'
-      });
-      break;
+      })
+    }
+    break
 
-    case 'decimal':
-    case 'float':
-    case 'double':
-      const numberRegex = scale !== undefined ? 
-        new RegExp(`^\d+(\.\d{0,${scale}})?$`) : 
-        /^\d+(\.\d*)?$/;
+  case 'int':
+  case 'bigint':
+    rules.push({
+      type: 'pattern',
+      value: /^\d*$/,
+      message: '请输入有效的整数',
+      trigger: 'blur'
+    })
+    break
+
+  case 'decimal':
+  case 'float':
+  case 'double':
+    const numberRegex = scale !== undefined ? 
+      new RegExp(`^\\d+(\\.\\d{0,${scale}})?$`) : 
+      /^\d+(\.\d*)?$/
       
-      rules.push({
-        type: 'pattern',
-        value: numberRegex,
-        message: `请输入有效的数字${scale ? `（最多${scale}位小数）` : ''}`,
-        trigger: 'blur'
-      });
-      break;
+    rules.push({
+      type: 'pattern',
+      value: numberRegex,
+      message: `请输入有效的数字${scale ? `（最多${scale}位小数）` : ''}`,
+      trigger: 'blur'
+    })
+    break
 
-    case 'boolean':
-      // 布尔类型不需要特殊验证规则
-      break;
+  case 'boolean':
+    // 布尔类型不需要特殊验证规则
+    break
 
-    case 'date':
-      rules.push({
-        type: 'pattern',
-        value: /^\d{4}-\d{2}-\d{2}$/,
-        message: '请输入有效的日期格式（YYYY-MM-DD）',
-        trigger: 'blur'
-      });
-      break;
+  case 'date':
+    rules.push({
+      type: 'pattern',
+      value: /^\d{4}-\d{2}-\d{2}$/,
+      message: '请输入有效的日期格式（YYYY-MM-DD）',
+      trigger: 'blur'
+    })
+    break
 
-    case 'datetime':
-    case 'timestamp':
-      rules.push({
-        type: 'pattern',
-        value: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
-        message: '请输入有效的日期时间格式（YYYY-MM-DD HH:MM:SS）',
-        trigger: 'blur'
-      });
-      break;
+  case 'datetime':
+  case 'timestamp':
+    rules.push({
+      type: 'pattern',
+      value: /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/,
+      message: '请输入有效的日期时间格式（YYYY-MM-DD HH:MM:SS）',
+      trigger: 'blur'
+    })
+    break
   }
 
-  return rules;
+  return rules
 }
 
 /**
@@ -284,5 +284,5 @@ export function getValidationRuleTemplates(): { [key: string]: ValidationRule } 
       message: '该字段必须包含特殊字符',
       trigger: 'blur'
     }
-  };
+  }
 }

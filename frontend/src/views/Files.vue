@@ -2,88 +2,203 @@
   <div class="files-container">
     <div class="page-header">
       <h2>文件管理</h2>
-      <el-button type="primary" @click="handleUpload">上传文件</el-button>
+      <el-button
+        type="primary"
+        @click="handleUpload"
+      >
+        上传文件
+      </el-button>
     </div>
 
     <!-- 文件统计 -->
     <div class="file-stats">
       <el-row :gutter="20">
         <el-col :span="6">
-          <el-statistic title="总文件数" :value="stats.totalFiles" />
+          <el-statistic
+            title="总文件数"
+            :value="stats.totalFiles"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="总大小" :value="formatFileSize(stats.totalSize)" />
+          <el-statistic
+            title="总大小"
+            :value="formatFileSize(stats.totalSize)"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="公开文件" :value="stats.publicFiles" />
+          <el-statistic
+            title="公开文件"
+            :value="stats.publicFiles"
+          />
         </el-col>
         <el-col :span="6">
-          <el-statistic title="私有文件" :value="stats.privateFiles" />
+          <el-statistic
+            title="私有文件"
+            :value="stats.privateFiles"
+          />
         </el-col>
       </el-row>
     </div>
 
     <!-- 搜索和筛选 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="文件名">
-          <el-input v-model="searchForm.fileName" placeholder="请输入文件名" clearable />
+          <el-input
+            v-model="searchForm.fileName"
+            placeholder="请输入文件名"
+            clearable
+          />
         </el-form-item>
         <el-form-item label="文件类型">
-          <el-select v-model="searchForm.contentType" placeholder="请选择文件类型" clearable>
-            <el-option label="图片" value="image" />
-            <el-option label="文档" value="document" />
-            <el-option label="视频" value="video" />
-            <el-option label="音频" value="audio" />
-            <el-option label="其他" value="other" />
+          <el-select
+            v-model="searchForm.contentType"
+            placeholder="请选择文件类型"
+            clearable
+          >
+            <el-option
+              label="图片"
+              value="image"
+            />
+            <el-option
+              label="文档"
+              value="document"
+            />
+            <el-option
+              label="视频"
+              value="video"
+            />
+            <el-option
+              label="音频"
+              value="audio"
+            />
+            <el-option
+              label="其他"
+              value="other"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="可见性">
-          <el-select v-model="searchForm.isPublic" placeholder="请选择可见性" clearable>
-            <el-option label="公开" :value="true" />
-            <el-option label="私有" :value="false" />
+          <el-select
+            v-model="searchForm.isPublic"
+            placeholder="请选择可见性"
+            clearable
+          >
+            <el-option
+              label="公开"
+              :value="true"
+            />
+            <el-option
+              label="私有"
+              :value="false"
+            />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 文件列表 -->
     <el-card>
-      <el-table :data="fileList" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="fileName" label="文件名" show-overflow-tooltip />
-        <el-table-column prop="fileSize" label="大小" width="120">
+      <el-table
+        v-loading="loading"
+        :data="fileList"
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          prop="fileName"
+          label="文件名"
+          show-overflow-tooltip
+        />
+        <el-table-column
+          prop="fileSize"
+          label="大小"
+          width="120"
+        >
           <template #default="{ row }">
             {{ formatFileSize(row.fileSize) }}
           </template>
         </el-table-column>
-        <el-table-column prop="contentType" label="类型" width="120">
+        <el-table-column
+          prop="contentType"
+          label="类型"
+          width="120"
+        >
           <template #default="{ row }">
-            <el-tag size="small">{{ getFileType(row.contentType) }}</el-tag>
+            <el-tag size="small">
+              {{ getFileType(row.contentType) }}
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="isPublic" label="可见性" width="100">
+        <el-table-column
+          prop="isPublic"
+          label="可见性"
+          width="100"
+        >
           <template #default="{ row }">
-            <el-tag size="small" :type="row.isPublic ? 'success' : 'info'">
+            <el-tag
+              size="small"
+              :type="row.isPublic ? 'success' : 'info'"
+            >
               {{ row.isPublic ? '公开' : '私有' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="uploaderId" label="上传者" width="120" />
-        <el-table-column prop="createdAt" label="上传时间" width="180">
+        <el-table-column
+          prop="uploaderId"
+          label="上传者"
+          width="120"
+        />
+        <el-table-column
+          prop="createdAt"
+          label="上传时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column
+          label="操作"
+          width="200"
+        >
           <template #default="{ row }">
-            <el-button size="small" @click="handleDownload(row)">下载</el-button>
-            <el-button size="small" @click="handlePreview(row)">预览</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button
+              size="small"
+              @click="handleDownload(row)"
+            >
+              下载
+            </el-button>
+            <el-button
+              size="small"
+              @click="handlePreview(row)"
+            >
+              预览
+            </el-button>
+            <el-button
+              size="small"
+              type="danger"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -103,10 +218,20 @@
     </el-card>
 
     <!-- 文件上传对话框 -->
-    <el-dialog v-model="uploadVisible" title="上传文件" width="600px">
-      <el-form :model="uploadForm" label-width="100px">
+    <el-dialog
+      v-model="uploadVisible"
+      title="上传文件"
+      width="600px"
+    >
+      <el-form
+        :model="uploadForm"
+        label-width="100px"
+      >
         <el-form-item label="文件描述">
-          <el-input v-model="uploadForm.description" placeholder="请输入文件描述（可选）" />
+          <el-input
+            v-model="uploadForm.description"
+            placeholder="请输入文件描述（可选）"
+          />
         </el-form-item>
         <el-form-item label="是否公开">
           <el-switch v-model="uploadForm.isPublic" />
@@ -121,8 +246,12 @@
             :on-change="handleFileChange"
             :limit="1"
           >
-            <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text">拖拽文件到此处或 <em>点击上传</em></div>
+            <el-icon class="el-icon--upload">
+              <upload-filled />
+            </el-icon>
+            <div class="el-upload__text">
+              拖拽文件到此处或 <em>点击上传</em>
+            </div>
             <template #tip>
               <div class="el-upload__tip">
                 请上传不超过 10MB 的文件
@@ -135,7 +264,11 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="uploadVisible = false">取消</el-button>
-          <el-button type="primary" @click="submitUpload" :loading="uploading">
+          <el-button
+            type="primary"
+            :loading="uploading"
+            @click="submitUpload"
+          >
             {{ uploading ? '上传中...' : '上传' }}
           </el-button>
         </span>
@@ -143,37 +276,82 @@
     </el-dialog>
 
     <!-- 文件预览对话框 -->
-    <el-dialog v-model="previewVisible" :title="previewFile?.fileName || '文件预览'" width="70%">
-      <div v-if="previewFile" class="preview-content">
+    <el-dialog
+      v-model="previewVisible"
+      :title="previewFile?.fileName || '文件预览'"
+      width="70%"
+    >
+      <div
+        v-if="previewFile"
+        class="preview-content"
+      >
         <!-- 文本文件预览 -->
-        <div v-if="isText(previewFile.contentType)" class="text-preview">
+        <div
+          v-if="isText(previewFile.contentType)"
+          class="text-preview"
+        >
           <pre>{{ previewContent }}</pre>
         </div>
         <!-- 图片预览 -->
-        <div v-else-if="isImage(previewFile.contentType)" class="image-preview">
-          <img :src="previewContent || ''" alt="预览图片" />
+        <div
+          v-else-if="isImage(previewFile.contentType)"
+          class="image-preview"
+        >
+          <img
+            :src="previewContent || ''"
+            alt="预览图片"
+          >
         </div>
         <!-- 视频预览 -->
-        <div v-else-if="previewFile.contentType?.startsWith('video/')" class="video-preview">
-          <video controls :src="previewContent || ''">您的浏览器不支持视频播放</video>
+        <div
+          v-else-if="previewFile.contentType?.startsWith('video/')"
+          class="video-preview"
+        >
+          <video
+            controls
+            :src="previewContent || ''"
+          >您的浏览器不支持视频播放</video>
         </div>
         <!-- 音频预览 -->
-        <div v-else-if="previewFile.contentType?.startsWith('audio/')" class="audio-preview">
-          <audio controls :src="previewContent || ''">您的浏览器不支持音频播放</audio>
+        <div
+          v-else-if="previewFile.contentType?.startsWith('audio/')"
+          class="audio-preview"
+        >
+          <audio
+            controls
+            :src="previewContent || ''"
+          >您的浏览器不支持音频播放</audio>
         </div>
         <!-- 不支持的文件类型 -->
-        <div v-else class="unsupported-preview">
+        <div
+          v-else
+          class="unsupported-preview"
+        >
           <el-empty description="不支持此文件类型的预览" />
         </div>
         
         <!-- 文件信息 -->
         <div class="file-info">
-          <el-descriptions :column="2" :border="true">
-            <el-descriptions-item label="文件名">{{ previewFile.fileName }}</el-descriptions-item>
-            <el-descriptions-item label="文件大小">{{ formatFileSize(previewFile.fileSize || 0) }}</el-descriptions-item>
-            <el-descriptions-item label="文件类型">{{ previewFile.contentType }}</el-descriptions-item>
-            <el-descriptions-item label="上传时间">{{ formatDate(previewFile.createdAt) }}</el-descriptions-item>
-            <el-descriptions-item label="是否公开" :span="2">
+          <el-descriptions
+            :column="2"
+            :border="true"
+          >
+            <el-descriptions-item label="文件名">
+              {{ previewFile.fileName }}
+            </el-descriptions-item>
+            <el-descriptions-item label="文件大小">
+              {{ formatFileSize(previewFile.fileSize || 0) }}
+            </el-descriptions-item>
+            <el-descriptions-item label="文件类型">
+              {{ previewFile.contentType }}
+            </el-descriptions-item>
+            <el-descriptions-item label="上传时间">
+              {{ formatDate(previewFile.createdAt) }}
+            </el-descriptions-item>
+            <el-descriptions-item
+              label="是否公开"
+              :span="2"
+            >
               <el-tag :type="previewFile.isPublic ? 'success' : 'info'">
                 {{ previewFile.isPublic ? '公开' : '私有' }}
               </el-tag>
@@ -185,7 +363,10 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="previewVisible = false">关闭</el-button>
-          <el-button type="primary" @click="previewFile && handleDownload(previewFile)">下载文件</el-button>
+          <el-button
+            type="primary"
+            @click="previewFile && handleDownload(previewFile)"
+          >下载文件</el-button>
         </span>
       </template>
     </el-dialog>

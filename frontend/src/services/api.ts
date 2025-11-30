@@ -33,6 +33,9 @@ api.interceptors.request.use(
   }
 )
 
+// 用于存储正在刷新token的Promise，避免并发刷新请求
+let refreshingToken = null
+
 // 响应拦截器
 api.interceptors.response.use(
   (response: AxiosResponse) => {
@@ -48,6 +51,8 @@ api.interceptors.response.use(
     return response
   },
   async (error: AxiosError) => {
+    const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean }
+    
     // 处理取消请求错误
     if (axios.isCancel(error)) {
       logger.debug('请求已取消:', error.message)
@@ -65,14 +70,51 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
     
+    // 处理401错误 - 身份验证失败或token过期
     if (error.response.status === 401) {
-      // 清除认证状态
-      tokenManager.clearTokens()
+      // 如果已经尝试过刷新token，则不再重试
+      if (originalRequest._retry) {
+        // 清除认证状态
+        tokenManager.clearTokens()
+        
+        if (!window.location.pathname.includes('/login')) {
+          await ElMessage.warning('登录已过期，请重新登录')
+          const currentPath = encodeURIComponent(window.location.pathname + window.location.search)
+          window.location.href = `/login?redirect=${currentPath}`
+        }
+        return Promise.reject(error)
+      }
       
-      if (!window.location.pathname.includes('/login')) {
-        await ElMessage.warning('登录已过期，请重新登录')
-        const currentPath = encodeURIComponent(window.location.pathname + window.location.search)
-        window.location.href = `/login?redirect=${currentPath}`
+      // 标记当前请求已重试
+      originalRequest._retry = true
+      
+      try {
+        // 如果没有正在进行的刷新请求，发起新的刷新请求
+        if (!refreshingToken) {
+          refreshingToken = tokenManager.refreshToken().finally(() => {
+            refreshingToken = null
+          })
+        }
+        
+        // 等待token刷新完成
+        await refreshingToken
+        
+        // 使用新token重新发送原始请求
+        const authHeader = tokenManager.getAuthHeader()
+        if (originalRequest.headers && authHeader) {
+          Object.assign(originalRequest.headers, authHeader)
+        }
+        
+        return api(originalRequest)
+      } catch (refreshError) {
+        // 刷新token失败，清除存储的令牌和用户信息
+        tokenManager.clearTokens()
+        
+        if (!window.location.pathname.includes('/login')) {
+          await ElMessage.warning('登录已过期，请重新登录')
+          const currentPath = encodeURIComponent(window.location.pathname + window.location.search)
+          window.location.href = `/login?redirect=${currentPath}`
+        }
       }
     } else {
       await handleApiError(error, {

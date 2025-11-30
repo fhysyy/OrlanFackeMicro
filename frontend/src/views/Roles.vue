@@ -2,59 +2,113 @@
   <div class="roles-container">
     <div class="page-header">
       <h2>角色管理</h2>
-      <el-button type="primary" @click="handleCreate">新增角色</el-button>
+      <el-button
+        type="primary"
+        @click="handleCreate"
+      >
+        新增角色
+      </el-button>
     </div>
 
     <!-- 搜索和筛选 -->
     <el-card class="search-card">
-      <el-form :model="searchForm" inline>
+      <el-form
+        :model="searchForm"
+        inline
+      >
         <el-form-item label="角色名称">
-          <el-input v-model="searchForm.name" placeholder="请输入角色名称" clearable />
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入角色名称"
+            clearable
+          />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">搜索</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button
+            type="primary"
+            @click="handleSearch"
+          >
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            重置
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 角色列表 -->
     <el-card>
-      <el-table :data="roleList" v-loading="loading">
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="角色名称" />
-        <el-table-column prop="description" label="角色描述" show-overflow-tooltip />
+      <el-table
+        v-loading="loading"
+        :data="roleList"
+      >
+        <el-table-column
+          prop="id"
+          label="ID"
+          width="80"
+        />
+        <el-table-column
+          prop="name"
+          label="角色名称"
+        />
+        <el-table-column
+          prop="description"
+          label="角色描述"
+          show-overflow-tooltip
+        />
         <el-table-column label="权限数量">
           <template #default="{ row }">
             {{ row.permissions.length }}
           </template>
         </el-table-column>
-        <el-table-column prop="isSystem" label="系统角色">
+        <el-table-column
+          prop="isSystem"
+          label="系统角色"
+        >
           <template #default="{ row }">
-            <el-tag v-if="row.isSystem" type="success">是</el-tag>
-            <el-tag v-else>否</el-tag>
+            <el-tag
+              v-if="row.isSystem"
+              type="success"
+            >
+              是
+            </el-tag>
+            <el-tag v-else>
+              否
+            </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180">
+        <el-table-column
+          prop="createdAt"
+          label="创建时间"
+          width="180"
+        >
           <template #default="{ row }">
             {{ formatDate(row.createdAt) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column
+          label="操作"
+          width="200"
+        >
           <template #default="{ row }">
             <el-button 
               size="small" 
-              @click="handleEdit(row)"
               :disabled="row.isSystem"
               :tooltip="row.isSystem ? '系统角色不可编辑' : ''"
-            >编辑</el-button>
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
             <el-button 
               size="small" 
               type="danger" 
-              @click="handleDelete(row)"
               :disabled="row.isSystem"
               :tooltip="row.isSystem ? '系统角色不可删除' : ''"
-            >删除</el-button>
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -80,16 +134,45 @@
       width="700px"
       @close="handleDialogClose"
     >
-      <el-form ref="roleFormRef" :model="roleForm" :rules="roleRules" label-width="80px">
-        <el-form-item label="角色名称" prop="name">
-          <el-input v-model="roleForm.name" :disabled="roleForm.isSystem" />
-          <el-input v-if="roleForm.isSystem" v-model="roleForm.name" disabled style="display: none;" />
+      <el-form
+        ref="roleFormRef"
+        :model="roleForm"
+        :rules="roleRules"
+        label-width="80px"
+      >
+        <el-form-item
+          label="角色名称"
+          prop="name"
+        >
+          <el-input
+            v-model="roleForm.name"
+            :disabled="roleForm.isSystem"
+          />
+          <el-input
+            v-if="roleForm.isSystem"
+            v-model="roleForm.name"
+            disabled
+            style="display: none;"
+          />
         </el-form-item>
-        <el-form-item label="角色描述" prop="description">
-          <el-input v-model="roleForm.description" type="textarea" :rows="3" />
+        <el-form-item
+          label="角色描述"
+          prop="description"
+        >
+          <el-input
+            v-model="roleForm.description"
+            type="textarea"
+            :rows="3"
+          />
         </el-form-item>
-        <el-form-item label="权限配置" prop="permissions">
-          <div v-if="permissionGroups.length > 0" class="permission-container">
+        <el-form-item
+          label="权限配置"
+          prop="permissions"
+        >
+          <div
+            v-if="permissionGroups.length > 0"
+            class="permission-container"
+          >
             <div 
               v-for="group in permissionGroups" 
               :key="group.id" 
@@ -114,19 +197,24 @@
               </div>
             </div>
           </div>
-          <div v-else class="no-data">
+          <div
+            v-else
+            class="no-data"
+          >
             暂无权限数据
           </div>
         </el-form-item>
       </el-form>
       
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">
+          取消
+        </el-button>
         <el-button 
           type="primary" 
           :loading="dialogLoading" 
-          @click="handleSubmit"
           :disabled="roleForm.isSystem"
+          @click="handleSubmit"
         >
           确定
         </el-button>
