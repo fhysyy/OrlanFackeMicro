@@ -182,6 +182,7 @@
             :key="field.prop || `field-${index}`"
             class="canvas-field-item"
             :class="{ 'active': selectedFieldIndex === index }"
+            @click="editField(index)"
           >
             <div class="field-item-header">
               <div class="field-item-title">
@@ -200,27 +201,27 @@
                 <el-button 
                   size="small" 
                   :disabled="index === 0"
-                  @click="moveField(index, index - 1)"
+                  @click.stop="moveField(index, index - 1)"
                 >
                   <el-icon><ArrowUp /></el-icon>
                 </el-button>
                 <el-button 
                   size="small" 
                   :disabled="index === formConfig.fields.length - 1"
-                  @click="moveField(index, index + 1)"
+                  @click.stop="moveField(index, index + 1)"
                 >
                   <el-icon><ArrowDown /></el-icon>
                 </el-button>
                 <el-button 
                   size="small" 
-                  @click="editField(index)"
+                  @click.stop="editField(index)"
                 >
                   <el-icon><Edit /></el-icon>
                 </el-button>
                 <el-button 
                   size="small" 
                   type="danger" 
-                  @click="deleteField(index)"
+                  @click.stop="deleteField(index)"
                 >
                   <el-icon><Delete /></el-icon>
                 </el-button>
@@ -607,13 +608,13 @@ const selectedField = computed({
     if (selectedFieldIndex.value === -1 || !formConfig.fields[selectedFieldIndex.value]) {
       return {} as FormField
     }
-    // 返回字段的深拷贝，避免直接修改只读对象
-    return JSON.parse(JSON.stringify(formConfig.fields[selectedFieldIndex.value]))
+    // 直接返回原始字段对象的引用，确保Vue响应性系统能够正确追踪变化
+    return formConfig.fields[selectedFieldIndex.value]
   },
   set: (value) => {
     if (selectedFieldIndex.value !== -1) {
-      // 使用深拷贝替换整个字段对象，而不是直接修改属性
-      formConfig.fields.splice(selectedFieldIndex.value, 1, JSON.parse(JSON.stringify(value)))
+      // 使用Object.assign合并属性，而不是替换整个对象，确保Vue响应性系统正常工作
+      Object.assign(formConfig.fields[selectedFieldIndex.value], value)
     }
   }
 })

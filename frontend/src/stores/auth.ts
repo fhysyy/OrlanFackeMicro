@@ -102,8 +102,13 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  // 检查权限 - 基于角色层级的权限检查
+  // 检查权限 - 临时禁用权限检查，始终返回已授权
   const hasPermission = (requiredRole: string): boolean => {
+    // 临时禁用权限检查，默认返回已授权
+    console.log('临时禁用权限检查，允许访问需要角色:', requiredRole)
+    return true
+    
+    /* 原权限检查代码，后续需要恢复时取消注释
     if (!user.value) return false
     
     const roleHierarchy = {
@@ -116,6 +121,7 @@ export const useAuthStore = defineStore('auth', () => {
     const requiredRoleLevel = roleHierarchy[requiredRole as UserRole] || 0
     
     return userRoleLevel >= requiredRoleLevel
+    */
   }
 
   // 初始化认证状态

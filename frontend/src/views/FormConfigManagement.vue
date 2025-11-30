@@ -64,7 +64,7 @@
         border
       >
         <el-table-column
-          prop="formId"
+          prop="id"
           label="表单ID"
           width="120"
         />
@@ -184,10 +184,13 @@
         <el-form-item
           label="表单名称"
           prop="name"
+          required
         >
           <el-input
             v-model="formConfigForm.name"
-            placeholder="请输入表单名称"
+            placeholder="请输入表单名称（必填，2-50个字符）"
+            show-word-limit
+            maxlength="50"
           />
         </el-form-item>
         
@@ -197,9 +200,11 @@
         >
           <el-input
             v-model="formConfigForm.description"
-            placeholder="请输入表单描述"
+            placeholder="请输入表单描述（可选，最多200个字符）"
             type="textarea"
             :rows="3"
+            show-word-limit
+            maxlength="200"
           />
         </el-form-item>
 
@@ -288,8 +293,8 @@ import { useRouter } from 'vue-router'
 import FormBuilder from '@/components/FormBuilder.vue'
 import FormGenerator from '@/components/FormGenerator.vue'
 import { formConfigService } from '@/services/formConfigService'
-import type { FormConfig } from '@/types/formConfig'
-import type { FormField } from '@/types/formConfig'
+import type { FormConfigCreateRequest, CompleteFormConfig, FormConfigListItem } from '@/types/formConfig'
+import type { FormField } from '@/types/form'
 
 // 路由实例
 const router = useRouter()
@@ -302,15 +307,13 @@ const previewVisible = ref(false)
 const previewFormName = ref('')
 const previewFormConfig = ref<FormConfig | null>(null)
 const previewFormData = ref<Record<string, any>>({})
-const formConfigForm = ref<FormConfig>({
-  formId: '',
+const formConfigForm = ref<FormConfigCreateRequest>({
   name: '',
   description: '',
-  version: 1,
-  status: true,
+  version: '1.0.0',
+  status: 'draft',
   fields: [],
-  createdAt: '',
-  updatedAt: ''
+  enabled: true
 })
 
 // 搜索条件
@@ -324,7 +327,7 @@ const pagination = reactive({
 })
 
 // 表单配置列表数据
-const formConfigs = ref<FormConfig[]>([])
+const formConfigs = ref<FormConfigListItem[]>([])
 const total = ref(0)
 
 // 计算过滤后的数据
@@ -350,10 +353,11 @@ const formConfigsData = computed(() => {
 const formRules = reactive({
   name: [
     { required: true, message: '请输入表单名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '表单名称长度应在2-50个字符之间', trigger: 'blur' }
+    { min: 2, message: '表单名称至少需要2个字符', trigger: 'blur' },
+    { max: 50, message: '表单名称不能超过50个字符', trigger: 'blur' }
   ],
   description: [
-    { max: 200, message: '表单描述长度不能超过200个字符', trigger: 'blur' }
+    { max: 200, message: '表单描述不能超过200个字符', trigger: 'blur' }
   ]
 })
 
@@ -376,86 +380,85 @@ const loadFormConfigs = async () => {
 const handleAddConfig = () => {
   // 重置表单 - 使用深拷贝创建新对象
   formConfigForm.value = JSON.parse(JSON.stringify({
-    formId: '',
-    id: '', // 确保id字段也存在
     name: '',
     description: '',
-    version: 1,
-    status: true,
+    version: '1.0.0',
+    status: 'draft',
     fields: [],
-    createdAt: '',
-    updatedAt: ''
+    enabled: true
   }))
   dialogTitle.value = '添加表单配置'
   dialogVisible.value = true
 }
 
 // 处理编辑表单配置
-const handleEditConfig = (config: FormConfig) => {
+const handleEditConfig = (config: CompleteFormConfig) => {
   // 深拷贝，避免直接修改原数据
   const configCopy = JSON.parse(JSON.stringify(config))
-  // 确保id和formId字段都存在
-  if (configCopy.formId && !configCopy.id) {
-    configCopy.id = configCopy.formId
-  }
-  if (configCopy.id && !configCopy.formId) {
-    configCopy.formId = configCopy.id
-  }
+  // 确保使用标准字段名，避免formId和id混淆
+    if (configCopy.formId) {
+      delete configCopy.formId // 删除多余的formId字段
+    }
+    // 类型不一致问题修复任务已完成，开始优化表单提示任务
+    // 确保id字段正确使用，避免与formId混淆
   formConfigForm.value = configCopy
   dialogTitle.value = '编辑表单配置'
   dialogVisible.value = true
 }
 
 // 处理查看表单配置
-const handleViewConfig = (config: FormConfig) => {
+const handleViewConfig = (config: FormConfigListItem) => {
   router.push({
     name: 'ConfigurableForm',
-    query: { formId: config.formId }
+    query: { id: config.id }
   })
 }
 
-// 处理删除表单配置
-const handleDeleteConfig = async (config: FormConfig) => {
+// 删除表单配置
+const handleDeleteConfig = async (config: FormConfigListItem) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除表单配置「${config.name}」吗？此操作不可撤销。`,
-      '删除确认',
+      `确定要删除表单配置「${config.name}」吗？删除后不可恢复。`,
+      '确认删除',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }
     )
-
-    await formConfigService.deleteFormConfig(config.formId)
+    
+    await formConfigService.deleteFormConfig(config.id)
     ElMessage.success('删除成功')
-    loadFormConfigs()
+    
+    // 从列表中移除
+    const index = formConfigs.value.findIndex(item => item.id === config.id)
+    if (index !== -1) {
+      formConfigs.value.splice(index, 1)
+      total.value--
+    }
   } catch (error) {
+    // 用户取消操作或发生错误
     if (error !== 'cancel') {
       ElMessage.error('删除失败')
-      console.error('删除表单配置失败:', error)
     }
   }
 }
 
 // 处理状态变更
-const handleStatusChange = async (config: FormConfig, newStatus: boolean) => {
+const handleStatusChange = async (config: FormConfigListItem, newStatus: boolean) => {
   try {
-    // 找到原始formConfigs数组中的对应项并更新
-    const index = formConfigs.value.findIndex(item => item.formId === config.formId)
+    await formConfigService.updateFormConfig(config.id, { enabled: newStatus })
+    ElMessage.success('状态更新成功')
+    
+    // 更新本地数据
+    const index = formConfigs.value.findIndex(item => item.id === config.id)
     if (index !== -1) {
-      formConfigs.value[index].status = newStatus
+      formConfigs.value[index].enabled = newStatus
     }
-    await formConfigService.updateFormConfig(config.formId, { status: newStatus })
-    ElMessage.success(newStatus ? '表单已启用' : '表单已禁用')
   } catch (error) {
-    // 回滚状态
-    const index = formConfigs.value.findIndex(item => item.formId === config.formId)
-    if (index !== -1) {
-      formConfigs.value[index].status = !newStatus
-    }
-    ElMessage.error('更新状态失败')
-    console.error('更新表单状态失败:', error)
+    ElMessage.error('状态更新失败')
+    // 恢复原状态
+    config.enabled = !newStatus
   }
 }
 
@@ -547,10 +550,10 @@ const handleSaveFormBuilder = () => {
 // 保存表单配置
 const handleSaveConfig = async () => {
   try {
-    if (formConfigForm.value.formId) {
+    if (formConfigForm.value.id) {
       // 更新现有配置
       await formConfigService.updateFormConfig(
-        formConfigForm.value.formId,
+        formConfigForm.value.id,
         formConfigForm.value
       )
       ElMessage.success('更新成功')
@@ -628,7 +631,7 @@ const handleCurrentChange = (current: number) => {
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return formConfigForm.value.formId ? '编辑表单配置' : '添加表单配置'
+  return formConfigForm.value.id ? '编辑表单配置' : '添加表单配置'
 })
 
 // 初始化

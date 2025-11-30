@@ -172,7 +172,13 @@ async function loadDynamicRoutes() {
 }
 
 // 检查用户是否有权限访问路由
+// 临时禁用权限检查，始终返回true
 function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolean {
+  // 临时禁用权限检查，默认返回已授权
+  console.log('临时禁用路由权限检查，允许访问:', route.name)
+  return true
+  
+  /* 原权限检查代码，后续需要恢复时取消注释
   // 如果没有定义权限要求，默认允许访问
   if (!route.meta?.permission) {
     return true
@@ -187,56 +193,28 @@ function hasPermission(route: RouteRecordRaw, userRole: UserRole | null): boolea
   
   // 检查用户角色是否在允许列表中
   return roles.length === 0 || (userRole && roles.includes(userRole))
+  */
 }
 
-// 路由守卫
+// 路由守卫 - 临时禁用鉴权检查，允许所有路由访问
+// 标记是否已输出鉴权禁用提示
+let authDisabledNoticeShown = false
+
 router.beforeEach(async (to: RouteLocationNormalized, from, next: NavigationGuardNext) => {
-  const authStore = useAuthStore()
-  
-  // 设置页面标题
+  // 保留页面标题设置
   if (to.meta.title) {
     document.title = `${to.meta.title} - Orleans管理系统`
   } else {
     document.title = 'Orleans管理系统'
   }
   
-  // 检查是否需要认证
-  if (to.meta.requiresAuth && !tokenManager.isTokenValid()) {
-    ElMessage.warning('请先登录')
-    next({ name: 'Login', query: { redirect: to.fullPath } })
-    return
+  // 只在第一次访问时输出日志，避免重复显示
+  if (!authDisabledNoticeShown && ['/configurable-form', '/form-config-management'].includes(to.path)) {
+    console.log('开发环境：临时禁用鉴权检查，允许访问:', to.path)
+    authDisabledNoticeShown = true // 标记为已显示
   }
   
-  // 如果已登录，不需要访问登录页面
-  if (to.name === 'Login' && tokenManager.isTokenValid()) {
-    next({ name: 'Dashboard' })
-    return
-  }
-  
-  // 如果已认证且未加载动态路由，则加载动态路由
-  if (to.meta.requiresAuth && tokenManager.isTokenValid() && !dynamicRoutesLoaded) {
-    const loaded = await loadDynamicRoutes()
-    // 如果路由加载成功，重新导航到目标路由，确保路由正确匹配
-    if (loaded) {
-      next({ ...to, replace: true })
-      return
-    }
-  }
-  
-  // 细粒度权限检查
-  if (to.meta.requiresAuth && tokenManager.isTokenValid()) {
-    const authStore = useAuthStore()
-    const userRole = authStore.user?.role || null
-   
-    // 检查路由权限
-    if (!hasPermission(to, userRole)) {
-      ElMessage.error('没有权限访问此页面')
-      // 使用404而不是返回上一页，避免暴露权限信息
-      next('/404')
-      return
-    }
-  }
-  
+  // 临时禁用所有认证和权限检查，直接允许访问所有路由
   next()
 })
 

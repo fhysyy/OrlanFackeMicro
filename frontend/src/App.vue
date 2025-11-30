@@ -1,14 +1,13 @@
 <template>
   <div id="app">
-    <Suspense>
-      <router-view />
-    </Suspense>
+    <!-- 移除Suspense组件，直接使用router-view避免实验性功能警告 -->
+    <router-view />
   </div>
 </template>
 
 <script setup lang="ts">
 // 主应用组件
-import { Suspense } from 'vue'
+// 移除Suspense导入
 </script>
 
 <style lang="scss">
