@@ -602,20 +602,32 @@ const validationRuleTypes = [
   { label: '正则表达式', value: 'pattern' }
 ]
 
-// 计算属性
+// 计算属性 - 直接返回原始字段对象引用以确保双向绑定正常工作
 const selectedField = computed({
   get: () => {
-    if (selectedFieldIndex.value === -1 || !formConfig.fields[selectedFieldIndex.value]) {
+    // 添加额外的安全检查，确保在组件完全初始化后再访问
+    if (selectedFieldIndex.value === -1 || !formConfig.fields || selectedFieldIndex.value >= formConfig.fields.length || !formConfig.fields[selectedFieldIndex.value]) {
       return {} as FormField
     }
-    // 直接返回原始字段对象的引用，确保Vue响应性系统能够正确追踪变化
+    // 直接返回原始字段对象引用，确保v-model能够正确更新
     return formConfig.fields[selectedFieldIndex.value]
   },
   set: (value) => {
-    if (selectedFieldIndex.value !== -1) {
-      // 使用Object.assign合并属性，而不是替换整个对象，确保Vue响应性系统正常工作
-      Object.assign(formConfig.fields[selectedFieldIndex.value], value)
+    // 确保所有依赖都已正确初始化
+    if (selectedFieldIndex.value === -1 || !formConfig.fields || selectedFieldIndex.value >= formConfig.fields.length) {
+      return
     }
+    // 使用深度合并确保所有嵌套属性都能被正确更新
+    const deepMerge = (target: any, source: any) => {
+      for (const key in source) {
+        if (typeof source[key] === 'object' && source[key] !== null && key in target) {
+          deepMerge(target[key], source[key])
+        } else {
+          target[key] = source[key]
+        }
+      }
+    }
+    deepMerge(formConfig.fields[selectedFieldIndex.value], value)
   }
 })
 
