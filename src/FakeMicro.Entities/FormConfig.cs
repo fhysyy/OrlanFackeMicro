@@ -17,7 +17,7 @@ namespace FakeMicro.Entities
         /// </summary>
         [SqlSugar.SugarColumn(IsPrimaryKey = true, ColumnName = "id")]
         [Id(0)]
-        public long id { get; set; }
+        public string id { get; set; }
 
         /// <summary>
         /// 表单编码

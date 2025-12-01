@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Entities.Enums;
+using FakeMicro.Interfaces.Models.Results;
 
 namespace FakeMicro.Api.Controllers
 {
@@ -88,7 +89,7 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(tempId);
                 var result = await grain.CreateAsync(request, cancellationToken);
 
-                if (result.Success)
+                if (result.Id!=null)
                 {
                     return CreatedAtAction(nameof(GetFormConfig), new { id = result.Data.Id }, result);
                 }
