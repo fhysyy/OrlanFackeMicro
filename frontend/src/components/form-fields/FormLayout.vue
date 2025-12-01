@@ -22,8 +22,9 @@
           :style="{ minWidth: minColWidth }"
         >
           <slot
-            :name="`item-${index}`"
+            name="item"
             :item="item"
+            :index="index"
           >
             {{ item }}
           </slot>
@@ -43,8 +44,9 @@
         :class="item.className"
       >
         <slot
-          :name="`item-${index}`"
+          name="item"
           :item="item"
+          :index="index"
         >
           {{ item }}
         </slot>
@@ -83,8 +85,9 @@
         :class="item.className"
       >
         <slot
-          :name="`item-${index}`"
+          name="item"
           :item="item"
+          :index="index"
         >
           {{ item }}
         </slot>

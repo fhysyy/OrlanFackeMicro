@@ -61,65 +61,33 @@
         />
       </div>
 
-      <!-- 预览模式：表单渲染器 -->
+      <!-- 预览模式：表单预览组件 -->
       <div
         v-else
         class="preview-mode"
       >
-        <el-card class="preview-card">
-          <template #header>
-            <div class="preview-header">
-              <h3>表单预览</h3>
-              <el-tag type="info">
-                {{ formConfig.value.title || '未命名表单' }}
-              </el-tag>
-            </div>
-          </template>
-
-          <FormGenerator
-            ref="formGeneratorRef"
-            v-model="formData.value"
-            :config="formConfig.value"
-            @submit="handleFormSubmit"
-            @reset="handleFormReset"
-            @field-change="handleFieldChange"
-          />
-        </el-card>
-
-        <!-- 表单数据展示 -->
-        <el-card
-          v-if="Object.keys(formData).length > 0"
-          class="data-card"
-        >
-          <template #header>
-            <h3>表单数据</h3>
-          </template>
-          <el-descriptions
-            :column="1"
-            border
-          >
-            <el-descriptions-item 
-              v-for="(value, key) in formData" 
-              :key="key"
-              :label="getFieldLabel(key)"
-            >
-              <pre>{{ formatValue(value) }}</pre>
-            </el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+        <FormPreview 
+          v-if="formConfig.value"
+          :config="formConfig.value"
+          @submit="handleFormSubmit"
+        />
+        
+        <!-- 空状态提示 -->
+        <el-empty v-else description="暂无表单配置，请先添加表单字段" />
       </div>
     </el-card>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, computed, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Switch, RefreshRight, DocumentCopy, Download } from '@element-plus/icons-vue'
 import type { FormConfig, FormField } from '@/types/form'
 import { FormFieldType, DatabaseDataType } from '@/types/form'
 import FormBuilder from '@/components/FormBuilder.vue'
 import FormGenerator from '@/components/FormGenerator.vue'
+import FormPreview from '@/components/form-parts/FormPreview.vue'
 import { generateFormConfigFromModel } from '@/services/formService'
 
 // 表单模式控制
@@ -286,9 +254,121 @@ const formConfig = ref<FormConfig>({
 // 表单数据
 const formData = ref<Record<string, any>>({})
 
+// 规范化后的表单配置，确保字段属性正确
+const normalizedFormConfig = computed(() => {
+  // 防御性检查，确保formConfig存在
+  if (!formConfig.value) {
+    return {
+      id: 'preview-form',
+      title: '表单预览',
+      description: '',
+      fields: []
+    }
+  }
+  
+  const config = { ...formConfig.value }
+  
+  // 确保fields属性存在
+  if (!config.fields || !Array.isArray(config.fields)) {
+    config.fields = []
+  }
+  
+  // 确保title属性存在
+  if (!config.title) {
+    config.title = config.name || '表单预览'
+  }
+  
+  // 确保description属性存在
+  if (!config.description) {
+    config.description = ''
+  }
+  
+  // 确保其他必要属性存在
+  if (!config.labelPosition) {
+    config.labelPosition = 'right'
+  }
+  
+  if (!config.labelWidth) {
+    config.labelWidth = '120px'
+  }
+  
+  if (!config.layout) {
+    config.layout = 'grid'
+  }
+  
+  config.fields = config.fields.map(field => {
+    // 确保字段有prop属性
+    if (!field.prop && field.name) {
+      return { ...field, prop: field.name }
+    } else if (!field.prop && field.fieldKey) {
+      return { ...field, prop: field.fieldKey }
+    } else if (!field.prop) {
+      return { ...field, prop: `field-${Math.random().toString(36).substr(2, 9)}` }
+    }
+    return field
+  })
+  
+  return config
+})
+
 // 切换编辑/预览模式
 function toggleMode() {
   isEditMode.value = !isEditMode.value
+  
+  // 当切换到预览模式时，初始化表单数据
+  if (!isEditMode.value) {
+    // 使用nextTick确保DOM更新后再初始化数据
+    nextTick(() => {
+      initFormData()
+    })
+  }
+}
+
+// 初始化表单数据
+function initFormData() {
+  // 清空表单数据
+  Object.keys(formData.value).forEach(key => {
+    delete formData.value[key]
+  })
+  
+  // 防御性检查，确保配置存在
+  if (!formConfig.value || !formConfig.value.fields) {
+    return
+  }
+  
+  // 根据表单字段初始化数据
+  formConfig.value.fields.forEach(field => {
+    // 确保字段有prop属性
+    const fieldProp = field.prop || field.name || field.fieldKey || `field-${Math.random().toString(36).substr(2, 9)}`
+    
+    if (fieldProp) {
+      if (field.defaultValue !== undefined && field.defaultValue !== null) {
+        formData.value[fieldProp] = field.defaultValue
+      } else {
+        // 根据字段类型设置默认值
+        switch (field.type) {
+          case FormFieldType.CHECKBOX:
+            formData.value[fieldProp] = []
+            break
+          case FormFieldType.INPUT_NUMBER:
+          case FormFieldType.SLIDER:
+          case FormFieldType.RATE:
+            formData.value[fieldProp] = 0
+            break
+          case FormFieldType.DATE_PICKER:
+          case FormFieldType.DATETIME_PICKER:
+          case FormFieldType.TIME_PICKER:
+            formData.value[fieldProp] = null
+            break
+          case FormFieldType.SWITCH:
+            formData.value[fieldProp] = false
+            break
+          default:
+            formData.value[fieldProp] = ''
+        }
+      }
+    }
+  })
 }
 
 // 重置表单
@@ -329,17 +409,17 @@ async function saveFormConfig() {
   
   saving.value = true
   try {
+    // 使用动态导入，避免同步导入问题
+    const { FormUtils } = await import('@/utils/formUtils')
+    
     // 模拟保存操作
     await new Promise(resolve => setTimeout(resolve, 1000))
     
-    // 生成配置的JSON字符串，处理可能的循环引用
-    const configJson = JSON.stringify(formConfig.value, (key, value) => {
-      // 处理可能导致循环引用的特殊属性
-      if (key === 'fieldValue' && typeof value === 'object' && value !== null) {
-        return { ...value }
-      }
-      return value
-    }, 2)
+    // 规范化表单配置
+    const normalizedConfig = FormUtils.normalizeFormConfig(formConfig.value)
+    
+    // 使用安全序列化处理可能的循环引用
+    const configJson = FormUtils.safeJsonStringify(normalizedConfig, 2)
     
     // 创建下载链接
     const blob = new Blob([configJson], { type: 'application/json' })
@@ -355,34 +435,21 @@ async function saveFormConfig() {
     ElMessage.success('表单配置已保存')
   } catch (error) {
     console.error('保存表单配置失败:', error)
-    // 如果是循环引用错误，尝试使用更安全的方法
-    if (error instanceof Error && error.message.includes('Converting circular structure to JSON')) {
-      try {
-        // 使用深拷贝工具处理循环引用
-        const safeFormConfig = JSON.parse(JSON.stringify(formConfig.value, (key, value) => {
-          if (key === 'fieldValue' || typeof value === 'object' && value !== null) {
-            return { ...value }
-          }
-          return value
-        }))
-        const configJson = JSON.stringify(safeFormConfig, null, 2)
-        
-        const blob = new Blob([configJson], { type: 'application/json' })
-        const url = URL.createObjectURL(blob)
-        const link = document.createElement('a')
-        link.href = url
-        link.download = `${formConfig.value.title || 'form-config'}.json`
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        URL.revokeObjectURL(url)
-        
-        ElMessage.success('表单配置已保存(已处理循环引用)')
-      } catch (innerError) {
-        console.error('使用安全方法保存也失败:', innerError)
-        ElMessage.error('保存表单配置失败(存在循环引用)')
-      }
-    } else {
+    // 降级处理：使用原生JSON方法
+    try {
+      const configJson = JSON.stringify(formConfig.value, null, 2)
+      const blob = new Blob([configJson], { type: 'application/json' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `${formConfig.value.title || 'form-config'}.json`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      ElMessage.success('表单配置已保存（降级模式）')
+    } catch (fallbackError) {
+      console.error('降级处理也失败:', fallbackError)
       ElMessage.error('保存表单配置失败')
     }
   } finally {
@@ -417,29 +484,8 @@ function getFieldLabel(prop: string): string {
   return field?.label || prop
 }
 
-// 检测循环引用的辅助函数
-function hasCircularReference(obj: any, seen = new Set()): boolean {
-  if (obj === null || typeof obj !== 'object') {
-    return false
-  }
-  
-  if (seen.has(obj)) {
-    return true
-  }
-  
-  seen.add(obj)
-  
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      if (hasCircularReference(obj[key], seen)) {
-        return true
-      }
-    }
-  }
-  
-  seen.delete(obj)
-  return false
-}
+// 使用FormUtils工具类，避免重复代码
+// 这些函数已移至 /utils/formUtils.ts 中的 FormUtils 类
 
 // 格式化值显示
 function formatValue(value: any): string {

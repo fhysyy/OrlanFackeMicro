@@ -9,7 +9,7 @@
       :inline="formConfig.layout === 'inline'"
       class="dynamic-form"
     >
-      <template v-if="formConfig.fields">
+      <template v-if="formConfig.fields && formConfig.fields.length > 0">
         <!-- 使用表单布局组件渲染字段 -->
         <FormLayout
           :layout="formConfig.layout || 'grid'"
@@ -22,7 +22,7 @@
           :min-col-width="'100px'"
           :children="visibleFields"
         >
-          <template #item-="{ item, index }">
+          <template #item="{ item, index }">
             <el-form-item
               :label="item.label"
               :prop="item.prop"
@@ -52,6 +52,11 @@
           </template>
         </FormLayout>
       </template>
+
+      <!-- 空状态提示 -->
+      <div v-else class="empty-form">
+        <el-empty description="暂无表单字段" />
+      </div>
 
       <!-- 表单操作按钮 -->
       <el-form-item v-if="showActions">
@@ -97,6 +102,59 @@ import {
   FormFieldTime,
   FormLayout
 } from './form-fields'
+
+// 检测循环引用的辅助函数 - 移到文件开头
+function hasCircularReference(obj: any, seen = new WeakSet()): boolean {
+  if (obj === null || typeof obj !== 'object') {
+    return false
+  }
+  
+  if (seen.has(obj)) {
+    return true
+  }
+  
+  seen.add(obj)
+  
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      if (hasCircularReference(obj[key], seen)) {
+        return true
+      }
+    }
+  }
+  
+  return false
+}
+
+// 安全克隆对象，避免循环引用
+function safeClone(obj: any): any {
+  if (obj === null || typeof obj !== 'object') {
+    return obj
+  }
+  
+  if (hasCircularReference(obj)) {
+    console.warn('检测到循环引用，使用安全克隆...')
+    return JSON.parse(JSON.stringify(obj, (key, value) => {
+      if (typeof value === 'object' && value !== null) {
+        return '[Circular Reference]'
+      }
+      return value
+    }))
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => safeClone(item))
+  }
+  
+  const cloned: Record<string, any> = {}
+  for (const key in obj) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
+      cloned[key] = safeClone(obj[key])
+    }
+  }
+  
+  return cloned
+}
 
 // Props
 const props = defineProps<{
@@ -151,15 +209,39 @@ function getFieldComponent(type: FormFieldType) {
 }
 
 // 表单配置计算属性 - 确保始终有默认值
-const formConfig = computed(() => ({
-  fields: [],
-  labelPosition: 'right',
-  labelWidth: '120px',
-  layout: '',
-  showSubmitButton: false,
-  showResetButton: false,
-  ...props.config
-}))
+const formConfig = computed(() => {
+  // 防御性检查，确保config存在
+  if (!props.config) {
+    return {
+      id: 'default-form',
+      title: '',
+      description: '',
+      fields: [],
+      labelPosition: 'right',
+      labelWidth: '120px',
+      layout: '',
+      showSubmitButton: false,
+      showResetButton: false
+    }
+  }
+  
+  const config = {
+    fields: [],
+    labelPosition: 'right',
+    labelWidth: '120px',
+    layout: '',
+    showSubmitButton: false,
+    showResetButton: false,
+    ...props.config
+  }
+  
+  // 确保fields是数组
+  if (!config.fields || !Array.isArray(config.fields)) {
+    config.fields = []
+  }
+  
+  return config
+})
 
 // 表单规则
 const formRules = computed(() => {
@@ -368,30 +450,6 @@ function handleFileRemove(file: any, fileList: any[]) {
   // 可以在这里添加自定义逻辑
 }
 
-// 检测循环引用的辅助函数
-function hasCircularReference(obj: any, seen = new Set()): boolean {
-  if (obj === null || typeof obj !== 'object') {
-    return false
-  }
-  
-  if (seen.has(obj)) {
-    return true
-  }
-  
-  seen.add(obj)
-  
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      if (hasCircularReference(obj[key], seen)) {
-        return true
-      }
-    }
-  }
-  
-  seen.delete(obj)
-  return false
-}
-
 // 安全克隆字段对象，只保留业务属性
 const safeCloneField = (field: FormField): FormField => {
   // 定义需要保留的业务属性列表
@@ -444,15 +502,9 @@ function handleFieldChange(field: string, value: any) {
   
   // 检查formData是否存在循环引用
   if (hasCircularReference(formData)) {
-    console.warn('检测到循环引用，尝试修复...')
-    // 创建一个不包含循环引用的新对象
-    const safeFormData = JSON.parse(JSON.stringify(formData, (key, value) => {
-      // 处理可能导致循环引用的特殊属性
-      if (key === 'fieldValue' && typeof value === 'object' && value !== null) {
-        return { ...value }
-      }
-      return value
-    }))
+    console.warn('检测到循环引用，使用安全克隆...')
+    // 使用安全克隆方法
+    const safeFormData = safeClone(formData)
     emit('update:modelValue', safeFormData)
   } else {
     emit('update:modelValue', { ...formData })
@@ -551,15 +603,9 @@ watch(
       try {
         // 检查newValue是否存在循环引用
         if (hasCircularReference(newValue)) {
-          console.warn('接收到的modelValue存在循环引用，尝试修复...')
-          // 创建一个不包含循环引用的新对象
-          const safeNewValue = JSON.parse(JSON.stringify(newValue, (key, value) => {
-            // 处理可能导致循环引用的特殊属性
-            if (key === 'fieldValue' && typeof value === 'object' && value !== null) {
-              return { ...value }
-            }
-            return value
-          }))
+          console.warn('接收到的modelValue存在循环引用，使用安全克隆...')
+          // 使用安全克隆方法
+          const safeNewValue = safeClone(newValue)
           Object.assign(formData, safeNewValue)
         } else {
           Object.assign(formData, newValue)
@@ -619,6 +665,11 @@ defineExpose({
 
 .form-item-hidden {
   display: none;
+}
+
+.empty-form {
+  padding: 20px 0;
+  text-align: center;
 }
 
 .radio-group-wrapper,

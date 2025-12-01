@@ -119,10 +119,15 @@
         </template>
         <FormGenerator 
           :config="{
-            fields: formConfig.fields,
-            labelPosition: formConfig.labelPosition,
-            labelWidth: formConfig.labelWidth,
-            layout: formConfig.layout
+            fields: formConfig.fields || [],
+            labelPosition: formConfig.labelPosition || 'right',
+            labelWidth: formConfig.labelWidth || '120px',
+            layout: formConfig.layout || 'grid',
+            gutter: formConfig.gutter || 20,
+            showSubmitButton: true,
+            showResetButton: true,
+            submitButtonText: '提交',
+            resetButtonText: '重置'
           }"
           @submit="handlePreviewSubmit"
         />

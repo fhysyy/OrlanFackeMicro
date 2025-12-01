@@ -264,15 +264,20 @@
     <el-dialog
       v-model="previewVisible"
       :title="`预览: ${previewFormName}`"
-      width="800px"
+      width="90%"
+      top="5vh"
       destroy-on-close
+      class="form-preview-dialog"
     >
-      <div v-if="previewFormConfig">
-        <FormGenerator
+      <div v-if="previewFormConfig" class="preview-content">
+        <FormPreview 
+          v-if="previewFormConfig"
           :config="previewFormConfig"
-          :model="previewFormData"
           @submit="handlePreviewSubmit"
         />
+        
+        <!-- 空状态提示 -->
+        <el-empty v-else description="暂无表单配置" />
       </div>
 
       <template #footer>
@@ -287,11 +292,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
 import FormBuilder from '@/components/FormBuilder.vue'
 import FormGenerator from '@/components/FormGenerator.vue'
+import FormPreview from '@/components/form-parts/FormPreview.vue'
 import { formConfigService } from '@/services/formConfigService'
 import type { FormConfigCreateRequest, CompleteFormConfig, FormConfigListItem } from '@/types/formConfig'
 import type { FormField } from '@/types/form'
@@ -393,17 +399,28 @@ const handleAddConfig = () => {
 
 // 处理编辑表单配置
 const handleEditConfig = (config: CompleteFormConfig) => {
-  // 深拷贝，避免直接修改原数据
-  const configCopy = JSON.parse(JSON.stringify(config))
-  // 确保使用标准字段名，避免formId和id混淆
-    if (configCopy.formId) {
-      delete configCopy.formId // 删除多余的formId字段
+  // 使用FormUtils安全深拷贝，避免直接修改原数据
+  import('@/utils/formUtils').then(({ FormUtils }) => {
+    const configCopy = FormUtils.safeDeepClone(config)
+    
+    // 确保id字段和formId字段一致
+    if (configCopy.formId && !configCopy.id) {
+      configCopy.id = configCopy.formId
+    } else if (configCopy.id && !configCopy.formId) {
+      configCopy.formId = configCopy.id
     }
-    // 类型不一致问题修复任务已完成，开始优化表单提示任务
-    // 确保id字段正确使用，避免与formId混淆
-  formConfigForm.value = configCopy
-  dialogTitle.value = '编辑表单配置'
-  dialogVisible.value = true
+    
+    formConfigForm.value = configCopy
+    dialogTitle.value = '编辑表单配置'
+    dialogVisible.value = true
+  }).catch(error => {
+    console.error('导入FormUtils失败:', error)
+    // 降级处理：使用原生JSON方法
+    const configCopy = JSON.parse(JSON.stringify(config))
+    formConfigForm.value = configCopy
+    dialogTitle.value = '编辑表单配置'
+    dialogVisible.value = true
+  })
 }
 
 // 处理查看表单配置
@@ -462,79 +479,38 @@ const handleStatusChange = async (config: FormConfigListItem, newStatus: boolean
   }
 }
 
-// 检测循环引用的辅助函数
-function hasCircularReference(obj: any, seen = new Set()): boolean {
-  if (obj === null || typeof obj !== 'object') {
-    return false
-  }
-  
-  if (seen.has(obj)) {
-    return true
-  }
-  
-  seen.add(obj)
-  
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      if (hasCircularReference(obj[key], seen)) {
-        return true
-      }
-    }
-  }
-  
-  seen.delete(obj)
-  return false
-}
-
-// 安全地复制对象，避免循环引用
-function safeClone(obj: any): any {
-  if (obj === null || typeof obj !== 'object') {
-    return obj
-  }
-  
-  // 如果是数组
-  if (Array.isArray(obj)) {
-    const clonedArray: any[] = []
-    for (let i = 0; i < obj.length; i++) {
-      clonedArray[i] = safeClone(obj[i])
-    }
-    return clonedArray
-  }
-  
-  // 如果是对象
-  const clonedObj: Record<string, any> = {}
-  for (const key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      // 跳过可能导致循环引用的属性
-      if (key === 'fieldValue' && typeof obj[key] === 'object') {
-        continue
-      }
-      clonedObj[key] = safeClone(obj[key])
-    }
-  }
-  return clonedObj
-}
+// 导入表单工具，避免重复代码
+// 这些函数已移至 /utils/formUtils.ts 中的 FormUtils 类
 
 // 打开表单构建器
 const openFormBuilder = () => {
   try {
-    // 检测并处理循环引用
-    if (hasCircularReference(formConfigForm.value)) {
-      console.warn('检测到循环引用，尝试修复...')
-      // 创建一个不包含循环引用的安全副本
-      const safeForm = safeClone(formConfigForm.value)
-      formConfigForm.value = safeForm
-    }
-    
-    // 确保formConfigForm有正确的id和formId字段
-    if (!formConfigForm.value.formId) {
-      formConfigForm.value.formId = formConfigForm.value.id || ''
-    }
-    if (!formConfigForm.value.id) {
-      formConfigForm.value.id = formConfigForm.value.formId || ''
-    }
-    
-    formBuilderVisible.value = true
+    // 使用动态导入，避免同步导入问题
+    import('@/utils/formUtils').then(({ FormUtils }) => {
+      // 检测并处理循环引用
+      if (FormUtils.hasCircularReference(formConfigForm.value)) {
+        console.warn('检测到循环引用，使用安全克隆...')
+        const safeForm = FormUtils.safeDeepClone(formConfigForm.value)
+        formConfigForm.value = safeForm
+      }
+      
+      // 确保formConfigForm有正确的id和formId字段
+      if (!formConfigForm.value.formId) {
+        formConfigForm.value.formId = formConfigForm.value.id || ''
+      }
+      if (!formConfigForm.value.id) {
+        formConfigForm.value.id = formConfigForm.value.formId || ''
+      }
+      
+      // 规范化表单配置
+      formConfigForm.value = FormUtils.normalizeFormConfig(formConfigForm.value)
+      
+      formBuilderVisible.value = true
+    }).catch(error => {
+      console.error('导入FormUtils失败，使用降级方案:', error)
+      // 降级处理：不进行特殊处理，直接打开表单构建器
+      formBuilderVisible.value = true
+    })
   } catch (error) {
     console.error('打开表单构建器时出错:', error)
     ElMessage.error('打开表单构建器失败，请检查表单配置是否正确')
@@ -571,34 +547,80 @@ const handleSaveConfig = async () => {
 }
 
 // 预览表单
-const handlePreviewForm = (config: FormConfig) => {
-  previewFormName.value = config.name
-  previewFormConfig.value = config
-  previewFormData.value = {}
-  // 初始化表单数据
-  config.fields.forEach(field => {
-    if (field.defaultValue !== undefined && field.defaultValue !== null) {
-      previewFormData.value[field.fieldKey] = field.defaultValue
-    } else {
-      // 根据字段类型设置默认值
-      switch (field.type) {
-      case 'checkbox':
-        previewFormData.value[field.fieldKey] = []
-        break
-      case 'number':
-        previewFormData.value[field.fieldKey] = 0
-        break
-      case 'date':
-      case 'datetime':
-      case 'time':
-        previewFormData.value[field.fieldKey] = null
-        break
-      default:
-        previewFormData.value[field.fieldKey] = ''
-      }
+const handlePreviewForm = async (config: FormConfig) => {
+  previewFormName.value = config.name || config.title || '表单预览'
+  
+  // 防御性检查，确保配置存在
+  if (!config) {
+    ElMessage.error('表单配置不存在')
+    return
+  }
+  
+  try {
+    // 确保每个字段都有prop属性
+    const normalizedConfig = {
+      ...config,
+      fields: config.fields?.map(field => {
+        // 确保字段有prop属性
+        if (!field.prop && field.name) {
+          return { ...field, prop: field.name }
+        } else if (!field.prop && field.fieldKey) {
+          return { ...field, prop: field.fieldKey }
+        } else if (!field.prop) {
+          return { ...field, prop: `field-${Math.random().toString(36).substr(2, 9)}` }
+        }
+        
+        // 确保字段有type属性
+        if (!field.type) {
+          return { ...field, type: FormFieldType.INPUT }
+        }
+        
+        return field
+      }) || []
     }
-  })
-  previewVisible.value = true
+    
+    previewFormConfig.value = normalizedConfig
+    previewFormData.value = {}
+    
+    // 初始化表单数据
+    normalizedConfig.fields?.forEach(field => {
+      if (field.prop) {
+        if (field.defaultValue !== undefined && field.defaultValue !== null) {
+          previewFormData.value[field.prop] = field.defaultValue
+        } else {
+          // 根据字段类型设置默认值
+          switch (field.type) {
+            case FormFieldType.CHECKBOX:
+              previewFormData.value[field.prop] = []
+              break
+            case FormFieldType.INPUT_NUMBER:
+            case FormFieldType.SLIDER:
+            case FormFieldType.RATE:
+              previewFormData.value[field.prop] = 0
+              break
+            case FormFieldType.DATE_PICKER:
+            case FormFieldType.DATETIME_PICKER:
+            case FormFieldType.TIME_PICKER:
+              previewFormData.value[field.prop] = null
+              break
+            case FormFieldType.SWITCH:
+              previewFormData.value[field.prop] = false
+              break
+            default:
+              previewFormData.value[field.prop] = ''
+          }
+        }
+      }
+    })
+    
+    // 使用nextTick确保DOM更新后再显示预览
+    nextTick(() => {
+      previewVisible.value = true
+    })
+  } catch (error) {
+    console.error('处理表单预览失败:', error)
+    ElMessage.error('表单预览处理失败')
+  }
 }
 
 // 预览表单提交
@@ -666,5 +688,17 @@ onMounted(() => {
 .dialog-footer {
   display: flex;
   justify-content: flex-end;
+}
+
+/* 表单预览对话框样式 */
+:deep(.form-preview-dialog) {
+  .el-dialog__body {
+    padding: 10px;
+  }
+  
+  .preview-content {
+    height: 70vh;
+    min-height: 400px;
+  }
 }
 </style>

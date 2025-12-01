@@ -131,6 +131,8 @@ export interface FormConfigListItem extends FormConfigMetadata {
   fieldCount: number;
   // 分组数量
   groupCount?: number;
+  // 状态（布尔值，与enabled字段保持一致）
+  status: boolean;
 }
 
 /**
@@ -159,6 +161,8 @@ export interface FormConfigListApiResponse {
  */
 export interface FormConfigCreateRequest extends Omit<CompleteFormConfig, 'id' | 'createdAt' | 'updatedAt'> {
   // 表单配置创建请求
+  // 确保与CompleteFormConfig兼容
+  formId?: string; // 兼容旧版本中的formId字段
 }
 
 /**
