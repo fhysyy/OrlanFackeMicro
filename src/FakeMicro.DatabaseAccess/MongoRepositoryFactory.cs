@@ -1,0 +1,98 @@
+using System;
+using System.Threading;
+using FakeMicro.DatabaseAccess.Interfaces;
+using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
+
+namespace FakeMicro.DatabaseAccess;
+
+/// <summary>
+/// MongoDB仓储工厂
+/// 用于创建MongoDB仓储实例
+/// </summary>
+public class MongoRepositoryFactory : IMongoRepositoryFactory
+{
+    private readonly IMongoDatabase _database;
+    private readonly ILoggerFactory _loggerFactory;
+
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="database">MongoDB数据库</param>
+    /// <param name="loggerFactory">日志工厂</param>
+    public MongoRepositoryFactory(IMongoDatabase database, ILoggerFactory loggerFactory)
+    {
+        _database = database ?? throw new ArgumentNullException(nameof(database));
+        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（实现IMongoRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    public IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>() where TEntity : class
+    {
+        return CreateRepository<TEntity, TKey>(null);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（带连接字符串名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>(string? connectionStringName = null) where TEntity : class
+    {
+        var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
+        return new MongoRepository<TEntity, TKey>(_database, logger);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（异步，实现IMongoRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>() where TEntity : class
+    {
+        return CreateRepositoryAsync<TEntity, TKey>(null, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（异步，带连接字符串名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(string? connectionStringName = null, CancellationToken cancellationToken = default) where TEntity : class
+    {
+        return Task.FromResult(CreateRepository<TEntity, TKey>(connectionStringName));
+    }
+
+    /// <summary>
+    /// 创建通用仓储实例（显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>通用仓储实例</returns>
+    IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>() where TEntity : class
+    {
+        return CreateRepository<TEntity, TKey>();
+    }
+
+    /// <summary>
+    /// 创建通用仓储实例（异步，显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>通用仓储实例</returns>
+    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>() where TEntity : class
+    {
+        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepository<TEntity, TKey>());
+    }
+}

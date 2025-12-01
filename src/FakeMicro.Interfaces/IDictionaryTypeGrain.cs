@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
+using FakeMicro.Utilities;
 using Orleans;
 namespace FakeMicro.Interfaces
 {
@@ -58,6 +59,6 @@ namespace FakeMicro.Interfaces
         /// <param name="keyword">关键字</param>
         /// <param name="isEnabled">是否启用</param>
         /// <returns>分页结果</returns>
-        Task<IPaginatedResult<DictionaryType>> GetDictionaryTypesAsync(int page, int pageSize, string? keyword = null, bool? isEnabled = null);
+        Task<PaginatedResult<DictionaryType>> GetDictionaryTypesAsync(int page, int pageSize, string? keyword = null, bool? isEnabled = null);
     }
 }

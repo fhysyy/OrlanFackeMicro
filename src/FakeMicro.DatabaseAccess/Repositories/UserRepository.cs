@@ -208,7 +208,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             }
         }
 
-        public async Task AddAsync(User user, CancellationToken cancellationToken = default)
+        public new async Task AddAsync(User user, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             try
@@ -238,7 +238,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             }
         }
 
-        public  async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
+        public new async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             try
@@ -275,7 +275,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             }
         }
 
-        public  async Task DeleteAsync(User user, CancellationToken cancellationToken = default)
+        public new async Task DeleteAsync(User user, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             try

@@ -24,7 +24,11 @@ namespace FakeMicro.DatabaseAccess
         /// SQL Server数据库
         /// </summary>
         SQLServer,
-        
+        /// <summary>
+        /// MongoDB数据库
+        /// </summary>
+        MongoDB,
+
         /// <summary>
         /// SQLite数据库
         /// </summary>
