@@ -249,13 +249,8 @@ namespace FakeMicro.Grains
                     return true;
                 }
 
-                // 尝试将 excludeId 转换为 long 类型
-                if (long.TryParse(excludeId, out long excludeLongId))
-                {
-                    return entity.id != excludeLongId;
-                }
-
-                return true;
+                // 比较字符串类型的 ID
+                return entity.id.ToString() != excludeId;
             }
             catch (Exception ex)
             {

@@ -1,40 +1,37 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using FakeMicro.Entities;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using System.Threading;
-using System.Linq;
-using FakeMicro.DatabaseAccess;
-using FakeMicro.DatabaseAccess.Interfaces;
 using System;
-using System.Linq.Expressions;
-using MongoDB.Bson;
+using Orleans;
+using FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.Api.Controllers
 {
     /// <summary>
     /// 表单配置管理控制器（MongoDB版本）
-    /// 使用MongoDB进行数据存储
+    /// 使用Orleans Grain进行数据访问
     /// </summary>
     [ApiController]
     [Route("api/[controller]")]
     public class FormConfigMongoController : ControllerBase
     {
-        private readonly IMongoRepository<FormConfig, string> _formConfigRepository;
+        private readonly IClusterClient _clusterClient;
         private readonly ILogger<FormConfigMongoController> _logger;
 
         /// <summary>
         /// 构造函数
         /// </summary>
-        /// <param name="formConfigRepository">表单配置MongoDB仓储</param>
+        /// <param name="clusterClient">Orleans集群客户端</param>
         /// <param name="logger">日志记录器</param>
         public FormConfigMongoController(
-            IMongoRepository<FormConfig, string> formConfigRepository,
+            IClusterClient clusterClient,
             ILogger<FormConfigMongoController> logger)
         {
-            _formConfigRepository = formConfigRepository;
+            _clusterClient = clusterClient;
             _logger = logger;
         }
 
@@ -50,7 +47,8 @@ namespace FakeMicro.Api.Controllers
             try
             {
                 _logger.LogInformation("正在获取表单配置，ID: {Id}", id);
-                var formConfig = await _formConfigRepository.GetByIdAsync(id, cancellationToken);
+                var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
+                var formConfig = await grain.GetAsync(cancellationToken);
                 
                 if (formConfig == null)
                 {
@@ -58,7 +56,7 @@ namespace FakeMicro.Api.Controllers
                     return NotFound($"表单配置不存在，ID: {id}");
                 }
                 
-                _logger.LogInformation("成功获取表单配置，ID: {Id}, 编码: {Code}", id, formConfig.code);
+                _logger.LogInformation("成功获取表单配置，ID: {Id}, 编码: {Code}", id, formConfig.Code);
                 return Ok(formConfig);
             }
             catch (Exception ex)
@@ -71,47 +69,31 @@ namespace FakeMicro.Api.Controllers
         /// <summary>
         /// 创建表单配置
         /// </summary>
-        /// <param name="formConfig">表单配置信息</param>
+        /// <param name="formConfigDto">表单配置信息</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>创建结果</returns>
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] FormConfig formConfig, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Create([FromBody] FormConfigCreateDto formConfigDto, CancellationToken cancellationToken = default)
         {
             try
             {
                 // 验证输入
-                if (formConfig == null)
+                if (formConfigDto == null)
                 {
                     return BadRequest("表单配置信息不能为空");
                 }
 
-                if (string.IsNullOrWhiteSpace(formConfig.code))
+                if (string.IsNullOrWhiteSpace(formConfigDto.Code))
                 {
                     return BadRequest("表单编码不能为空");
                 }
 
-                // 检查编码是否已存在
-                var exists = await _formConfigRepository.ExistsAsync(f => f.code == formConfig.code, cancellationToken);
-                if (exists)
-                {
-                    return Conflict($"表单编码已存在: {formConfig.code}");
-                }
+                _logger.LogInformation("正在创建表单配置，编码: {Code}", formConfigDto.Code);
+                var grain = _clusterClient.GetGrain<IFormConfigGrain>(Guid.NewGuid().ToString());
+                var result = await grain.CreateAsync(formConfigDto, cancellationToken);
+                _logger.LogInformation("表单配置创建成功，ID: {Id}, 编码: {Code}", result.Id, result.Code);
 
-                // 设置默认值
-                if (string.IsNullOrEmpty(formConfig.id))
-                {
-                    formConfig.id = ObjectId.GenerateNewId().ToString();
-                }
-                
-                formConfig.created_at = DateTime.UtcNow;
-                formConfig.updated_at = DateTime.UtcNow;
-                formConfig.is_deleted = false;
-
-                _logger.LogInformation("正在创建表单配置，编码: {Code}", formConfig.code);
-                await _formConfigRepository.AddAsync(formConfig, cancellationToken);
-                _logger.LogInformation("表单配置创建成功，ID: {Id}, 编码: {Code}", formConfig.id, formConfig.code);
-
-                return CreatedAtAction(nameof(GetById), new { id = formConfig.id }, formConfig);
+                return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
             }
             catch (Exception ex)
             {
@@ -124,53 +106,31 @@ namespace FakeMicro.Api.Controllers
         /// 更新表单配置
         /// </summary>
         /// <param name="id">配置ID</param>
-        /// <param name="formConfig">表单配置信息</param>
+        /// <param name="formConfigDto">表单配置信息</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>更新结果</returns>
         [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] FormConfig formConfig, CancellationToken cancellationToken = default)
+        public async Task<IActionResult> Update(string id, [FromBody] FormConfigUpdateDto formConfigDto, CancellationToken cancellationToken = default)
         {
             try
             {
                 // 验证输入
-                if (formConfig == null)
+                if (formConfigDto == null)
                 {
                     return BadRequest("表单配置信息不能为空");
                 }
 
-                if (string.IsNullOrWhiteSpace(formConfig.code))
+                if (string.IsNullOrWhiteSpace(formConfigDto.Code))
                 {
                     return BadRequest("表单编码不能为空");
                 }
 
-                // 检查配置是否存在
-                var existingConfig = await _formConfigRepository.GetByIdAsync(id, cancellationToken);
-                if (existingConfig == null)
-                {
-                    return NotFound($"表单配置不存在，ID: {id}");
-                }
+                _logger.LogInformation("正在更新表单配置，ID: {Id}, 编码: {Code}", id, formConfigDto.Code);
+                var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
+                var result = await grain.UpdateAsync(formConfigDto, cancellationToken);
+                _logger.LogInformation("表单配置更新成功，ID: {Id}, 编码: {Code}", id, result.Code);
 
-                // 检查编码是否被其他配置使用
-                if (existingConfig.code != formConfig.code)
-                {
-                    var codeExists = await _formConfigRepository.ExistsAsync(f => f.code == formConfig.code && f.id != id, cancellationToken);
-                    if (codeExists)
-                    {
-                        return Conflict($"表单编码已存在: {formConfig.code}");
-                    }
-                }
-
-                // 更新配置
-               // formConfig.id = id;
-                formConfig.created_at = existingConfig.created_at;
-                formConfig.updated_at = DateTime.UtcNow;
-                formConfig.is_deleted = existingConfig.is_deleted;
-
-                _logger.LogInformation("正在更新表单配置，ID: {Id}, 编码: {Code}", id, formConfig.code);
-                await _formConfigRepository.UpdateAsync(formConfig, cancellationToken);
-                _logger.LogInformation("表单配置更新成功，ID: {Id}, 编码: {Code}", id, formConfig.code);
-
-                return Ok(formConfig);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -190,22 +150,12 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                // 检查配置是否存在
-                var formConfig = await _formConfigRepository.GetByIdAsync(id, cancellationToken);
-                if (formConfig == null)
-                {
-                    return NotFound($"表单配置不存在，ID: {id}");
-                }
+                _logger.LogInformation("正在删除表单配置，ID: {Id}", id);
+                var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
+                var result = await grain.DeleteAsync(cancellationToken);
+                _logger.LogInformation("表单配置删除成功，ID: {Id}", id);
 
-                // 软删除
-                formConfig.is_deleted = true;
-                formConfig.updated_at = DateTime.UtcNow;
-
-                _logger.LogInformation("正在删除表单配置，ID: {Id}, 编码: {Code}", id, formConfig.code);
-                await _formConfigRepository.UpdateAsync(formConfig, cancellationToken);
-                _logger.LogInformation("表单配置删除成功，ID: {Id}, 编码: {Code}", id, formConfig.code);
-
-                return Ok(new { message = "表单配置删除成功" });
+                return Ok(new { message = "表单配置删除成功", success = result });
             }
             catch (Exception ex)
             {
@@ -229,28 +179,16 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                // 构建查询条件
-                var predicate = PredicateBuilder.True<FormConfig>();
-                predicate = predicate.And(f => !f.is_deleted); // 排除已删除的记录
-
-                if (!string.IsNullOrEmpty(code))
-                {
-                    predicate = predicate.And(f => f.code.Contains(code));
-                }
-
-                if (!string.IsNullOrEmpty(name))
-                {
-                    predicate = predicate.And(f => f.name.Contains(name));
-                }
-
                 _logger.LogInformation("正在分页查询表单配置，页码: {PageNumber}, 每页大小: {PageSize}", pageNumber, pageSize);
-                var result = await _formConfigRepository.GetPagedByConditionAsync(
-                    predicate,
-                    pageNumber,
-                    pageSize,
-                    f => f.created_at,
-                    true, // 按创建时间倒序
-                    cancellationToken);
+                var service = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
+                var query = new FormConfigQueryDto
+                {
+                    PageIndex = pageNumber,
+                    PageSize = pageSize,
+                    Code = code,
+                    Name = name
+                };
+                var result = await service.GetFormConfigsAsync(query, cancellationToken);
 
                 _logger.LogInformation("分页查询成功，总记录数: {TotalCount}, 页码: {PageNumber}", result.TotalCount, pageNumber);
                 return Ok(result);
@@ -273,11 +211,10 @@ namespace FakeMicro.Api.Controllers
             try
             {
                 _logger.LogInformation("正在获取所有表单配置");
-                var formConfigs = await _formConfigRepository.GetByConditionAsync(
-                    f => !f.is_deleted, // 排除已删除的记录
-                    cancellationToken);
+                var service = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
+                var formConfigs = await service.GetAllFormConfigsAsync(cancellationToken: cancellationToken);
 
-                _logger.LogInformation("成功获取所有表单配置，数量: {Count}", formConfigs.Count());
+                _logger.LogInformation("成功获取所有表单配置，数量: {Count}", formConfigs.Count);
                 return Ok(formConfigs);
             }
             catch (Exception ex)
@@ -299,11 +236,8 @@ namespace FakeMicro.Api.Controllers
             try
             {
                 _logger.LogInformation("正在根据编码查询表单配置，编码: {Code}", code);
-                var formConfigs = await _formConfigRepository.GetByConditionAsync(
-                    f => !f.is_deleted && f.code == code,
-                    cancellationToken);
-                
-                var formConfig = formConfigs.FirstOrDefault();
+                var service = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
+                var formConfig = await service.GetByCodeAsync(code, cancellationToken);
                 
                 if (formConfig == null)
                 {
@@ -311,7 +245,7 @@ namespace FakeMicro.Api.Controllers
                     return NotFound($"表单配置不存在，编码: {code}");
                 }
                 
-                _logger.LogInformation("成功获取表单配置，ID: {Id}, 编码: {Code}", formConfig.id, formConfig.code);
+                _logger.LogInformation("成功获取表单配置，ID: {Id}, 编码: {Code}", formConfig.Id, formConfig.Code);
                 return Ok(formConfig);
             }
             catch (Exception ex)
@@ -319,31 +253,6 @@ namespace FakeMicro.Api.Controllers
                 _logger.LogError(ex, "根据编码查询表单配置失败，编码: {Code}", code);
                 return StatusCode(500, "根据编码查询表单配置失败: " + ex.Message);
             }
-        }
-    }
-
-    /// <summary>
-    /// 表达式构建辅助类
-    /// </summary>
-    public static class PredicateBuilder
-    {
-        public static Expression<Func<T, bool>> True<T>() { return f => true; }
-        public static Expression<Func<T, bool>> False<T>() { return f => false; }
-
-        public static Expression<Func<T, bool>> Or<T>(this Expression<Func<T, bool>> expr1,
-                                                            Expression<Func<T, bool>> expr2)
-        {
-            var invokedExpr = Expression.Invoke(expr2, expr1.Parameters.Cast<Expression>());
-            return Expression.Lambda<Func<T, bool>>(
-                  Expression.OrElse(expr1.Body, invokedExpr), expr1.Parameters);
-        }
-
-        public static Expression<Func<T, bool>> And<T>(this Expression<Func<T, bool>> expr1,
-                                                             Expression<Func<T, bool>> expr2)
-        {
-            var invokedExpr = Expression.Invoke(expr2, expr1.Parameters.Cast<Expression>());
-            return Expression.Lambda<Func<T, bool>>(
-                  Expression.AndAlso(expr1.Body, invokedExpr), expr1.Parameters);
         }
     }
 }

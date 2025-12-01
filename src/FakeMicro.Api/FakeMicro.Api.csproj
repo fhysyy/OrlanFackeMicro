@@ -46,7 +46,6 @@
     <Compile Include="Controllers\FakeNewsController.cs" />
     <Compile Include="Controllers\FakeStudentController.cs" />
     <Compile Include="Controllers\FilesController.cs" />
-    <Compile Include="Controllers\FormConfigController.cs" />
     <Compile Include="Controllers\FormConfigMongoController.cs" />
     <Compile Include="Controllers\HangfireJobsController.cs" />
     <Compile Include="Controllers\HealthController.cs" />

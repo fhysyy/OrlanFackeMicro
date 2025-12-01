@@ -8,7 +8,6 @@ using System.Threading.Tasks;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Entities.Enums;
-using FakeMicro.Interfaces.Models.Results;
 
 namespace FakeMicro.Api.Controllers
 {
@@ -69,7 +68,7 @@ namespace FakeMicro.Api.Controllers
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>创建结果</returns>
         [HttpPost]
-        public async Task<ActionResult<BaseResult<FormConfigDto>>> CreateFormConfig([FromBody] FormConfigCreateDto request, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<FormConfigDto>> CreateFormConfig([FromBody] FormConfigCreateDto request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -89,12 +88,12 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(tempId);
                 var result = await grain.CreateAsync(request, cancellationToken);
 
-                if (result.Id!=null)
-                {
-                    return CreatedAtAction(nameof(GetFormConfig), new { id = result.Data.Id }, result);
-                }
-
-                return BadRequest(result);
+                return CreatedAtAction(nameof(GetFormConfig), new { id = result.id }, result);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "创建表单配置参数错误: {Message}", ex.Message);
+                return BadRequest(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -111,7 +110,7 @@ namespace FakeMicro.Api.Controllers
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>更新结果</returns>
         [HttpPut("{id}")]
-        public async Task<ActionResult<BaseResult<FormConfigDto>>> UpdateFormConfig(string id, [FromBody] FormConfigUpdateDto request, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<FormConfigDto>> UpdateFormConfig(string id, [FromBody] FormConfigUpdateDto request, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -134,17 +133,16 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
                 var result = await grain.UpdateAsync(request, cancellationToken);
 
-                if (result.Success)
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "更新表单配置参数错误: {Message}", ex.Message);
+                if (ex.Message.Contains("不存在"))
                 {
-                    return Ok(result);
+                    return NotFound(new { Message = ex.Message });
                 }
-
-                if (result.Message.Contains("不存在"))
-                {
-                    return NotFound(result);
-                }
-
-                return BadRequest(result);
+                return BadRequest(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -160,7 +158,7 @@ namespace FakeMicro.Api.Controllers
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>删除结果</returns>
         [HttpDelete("{id}")]
-        public async Task<ActionResult<BaseResult<bool>>> DeleteFormConfig(string id, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<bool>> DeleteFormConfig(string id, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -172,12 +170,7 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
                 var result = await grain.DeleteAsync(cancellationToken);
 
-                if (result.Success)
-                {
-                    return Ok(result);
-                }
-
-                return BadRequest(result);
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -194,7 +187,7 @@ namespace FakeMicro.Api.Controllers
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>更新结果</returns>
         [HttpPut("{id}/status")]
-        public async Task<ActionResult<BaseResult<FormConfigDto>>> UpdateFormConfigStatus(string id, [FromBody] FormConfigStatus status, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<FormConfigDto>> UpdateFormConfigStatus(string id, [FromBody] FormConfigStatus status, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -206,17 +199,16 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(id);
                 var result = await grain.UpdateStatusAsync(status, cancellationToken);
 
-                if (result.Success)
+                return Ok(result);
+            }
+            catch (ArgumentException ex)
+            {
+                _logger.LogWarning(ex, "更新表单配置状态参数错误: {Message}", ex.Message);
+                if (ex.Message.Contains("不存在"))
                 {
-                    return Ok(result);
+                    return NotFound(new { Message = ex.Message });
                 }
-
-                if (result.Message.Contains("不存在"))
-                {
-                    return NotFound(result);
-                }
-
-                return BadRequest(result);
+                return BadRequest(new { Message = ex.Message });
             }
             catch (Exception ex)
             {
@@ -267,7 +259,7 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid().ToString());
+                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
                 var result = await serviceGrain.GetFormConfigsAsync(query, cancellationToken);
 
                 return Ok(result);
@@ -290,7 +282,7 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid().ToString());
+                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
                 var result = await serviceGrain.GetAllFormConfigsAsync(status, cancellationToken);
 
                 return Ok(result);
@@ -318,7 +310,7 @@ namespace FakeMicro.Api.Controllers
                     return BadRequest(new { Message = "表单编码不能为空" });
                 }
 
-                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid().ToString());
+                var serviceGrain = _clusterClient.GetGrain<IFormConfigService>(Guid.NewGuid());
                 var formConfig = await serviceGrain.GetByCodeAsync(code, cancellationToken);
 
                 if (formConfig == null)
