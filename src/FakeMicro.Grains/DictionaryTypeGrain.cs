@@ -126,24 +126,24 @@ namespace FakeMicro.Grains
                 System.Linq.Expressions.Expression<System.Func<DictionaryType, bool>>? predicate = null;
                 if (!string.IsNullOrEmpty(keyword) || isEnabled.HasValue)
                 {
-                    predicate = x => 
+                    predicate = x =>
                         (string.IsNullOrEmpty(keyword) || x.Name.Contains(keyword) || x.Code.Contains(keyword)) &&
                         (!isEnabled.HasValue || x.IsEnabled == isEnabled.Value);
                 }
-                
+
                 // 使用GetPagedByConditionAsync方法并指定排序
                 var result = await _dictionaryTypeRepository.GetPagedByConditionAsync(
                     predicate ?? (x => true),
-                    page, 
+                    page,
                     pageSize,
                     orderBy: x => x.SortOrder, // 按排序号排序
                     isDescending: false);
-                
+
                 // 将项目的分页结果转换为自定义的分页结果
                 return new FakeMicro.Interfaces.PaginatedResult<DictionaryType>(
                     result.Items.ToList() as System.Collections.Generic.IReadOnlyCollection<DictionaryType>,
-                    result.PageIndex, 
-                    result.PageSize, 
+                    result.PageIndex,
+                    result.PageSize,
                     result.TotalCount);
             }
             catch (System.Exception ex)
@@ -152,6 +152,8 @@ namespace FakeMicro.Grains
                 throw;
             }
         }
+
+       
     }
 
 

@@ -490,7 +490,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         {
             Items = items,
             TotalCount = (int)totalCount,
-            PageNumber = pageNumber,
+            PageIndex = pageNumber,
             PageSize = pageSize,
             TotalPages = totalPages
         };
