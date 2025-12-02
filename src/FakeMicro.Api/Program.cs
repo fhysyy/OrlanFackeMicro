@@ -132,7 +132,13 @@ namespace FakeMicro.Api
 
             // 添加模拟的ILogger服务以解决依赖问题
             builder.Services.AddLogging();
-            
+            builder.Services.AddControllers().AddNewtonsoftJson(op => {
+            op.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
+            op.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+            op.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+            op.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ";
+
+            });
             // 添加系统健康服务
             builder.Services.AddTransient<SystemHealthService>();
             

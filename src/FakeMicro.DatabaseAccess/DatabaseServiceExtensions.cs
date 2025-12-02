@@ -1,6 +1,8 @@
 using FakeMicro.DatabaseAccess.Extensions;
 using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.DatabaseAccess.Interfaces.Mongo;
 using FakeMicro.DatabaseAccess.Repositories;
+using FakeMicro.DatabaseAccess.Repositories.Mongo;
 using FakeMicro.DatabaseAccess.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -51,7 +53,7 @@ public static class DatabaseServiceExtensions
         services.AddScoped<IDictionaryItemRepository, DictionaryItemRepository>();
         services.AddScoped<ISysOpenRepository, SysOpenRepository>();
         services.AddScoped<IManagerVersionRepository, ManagerVersionRepository>();
-
+        services.AddScoped<IMongoActRepository, MongoActRepository>();
         // 移除Dapper相关配置和依赖，统一使用SqlSugar
         // Dapper相关服务已从依赖注入中移除
 

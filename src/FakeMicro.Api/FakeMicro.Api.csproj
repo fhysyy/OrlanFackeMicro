@@ -16,6 +16,7 @@
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
     <PackageReference Include="Hangfire.PostgreSql" Version="1.19.3" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.11" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
     <PackageReference Include="Moq" Version="4.20.70" />
     <PackageReference Include="Serilog" Version="4.3.0" />
@@ -52,6 +53,7 @@
     <Compile Include="Controllers\HealthController.cs" />
     <Compile Include="Controllers\ManagerVersionController.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
+    <Compile Include="Controllers\MongoController.cs" />
     <Compile Include="Controllers\MonitoringController.cs" />
     <Compile Include="Controllers\PermissionController.cs" />
     <Compile Include="Controllers\ProtectedController.cs" />
