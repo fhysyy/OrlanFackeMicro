@@ -56,7 +56,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineEmits } from 'vue'
 import { BaseFormFieldProps } from './types'
 import type { FormField } from '@/types'
 

@@ -44,7 +44,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits, computed, watch } from 'vue'
+import { defineEmits, computed, watch } from 'vue'
 import { BaseFormFieldProps } from './types'
 import { Upload, UploadFilled } from '@element-plus/icons-vue'
 

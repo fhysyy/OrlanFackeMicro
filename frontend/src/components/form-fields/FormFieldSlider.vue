@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from 'vue'
+import { defineEmits } from 'vue'
 import { BaseFormFieldProps } from './types'
 
 // Props

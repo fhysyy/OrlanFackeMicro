@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, defineEmits } from 'vue'
+import { computed, defineEmits } from 'vue'
 import type { FormField } from '@/types'
 import { DatabaseDataType } from '@/types'
 

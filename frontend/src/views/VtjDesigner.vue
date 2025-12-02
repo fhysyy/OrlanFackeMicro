@@ -42,7 +42,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, defineAsyncComponent, defineProps, defineEmits } from 'vue'
+import { ref, onMounted, defineAsyncComponent, defineEmits } from 'vue'
 import { ElMessage } from 'element-plus'
 
 // 定义属性
