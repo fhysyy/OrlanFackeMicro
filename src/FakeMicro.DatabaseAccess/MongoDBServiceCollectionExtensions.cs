@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
+using SqlSugar;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -28,39 +29,37 @@ public static class MongoDBServiceCollectionExtensions
         var options = configuration.GetSection(sectionName).Get<MongoDBConfig.MongoDBOptions>() ?? throw new InvalidOperationException($"MongoDB配置未找到: {sectionName}");
         services.AddSingleton(options);
 
-        // 注册MongoDB客户端
-        services.AddSingleton<IMongoClient>(provider =>
+        // 配置SqlSugar.MongoDbCore
+        services.AddSingleton<ISqlSugarClient>(provider =>
         {
-            var logger = provider.GetService<ILogger<IMongoClient>>();
+            var logger = provider.GetService<ILogger<ISqlSugarClient>>();
             try
             {
-                logger?.LogInformation("正在创建MongoDB客户端连接");
-                var client = new MongoClient(options.ConnectionString);
-                logger?.LogInformation("MongoDB客户端连接创建成功");
-                return client;
+                logger?.LogInformation("正在创建SqlSugar MongoDB客户端");
+                
+                // 注册DLL防止找不到DLL
+                InstanceFactory.CustomAssemblies = new Assembly[] { typeof(SqlSugar.MongoDb.MongoDbProvider).Assembly };
+                
+                // 创建SqlSugar客户端，配置为MongoDB
+                var db = new SqlSugarClient(new ConnectionConfig()
+                {
+                    IsAutoCloseConnection = true,
+                    DbType = DbType.MongoDb,
+                    ConnectionString = options.ConnectionString
+                }, it =>
+                {
+                    it.Aop.OnLogExecuting = (sql, pars) =>
+                    {
+                        logger?.LogDebug("MongoDB SQL执行: {Sql}", sql);
+                    };
+                });
+                
+                logger?.LogInformation("SqlSugar MongoDB客户端创建成功");
+                return db;
             }
             catch (Exception ex)
             {
-                logger?.LogError(ex, "创建MongoDB客户端失败");
-                throw;
-            }
-        });
-
-        // 注册MongoDB数据库
-        services.AddSingleton<IMongoDatabase>(provider =>
-        {
-            var client = provider.GetRequiredService<IMongoClient>();
-            var logger = provider.GetService<ILogger<IMongoDatabase>>();
-            try
-            {
-                logger?.LogInformation("正在获取MongoDB数据库: {DatabaseName}", options.DatabaseName);
-                var database = client.GetDatabase(options.DatabaseName);
-                logger?.LogInformation("成功获取MongoDB数据库: {DatabaseName}", options.DatabaseName);
-                return database;
-            }
-            catch (Exception ex)
-            {
-                logger?.LogError(ex, "获取MongoDB数据库失败: {DatabaseName}", options.DatabaseName);
+                logger?.LogError(ex, "创建SqlSugar MongoDB客户端失败");
                 throw;
             }
         });

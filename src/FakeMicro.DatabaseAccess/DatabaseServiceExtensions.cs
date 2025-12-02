@@ -4,6 +4,7 @@ using FakeMicro.DatabaseAccess.Repositories;
 using FakeMicro.DatabaseAccess.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDB.Driver;
 using static Microsoft.AspNetCore.Hosting.Internal.HostingApplication;
 
 namespace FakeMicro.DatabaseAccess;
@@ -32,10 +33,14 @@ public static class DatabaseServiceExtensions
         // 注册SqlSugar服务（主ORM框架）
         services.AddSqlSugar(configuration,sectionName:"SqlSugar");
 
-        // 注册基础仓储服务（SqlSugar实现）- 统一使用SqlSugar作为唯一ORM
+        // 注册MongoDB服务
+        services.AddMongoDB(configuration);
+
+        // 注册基础仓储服务
         services.AddScoped(typeof(IRepository<,>), typeof(SqlSugarRepository<,>));
+        services.AddScoped(typeof(IMongoRepository<,>), typeof(MongoRepository<,>));
         
-        // 注册具体仓储服务 - 统一使用SqlSugar实现
+        // 注册具体仓储服务
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IMessageRepository, MessageRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
@@ -45,6 +50,7 @@ public static class DatabaseServiceExtensions
         services.AddScoped<IDictionaryTypeRepository, DictionaryTypeRepository>();
         services.AddScoped<IDictionaryItemRepository, DictionaryItemRepository>();
         services.AddScoped<ISysOpenRepository, SysOpenRepository>();
+        services.AddScoped<IManagerVersionRepository, ManagerVersionRepository>();
 
         // 移除Dapper相关配置和依赖，统一使用SqlSugar
         // Dapper相关服务已从依赖注入中移除

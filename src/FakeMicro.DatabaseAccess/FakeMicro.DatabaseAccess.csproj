@@ -14,7 +14,8 @@
     <PackageReference Include="MongoDB.Bson" Version="3.5.2" />
     <PackageReference Include="MongoDB.Driver" Version="3.5.2" />
     <PackageReference Include="MongoDB.Driver.Core" Version="2.30.0" />
-    <PackageReference Include="SqlSugarCore" Version="5.1.4.207" />
+    <PackageReference Include="SqlSugar.MongoDbCore" Version="5.1.4.277" />
+    <PackageReference Include="SqlSugarCore" Version="5.1.4.210" />
     
     <!-- 数据库驱动 (主要使用PostgreSQL) -->
     <PackageReference Include="Npgsql" Version="9.0.4" />

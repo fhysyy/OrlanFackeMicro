@@ -17,10 +17,28 @@ public interface IMongoRepositoryFactory : IRepositoryFactory
     IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>() where TEntity : class;
 
     /// <summary>
+    /// 创建MongoDB仓储实例（带数据库名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称，未提供时使用配置中的默认数据库</param>
+    /// <returns>MongoDB仓储实例</returns>
+    IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>(string? databaseName) where TEntity : class;
+
+    /// <summary>
     /// 创建MongoDB仓储实例（异步）
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
     /// <returns>MongoDB仓储实例</returns>
     Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>() where TEntity : class;
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（异步，带数据库名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称，未提供时使用配置中的默认数据库</param>
+    /// <returns>MongoDB仓储实例</returns>
+    Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(string? databaseName) where TEntity : class;
 }

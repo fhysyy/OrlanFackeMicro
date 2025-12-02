@@ -49,6 +49,7 @@
     <Compile Include="Controllers\FormConfigMongoController.cs" />
     <Compile Include="Controllers\HangfireJobsController.cs" />
     <Compile Include="Controllers\HealthController.cs" />
+    <Compile Include="Controllers\ManagerVersionController.cs" />
     <Compile Include="Controllers\MessagesController.cs" />
     <Compile Include="Controllers\MonitoringController.cs" />
     <Compile Include="Controllers\PermissionController.cs" />

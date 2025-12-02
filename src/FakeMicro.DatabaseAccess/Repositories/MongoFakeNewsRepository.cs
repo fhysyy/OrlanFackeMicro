@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
+using SqlSugar;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
@@ -29,10 +29,10 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// <summary>
         /// FakeNews MongoDB仓储构造函数
         /// </summary>
-        /// <param name="database">MongoDB数据库</param>
+        /// <param name="db">SqlSugar客户端</param>
         /// <param name="logger">日志记录器</param>
-        public MongoFakeNewsRepository(IMongoDatabase database, ILogger<MongoFakeNewsRepository> logger)
-            : base(database, logger)
+        public MongoFakeNewsRepository(ISqlSugarClient db, ILogger<MongoFakeNewsRepository> logger)
+            : base(db, logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

@@ -82,8 +82,9 @@ public static class MongoDBConfig
 
         public DbConnection CreateConnection()
         {
-            // MongoDB不使用传统的DbConnection，返回null
-            // MongoDB使用的是MongoClient和IMongoDatabase接口进行数据库操作
+            // MongoDB不使用传统的DbConnection
+            // 记录警告日志，提示MongoDB使用特殊的连接方式
+            _logger.LogWarning("MongoDB不使用传统的DbConnection，建议使用GetMongoClient()或GetDatabase()方法获取连接");
             return null;
         }
 
@@ -91,8 +92,9 @@ public static class MongoDBConfig
 
         public async Task<DbConnection> GetConnectionAsync()
         {
-            // MongoDB不使用传统的DbConnection，返回null
-            // MongoDB使用的是MongoClient和IMongoDatabase接口进行数据库操作
+            // MongoDB不使用传统的DbConnection
+            // 记录警告日志，提示MongoDB使用特殊的连接方式
+            _logger.LogWarning("MongoDB不使用传统的DbConnection，建议使用GetMongoClient()或GetDatabase()方法获取连接");
             return await Task.FromResult((DbConnection)null);
         }
 

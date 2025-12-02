@@ -1,8 +1,9 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
+using SqlSugar;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -12,17 +13,17 @@ namespace FakeMicro.DatabaseAccess;
 /// </summary>
 public class MongoRepositoryFactory : IMongoRepositoryFactory
 {
-    private readonly IMongoDatabase _database;
+    private readonly ISqlSugarClient _db;
     private readonly ILoggerFactory _loggerFactory;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="database">MongoDB数据库</param>
+    /// <param name="db">SqlSugar客户端</param>
     /// <param name="loggerFactory">日志工厂</param>
-    public MongoRepositoryFactory(IMongoDatabase database, ILoggerFactory loggerFactory)
+    public MongoRepositoryFactory(ISqlSugarClient db, ILoggerFactory loggerFactory)
     {
-        _database = database ?? throw new ArgumentNullException(nameof(database));
+        _db = db ?? throw new ArgumentNullException(nameof(db));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
     }
 
@@ -34,7 +35,7 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <returns>MongoDB仓储实例</returns>
     public IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>() where TEntity : class
     {
-        return CreateRepository<TEntity, TKey>(null);
+        return CreateRepositoryInternal<TEntity, TKey>(null);
     }
 
     /// <summary>
@@ -46,8 +47,20 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <returns>MongoDB仓储实例</returns>
     public IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>(string? connectionStringName = null) where TEntity : class
     {
+        return CreateRepositoryInternal<TEntity, TKey>(connectionStringName);
+    }
+
+    /// <summary>
+    /// 内部创建MongoDB仓储实例
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    private IMongoRepository<TEntity, TKey> CreateRepositoryInternal<TEntity, TKey>(string? connectionStringName = null) where TEntity : class
+    {
         var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
-        return new MongoRepository<TEntity, TKey>(_database, logger);
+        return new MongoRepository<TEntity, TKey>(_db, logger);
     }
 
     /// <summary>
@@ -58,7 +71,19 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <returns>MongoDB仓储实例</returns>
     public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>() where TEntity : class
     {
-        return CreateRepositoryAsync<TEntity, TKey>(null, CancellationToken.None);
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(null, null, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（异步，带数据库名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(string? databaseName) where TEntity : class
+    {
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(null, databaseName, CancellationToken.None);
     }
 
     /// <summary>
@@ -71,7 +96,38 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <returns>MongoDB仓储实例</returns>
     public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(string? connectionStringName = null, CancellationToken cancellationToken = default) where TEntity : class
     {
-        return Task.FromResult(CreateRepository<TEntity, TKey>(connectionStringName));
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(connectionStringName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例（异步，带连接字符串名称和数据库名称）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(string? connectionStringName, string? databaseName, CancellationToken cancellationToken = default) where TEntity : class
+    {
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(connectionStringName, databaseName, cancellationToken);
+    }
+
+    /// <summary>
+    /// 内部创建MongoDB仓储实例（异步）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>MongoDB仓储实例</returns>
+    private Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsyncInternal<TEntity, TKey>(string? connectionStringName = null, string? databaseName = null, CancellationToken cancellationToken = default) where TEntity : class
+    {
+        // 异步创建仓储实例
+        var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
+        IMongoRepository<TEntity, TKey> repository = new MongoRepository<TEntity, TKey>(_db, logger, databaseName);
+        return Task.FromResult(repository);
     }
 
     /// <summary>
@@ -80,9 +136,9 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
     /// <returns>通用仓储实例</returns>
-    IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>() where TEntity : class
+    IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>()
     {
-        return CreateRepository<TEntity, TKey>();
+        return CreateRepositoryInternal<TEntity, TKey>(null);
     }
 
     /// <summary>
@@ -91,8 +147,8 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
     /// <returns>通用仓储实例</returns>
-    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>() where TEntity : class
+    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>()
     {
-        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepository<TEntity, TKey>());
+        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepositoryInternal<TEntity, TKey>(null));
     }
 }
