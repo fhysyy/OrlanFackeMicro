@@ -20,7 +20,7 @@ namespace FakeMicro.Api.Controllers
             _logger = logger;
         }
         [HttpPost("insert")]
-        public async Task<IActionResult> InsertData([FromBody] object request)
+        public async Task<IActionResult> InsertData([FromBody]Object request)
         {
             var _client = _clusterClient.GetGrain<IManagerVersion>(Guid.NewGuid().ToString());
             var result = await _client.InsertData(JsonConvert.SerializeObject(request));
@@ -51,10 +51,10 @@ namespace FakeMicro.Api.Controllers
             return Ok(result);
         }
         [HttpPost("info/{id}")]
-        public async Task<IActionResult> DataInfo([FromBody] object request)
+        public async Task<IActionResult> DataInfo(string id)
         {
             var _client = _clusterClient.GetGrain<IManagerVersion>(Guid.NewGuid().ToString());
-            var result = await _client.DataInfo(JsonConvert.SerializeObject(request));
+            var result = await _client.DataInfo(id);
             return Ok(result);
         }
 

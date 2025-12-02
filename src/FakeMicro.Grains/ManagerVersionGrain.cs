@@ -41,19 +41,20 @@ namespace FakeMicro.Grains
             return await Task.FromResult(expand);
         }
 
-        public async Task<BaseResultModel> DataInfo(string data)
+        public async Task<BaseResultModel<ManagerVersion>> DataInfo(string id)
         {
-            var  expand = new BaseResultModel();
+            var  expand = new BaseResultModel<ManagerVersion>();
             try
             {
+                var datainfo=await _managerVersionRepository.GetByIdAsync(id, "FakeMicroDB");
                 // 实现获取数据信息逻辑
+                expand.Data = datainfo;
                 expand.Success = true;
-                expand.Data = "数据信息获取成功";
             }
             catch (Exception ex)
             {
                 expand.Success = false;
-                expand.Data = $"{ex.Message}{ex.StackTrace}";
+                expand.ErrorMessage = $"{ex.Message}{ex.StackTrace}";
             }
             return await Task.FromResult(expand);
         }
@@ -63,11 +64,13 @@ namespace FakeMicro.Grains
             var expand = new BaseResultModel();
             try
             {
-                var id=Guid.NewGuid().ToString();
-                var entity = new ManagerVersion() {Id=id };
+                var json = JsonConvert.DeserializeObject<dynamic>(data);
+                // 使用Guid生成唯一ID，避免使用ObjectId类型
+                var id=ObjectId.GenerateNewId().ToString();
+                var entity = new ManagerVersion() {Id=id,created_at=DateTime.UtcNow, count=new Random().Next(1000,9999)/21,   updated_at =DateTime.Now};
                 
                 // 使用仓储自带的AddAsync方法，并传入databaseName参数
-                await _managerVersionRepository.AddAsync(entity,"FackeMicroDB");
+                await _managerVersionRepository.AddAsync(entity, "FakeMicroDB");
                 
                 expand.Success = true;
                 expand.Data = $"添加成功{id}";

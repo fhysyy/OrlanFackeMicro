@@ -244,6 +244,8 @@ namespace FakeMicro.Silo
                         clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster",
                         serviceId: orleansConfig.ServiceId ?? "FakeMicroService");
 
+
+
                     // 🚀 配置PostgreSQL持久化存储（生产模式 - 无内存存储）
                     if (!string.IsNullOrEmpty(connectionString))
                     {

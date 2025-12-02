@@ -69,7 +69,6 @@ public static class MongoDBServiceCollectionExtensions
 
         // 注册通用MongoDB仓储
         services.AddScoped(typeof(IMongoRepository<,>), typeof(MongoRepository<,>));
-        services.AddScoped(typeof(IRepository<,>), typeof(MongoRepository<,>));
 
         return services;
     }

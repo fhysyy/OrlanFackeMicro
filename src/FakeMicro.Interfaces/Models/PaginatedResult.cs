@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Orleans;
 
 namespace FakeMicro.Interfaces
 {
@@ -48,31 +49,37 @@ namespace FakeMicro.Interfaces
     /// 分页结果实现类
     /// </summary>
     /// <typeparam name="T">数据项类型</typeparam>
+    [GenerateSerializer]
     public class PaginatedResult<T> : IPaginatedResult<T>
     {
         /// <summary>
         /// 当前页码
         /// </summary>
+        [Id(0)]
         public int Page { get; private set; }
 
         /// <summary>
         /// 每页大小
         /// </summary>
+        [Id(1)]
         public int PageSize { get; private set; }
 
         /// <summary>
         /// 总记录数
         /// </summary>
+        [Id(2)]
         public long TotalCount { get; private set; }
 
         /// <summary>
         /// 总页数
         /// </summary>
+        [Id(3)]
         public int TotalPages { get; private set; }
 
         /// <summary>
         /// 数据项集合
         /// </summary>
+        [Id(4)]
         public IReadOnlyCollection<T> Items { get; private set; }
 
         /// <summary>

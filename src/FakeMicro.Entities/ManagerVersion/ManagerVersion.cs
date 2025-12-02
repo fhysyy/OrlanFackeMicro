@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MongoDB.Bson;
 using Orleans;
 using SqlSugar;
 namespace FakeMicro.Entities.ManagerVersion
@@ -23,6 +24,9 @@ namespace FakeMicro.Entities.ManagerVersion
         public DateTime? updated_at { get  ; set  ; }
         [Id(4)]
         public string? updated_by { get  ; set  ; }
+
+        [Id(5)]
+        public decimal count { get  ; set  ; }
 
        
     }

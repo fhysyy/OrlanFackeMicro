@@ -25,8 +25,9 @@ namespace FakeMicro.Interfaces
             [Id(2)]
             public string? ErrorMessage { get; set; }
 
+            //[Id(3)]
             [Id(3)]
-            public object? Data { get; set; }
+            public  Object Data { get; set; }
 
             [Id(4)]
             public int TotalCount { get; set; } = 0;

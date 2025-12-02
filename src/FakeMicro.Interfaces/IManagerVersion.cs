@@ -1,3 +1,4 @@
+using FakeMicro.Entities.ManagerVersion;
 using FakeMicro.Interfaces.FakeMicro.Interfaces;
 using Orleans;
 using System;
@@ -12,7 +13,7 @@ namespace FakeMicro.Interfaces
         Task<BaseResultModel> InsertData(string data); 
         Task<BaseResultModel> UpdateData(string data);
         Task<BaseResultModel> DeleteData(string data);
-        Task<BaseResultModel> DataInfo(string data);
+        Task<BaseResultModel<ManagerVersion>> DataInfo(string data);
         Task<BaseResultModel> SearchData(string data);
         Task<BaseResultModel> ValidateData(string data);
     }

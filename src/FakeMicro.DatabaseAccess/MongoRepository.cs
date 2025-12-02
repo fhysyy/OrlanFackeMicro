@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using SqlSugar;
 
@@ -513,7 +514,8 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     public async Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Eq("Id", id);
+        // 使用字符串直接比较，避免使用ObjectId类型
+        var filter = Builders<TEntity>.Filter.Eq("_id", id.ToString());
         return await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
     }
 

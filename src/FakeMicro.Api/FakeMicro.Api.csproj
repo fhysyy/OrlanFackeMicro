@@ -31,6 +31,7 @@
     <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
     <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
     <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
+    <ProjectReference Include="..\FakeMicro.DatabaseAccess\FakeMicro.DatabaseAccess.csproj" />
   </ItemGroup>
   <!-- 排除所有原始控制器文件，只保留TestController -->
   <ItemGroup>

@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
 using Orleans;
 using Orleans.Configuration;
@@ -98,30 +99,29 @@ namespace FakeMicro.Api
             // 使用推荐的方式配置Orleans客户端
             builder.Services.AddOrleansClient(clientBuilder =>
             {
+                // 从配置中获取Orleans设置
+                var orleansConfig = builder.Configuration.GetSection("Orleans").Get<FakeMicro.Utilities.Configuration.OrleansConfig>() ?? new FakeMicro.Utilities.Configuration.OrleansConfig();
+                
                 // 配置集群ID和服务ID，必须与Silo配置一致
                 clientBuilder.Configure<ClusterOptions>(options =>
                 {
-                    options.ClusterId = "FakeMicroCluster";
-                    options.ServiceId = "FakeMicroService";
+                    options.ClusterId = orleansConfig.ClusterId ?? "FakeMicroCluster";
+                    options.ServiceId = orleansConfig.ServiceId ?? "FakeMicroService";
                 });
+                
                 // 配置本地集群连接
-                clientBuilder.UseLocalhostClustering(30000, "FakeMicroService", "FakeMicroCluster");
-               
+                clientBuilder.UseLocalhostClustering(
+                    gatewayPort: orleansConfig.GatewayPort,
+                    serviceId: orleansConfig.ServiceId ?? "FakeMicroService",
+                    clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster"
+                );
+
+                // Orleans 客户端的日志配置应该通过 WebApplicationBuilder 的 logging 配置来处理
+                // 这里不需要单独配置日志
             });
 
-
-
-
-            // 添加一个IHostedService来处理客户端连接
-            builder.Services.AddHostedService<OrleansClientConnectionService>();
-
-            // 确保应用关闭时优雅地断开连接
-            builder.Services.AddSingleton<IHostedService>(sp => 
-            {
-                var client = sp.GetRequiredService<IClusterClient>();
-                var logger = sp.GetRequiredService<ILoggerFactory>().CreateLogger<Program>();
-                return new OrleansClientLifetimeService(client, logger);
-            });
+            // 暂时移除自定义的Orleans客户端服务，只保留基本配置
+            // 后续可以根据需要重新添加这些服务
 
             builder.Services.Configure<ClientMessagingOptions>(options =>
             {
@@ -142,6 +142,8 @@ namespace FakeMicro.Api
             // 注册代码生成器服务
             RegisterCodeGeneratorServices(builder);
             
+            // 注册OrleansConfig配置
+            builder.Services.Configure<FakeMicro.Utilities.Configuration.OrleansConfig>(builder.Configuration.GetSection("Orleans"));
 
             // 配置HangFire
             builder.Services.AddHangfire(configuration => configuration
@@ -156,11 +158,11 @@ namespace FakeMicro.Api
             // 添加认证和授权策略
             builder.Services.AddAuthorizationPolicies();
             
-            // 添加CAP事件总线服务
-            builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
+            // 暂时注释掉CAP事件总线服务，专注于测试Orleans连接
+            // builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
             
-            // 注册MongoDB服务
-            builder.Services.AddMongoDB(builder.Configuration);
+            // 暂时注释掉数据库服务注册，专注于测试Orleans连接
+            // builder.Services.AddDatabaseServices(builder.Configuration);
             
             // 注册表单配置相关服务
             builder.Services.AddFormConfigServices();
@@ -188,19 +190,19 @@ namespace FakeMicro.Api
             app.UseAuthentication();
             app.UseAuthorization();
             
-            // 使用CAP中间件
-            app.UseCap();
+            // 暂时注释掉CAP中间件，专注于测试Orleans连接
+            // app.UseCap();
 
-            // 使用HangFire Dashboard（仅限管理员访问）
-            app.UseHangfireDashboard("/hangfire"); 
+            // 暂时注释掉HangFire Dashboard，专注于测试Orleans连接
+            // app.UseHangfireDashboard("/hangfire"); 
             //    new DashboardOptions
             //{
             //    Authorization = new[] { new HangfireAuthorizationFilter() },
             //    DashboardTitle = "FakeMicro任务调度中心"
             //});
             
-            // 配置默认的定时任务
-            ConfigureDefaultJobs();
+            // 暂时注释掉默认的定时任务，专注于测试Orleans连接
+            // ConfigureDefaultJobs();
            
             
             // 映射控制器路由
@@ -209,10 +211,8 @@ namespace FakeMicro.Api
             // 添加健康检查端点
             app.MapGet("/health", () => "Healthy");
             
-            
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");
-            Console.WriteLine("访问 http://localhost:5000/hangfire 查看HangFire仪表盘");
             Console.WriteLine("按Ctrl+C退出");
             
             await app.RunAsync();
