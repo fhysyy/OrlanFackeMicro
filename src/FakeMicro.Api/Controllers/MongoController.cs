@@ -32,10 +32,10 @@ namespace FakeMicro.Api.Controllers
         public async Task<IActionResult> info(string id)
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("MongoGrain");
-           // var para = JsonConvert.SerializeObject(data);
+         
             var result = await mongoGrain.DataInfo(id);
             return Ok(JsonConvert.DeserializeObject(result));
-            //return  Ok(JsonConvert.DeserializeObject<BaseResultModel>(result));
+            
         }
     }
 }

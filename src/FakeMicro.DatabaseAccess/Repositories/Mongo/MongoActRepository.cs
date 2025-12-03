@@ -2,6 +2,7 @@
 using FakeMicro.DatabaseAccess.Interfaces.Mongo;
 using FakeMicro.Entities.ManagerVersion;
 using Microsoft.Extensions.Logging;
+using MongoDB.Bson;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
@@ -12,7 +13,7 @@ using System.Threading.Tasks;
 namespace FakeMicro.DatabaseAccess.Repositories.Mongo
 {
 
-    public class MongoActRepository : MongoRepository<Object, string>, IMongoActRepository
+    public class MongoActRepository : MongoRepository<Object, ObjectId>, IMongoActRepository
     {
         private readonly ILogger<MongoActRepository> _logger;
 

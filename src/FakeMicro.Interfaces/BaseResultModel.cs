@@ -28,11 +28,7 @@ namespace FakeMicro.Interfaces
             //[Id(3)]
             [Id(3)]
             public  Object Data { get; set; }
-
             [Id(4)]
-            public int TotalCount { get; set; } = 0;
-
-            [Id(5)]
             public string? TraceId { get; set; }= Guid.NewGuid().ToString();
 
             public static BaseResultModel SuccessResult(object? data = null, string message = "")
@@ -76,9 +72,6 @@ namespace FakeMicro.Interfaces
             public T? Data { get; set; }
 
             [Id(4)]
-            public int TotalCount { get; set; } = 0;
-
-            [Id(5)]
             public string? TraceId { get; set; }
 
             public static BaseResultModel<T> SuccessResult(T? data = default, string message = "")
@@ -104,6 +97,12 @@ namespace FakeMicro.Interfaces
                     Data = data
                 };
             }
+        }
+        [GenerateSerializer]
+        public class PageBaseResultModel:BaseResultModel
+        {
+            [Id(6)]
+            public int TotalCount { get; set; } = 1;
         }
     }
 }
