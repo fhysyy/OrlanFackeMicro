@@ -1,4 +1,6 @@
 ﻿using FakeMicro.Interfaces;
+using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
@@ -23,7 +25,17 @@ namespace FakeMicro.Api.Controllers
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("MongoGrain");
             var para= JsonConvert.SerializeObject(data);
             var result = await mongoGrain.InsertData(para);
-            return Ok(result);
+            return Ok(JsonConvert.DeserializeObject(result));
+            //return  Ok(JsonConvert.DeserializeObject<BaseResultModel>(result));
+        }
+        [HttpPost("info/{id}")]
+        public async Task<IActionResult> info(string id)
+        {
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("MongoGrain");
+           // var para = JsonConvert.SerializeObject(data);
+            var result = await mongoGrain.DataInfo(id);
+            return Ok(JsonConvert.DeserializeObject(result));
+            //return  Ok(JsonConvert.DeserializeObject<BaseResultModel>(result));
         }
     }
 }

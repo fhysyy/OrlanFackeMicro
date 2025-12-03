@@ -216,7 +216,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         public async Task<TEntity> GetByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
         {
             var collection = GetCollection(databaseName, collectionName);
-            return await collection.Find(Builders<TEntity>.Filter.Eq("_id", id)).FirstOrDefaultAsync(cancellationToken);
+            return await collection.Find(Builders<TEntity>.Filter.Eq("_id", ObjectId.Parse(id.ToString()))).FirstOrDefaultAsync(cancellationToken);
         }
 
         /// <summary>

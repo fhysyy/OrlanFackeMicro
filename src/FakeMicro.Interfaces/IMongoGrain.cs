@@ -11,10 +11,10 @@ namespace FakeMicro.Interfaces
 {
     public interface IMongoGrain:IGrainWithStringKey
     {
-        Task<BaseResultModel> InsertData(string data);
+        Task<string> InsertData(string data);
         Task<BaseResultModel> UpdateData(string data);
-        Task<BaseResultModel> DeleteData(string data);
-        Task<BaseResultModel<Object>> DataInfo(string data);
+        Task<string> DeleteData(string data);
+        Task<string> DataInfo(string data);
         Task<BaseResultModel> SearchData(string data);
         Task<BaseResultModel> ValidateData(string data);
     }

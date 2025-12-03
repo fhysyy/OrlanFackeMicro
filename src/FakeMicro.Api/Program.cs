@@ -1,7 +1,11 @@
-using FakeMicro.Api.Services;
 using FakeMicro.Api.Extensions;
 using FakeMicro.Api.Security;
+using FakeMicro.Api.Services;
 using FakeMicro.DatabaseAccess;
+// 添加代码生成器相关的using语句
+using FakeMicro.Utilities.CodeGenerator;
+using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
+using FakeMicro.Utilities.CodeGenerator.Templates;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Builder;
@@ -16,13 +20,11 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 using System;
 using System.Net;
+using System.Runtime.Serialization.Formatters;
+using System.Text.Encodings.Web;
+using System.Text.Unicode;
 using System.Threading;
 using System.Threading.Tasks;
-
-// 添加代码生成器相关的using语句
-using FakeMicro.Utilities.CodeGenerator;
-using FakeMicro.Utilities.CodeGenerator.Templates;
-using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
 
 
 namespace FakeMicro.Api
@@ -137,7 +139,12 @@ namespace FakeMicro.Api
             op.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
             op.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
             op.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ";
+            
 
+            }).
+            AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
             });
             // 添加系统健康服务
             builder.Services.AddTransient<SystemHealthService>();
