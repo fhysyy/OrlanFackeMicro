@@ -25,22 +25,17 @@ namespace FakeMicro.Grains
         }
         public async Task<string> DataInfo(string data)
         {
-            var expand=new BaseResultModel<object>();
+            var expand=new BaseResultModel();
             try
             {
-                //dynamic info = JsonConvert.SerializeObject(data);
-                //info._id = ObjectId.GenerateNewId().ToString();
+              
                 var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(data), "FakeMicroDB", "activities");
-                // 使用支持collectionName参数的方法重载
-                //var result= mongoActRepository.AddAsync(data, "FakeMicroDB", "activities");
-                expand.Success = true;
-                expand.Data = result;
+                expand=BaseResultModel.SuccessResult(data:result, message: "操作成功");
             }
             catch (Exception ex)
             {
 
-                expand.ErrorMessage = ex.Message;
-                expand.Success = false;
+               expand=BaseResultModel.FailedResult(message:ex.Message);
                 
             }
             return await Task.FromResult(JsonConvert.SerializeObject(expand));

@@ -9,7 +9,7 @@ namespace FakeMicro.DatabaseAccess;
 /// <summary>
 /// 审计日志数据访问接口
 /// </summary>
-public interface IAuditLogRepository : IRepository<AuditLog, int>
+public interface IAuditLogRepository : IRepository<AuditLog, long>
 {
     /// <summary>
     /// 获取审计日志

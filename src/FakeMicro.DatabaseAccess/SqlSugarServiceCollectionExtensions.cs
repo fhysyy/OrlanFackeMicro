@@ -36,13 +36,19 @@ namespace FakeMicro.DatabaseAccess
             configuration.GetSection(sectionName).Bind(options);
             services.AddSingleton(options);
 
-            // 注册SqlSugar客户端为Singleton（推荐最佳实践）
-            services.AddSingleton<ISqlSugarClient>(provider =>
+            // 创建PostgreSQL SqlSugar客户端
+            Func<IServiceProvider, object?, ISqlSugarClient> createPostgreSqlClient = (provider, _) =>
             {
                 var sqlSugarOptions = provider.GetRequiredService<SqlSugarConfig.SqlSugarOptions>();
                 var logger = provider.GetService<ILogger<ISqlSugarClient>>();
                 return CreateSqlSugarClient(sqlSugarOptions, logger);
-            });
+            };
+            
+            // 注册PostgreSQL SqlSugar客户端（命名注册，避免与MongoDB冲突）
+            services.AddKeyedSingleton<ISqlSugarClient>("PostgreSQL", createPostgreSqlClient);
+            
+            // 注册默认SqlSugar客户端（指向PostgreSQL）
+            services.AddSingleton<ISqlSugarClient>(provider => createPostgreSqlClient(provider, null));
 
             // 注册SqlSugar仓储工厂
             services.AddScoped<ISqlSugarRepositoryFactory, SqlSugarRepositoryFactory>();

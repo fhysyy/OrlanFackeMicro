@@ -2,6 +2,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SqlSugar;
 
@@ -19,12 +20,15 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="db">SqlSugar客户端</param>
+    /// <param name="serviceProvider">服务提供程序</param>
     /// <param name="loggerFactory">日志工厂</param>
-    public MongoRepositoryFactory(ISqlSugarClient db, ILoggerFactory loggerFactory)
+    public MongoRepositoryFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
     {
-        _db = db ?? throw new ArgumentNullException(nameof(db));
+        if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
+        
+        // 获取命名注册的MongoDB SqlSugar客户端
+        _db = serviceProvider.GetRequiredKeyedService<ISqlSugarClient>("MongoDB");
     }
 
     /// <summary>

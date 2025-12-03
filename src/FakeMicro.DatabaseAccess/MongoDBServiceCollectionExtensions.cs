@@ -29,8 +29,8 @@ public static class MongoDBServiceCollectionExtensions
         var options = configuration.GetSection(sectionName).Get<MongoDBConfig.MongoDBOptions>() ?? throw new InvalidOperationException($"MongoDB配置未找到: {sectionName}");
         services.AddSingleton(options);
 
-        // 配置SqlSugar.MongoDbCore
-        services.AddSingleton<ISqlSugarClient>(provider =>
+        // 配置SqlSugar.MongoDbCore（命名注册，避免与PostgreSQL冲突）
+        services.AddKeyedSingleton<ISqlSugarClient>("MongoDB", (provider, serviceKey) =>
         {
             var logger = provider.GetService<ILogger<ISqlSugarClient>>();
             try

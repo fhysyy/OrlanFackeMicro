@@ -39,6 +39,9 @@
     <Compile Remove="OrleansApiHost.cs" />
     <!-- 排除除TestController外的所有控制器 -->
     <Compile Remove="Controllers\*.cs" />
+    <None Remove="build.log" />
+    <None Remove="build_error.txt" />
+    <None Remove="run.log" />
     <Compile Include="Controllers\AdminController.cs" />
     <Compile Include="Controllers\AuthController.cs" />
     <Compile Include="Controllers\CodeGeneratorController.cs" />

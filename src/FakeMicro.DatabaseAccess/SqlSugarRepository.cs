@@ -176,21 +176,6 @@ public class SqlSugarRepository<TEntity, TKey> : IRepository<TEntity, TKey> wher
                 var paramValues = pars.Select(p => $"{p.ParameterName}={p.Value}").ToList();
                 _logger.LogDebug("SQL执行前: {Sql}, 参数: {Parameters}", sql, string.Join(", ", paramValues));
             };
-            
-            // SQL执行后拦截 - 添加执行时间统计
-            //_db.Aop.OnLogExecuted = (sql, pars, cost) =>
-            //{
-            //    // 慢查询检测
-            //    if (cost > 500) // 超过500ms视为慢查询
-            //    {
-            //        _logger.LogWarning("慢查询警告: {Sql}, 执行时间: {Cost}ms", sql, cost);
-            //    }
-            //    else
-            //    {
-            //        _logger.LogDebug("SQL执行后: {Sql}, 执行时间: {Cost}ms", sql, cost);
-            //    }
-            //};
-            
             // SQL执行异常拦截 - 增强异常处理
             _db.Aop.OnError = (ex) =>
             {

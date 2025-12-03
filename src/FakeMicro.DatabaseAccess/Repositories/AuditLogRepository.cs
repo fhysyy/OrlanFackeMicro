@@ -9,7 +9,7 @@ using FakeMicro.Entities;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
-    public class AuditLogRepository : SqlSugarRepository<AuditLog, int>, IAuditLogRepository
+    public class AuditLogRepository : SqlSugarRepository<AuditLog, long>, IAuditLogRepository
     {
         public AuditLogRepository(ISqlSugarClient db, ILogger<AuditLogRepository> logger)
             : base(db, logger)

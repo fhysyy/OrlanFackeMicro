@@ -174,8 +174,8 @@ namespace FakeMicro.Api
             // 暂时注释掉CAP事件总线服务，专注于测试Orleans连接
             // builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
             
-            // 暂时注释掉数据库服务注册，专注于测试Orleans连接
-            // builder.Services.AddDatabaseServices(builder.Configuration);
+            // 注册数据库服务
+            builder.Services.AddDatabaseServices(builder.Configuration);
             
             // 注册表单配置相关服务
             builder.Services.AddFormConfigServices();
@@ -202,6 +202,9 @@ namespace FakeMicro.Api
             // 添加认证和授权中间件
             app.UseAuthentication();
             app.UseAuthorization();
+            
+            // 添加请求响应日志记录中间件
+            app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
             
             // 暂时注释掉CAP中间件，专注于测试Orleans连接
             // app.UseCap();
