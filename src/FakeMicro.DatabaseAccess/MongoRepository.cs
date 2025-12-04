@@ -56,7 +56,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         // SqlSugar.MongoDbCore不直接提供GetCollection方法
         // 我们需要使用MongoDB.Driver直接获取集合
         var connectionString = _db.CurrentConnectionConfig.ConnectionString;
-        var mongoClient = new MongoDB.Driver.MongoClient(connectionString);
+        var mongoClient = new MongoClient(connectionString);
         
         // 优先级：方法参数 > 类构造函数参数 > 连接字符串中的数据库名称
         var dbName = databaseName ?? _defaultDatabaseName ?? _db.CurrentConnectionConfig.ConnectionString.Split('/').Last().Split('?').First();
