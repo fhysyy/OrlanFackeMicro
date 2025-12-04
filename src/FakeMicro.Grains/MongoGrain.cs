@@ -54,7 +54,7 @@ namespace FakeMicro.Grains
             catch (Exception ex)
             {
 
-                expand.ErrorMessage = ex.Message;
+                expand.Message = ex.Message;
                 expand.Success = false;
             }
             return await Task.FromResult(JsonConvert.SerializeObject(expand));

@@ -53,8 +53,9 @@ namespace FakeMicro.Grains
             }
             catch (Exception ex)
             {
+                
                 expand.Success = false;
-                expand.ErrorMessage = $"{ex.Message}{ex.StackTrace}";
+                expand.Message = $"{ex.Message}{ex.StackTrace}";
             }
             return await Task.FromResult(expand);
         }

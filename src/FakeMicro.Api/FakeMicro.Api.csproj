@@ -14,7 +14,7 @@
     <PackageReference Include="DotNetCore.CAP.RabbitMQ" Version="8.4.1" />
     <PackageReference Include="Hangfire.Core" Version="1.8.22" />
     <PackageReference Include="Hangfire.AspNetCore" Version="1.8.22" />
-    <PackageReference Include="Hangfire.PostgreSql" Version="1.19.3" />
+    <PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.10" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.11" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
