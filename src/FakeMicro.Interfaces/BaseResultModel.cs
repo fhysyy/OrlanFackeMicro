@@ -23,7 +23,7 @@ namespace FakeMicro.Interfaces
             public int Code { get; set; } = 200;
 
             [Id(2)]
-            public string? ErrorMessage { get; set; }
+            public string? Message { get; set; }
 
             //[Id(3)]
             [Id(3)]
@@ -37,7 +37,7 @@ namespace FakeMicro.Interfaces
                 {
                     Success = true,
                     Code = 200,
-                    ErrorMessage = message,
+                    Message = message,
                     TraceId = Guid.NewGuid().ToString(),
                     Data = data
                 };
@@ -50,7 +50,7 @@ namespace FakeMicro.Interfaces
                     Success = false,
                     Code = code,
                     TraceId = Guid.NewGuid().ToString(),
-                    ErrorMessage = message,
+                    Message = message,
                     Data = data
                 };
             }
@@ -66,7 +66,7 @@ namespace FakeMicro.Interfaces
             public int Code { get; set; } = 200;
 
             [Id(2)]
-            public string? ErrorMessage { get; set; }
+            public string? Message { get; set; }
 
             [Id(3)]
             public T? Data { get; set; }
@@ -81,7 +81,7 @@ namespace FakeMicro.Interfaces
                     Success = true,
                     Code = 200,
                     TraceId = Guid.NewGuid().ToString(),
-                    ErrorMessage = message,
+                    Message = message,
                     Data = data
                 };
             }
@@ -93,7 +93,7 @@ namespace FakeMicro.Interfaces
                     Success = false,
                     Code = code,
                     TraceId = Guid.NewGuid().ToString(),
-                    ErrorMessage = message,
+                     Message = message,
                     Data = data
                 };
             }
