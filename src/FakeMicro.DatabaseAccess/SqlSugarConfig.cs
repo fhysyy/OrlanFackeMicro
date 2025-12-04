@@ -25,7 +25,8 @@ public static class SqlSugarConfig
         MySQL,
         SQLServer,
         PostgreSQL,
-        MariaDB
+        MariaDB,
+        MongoDB
     }
     
     // 数据库连接管理器匿名实现
@@ -48,6 +49,7 @@ public static class SqlSugarConfig
                 SqlSugarConfig.DatabaseType.SQLServer => FakeMicro.DatabaseAccess.DatabaseType.SQLServer,
                 SqlSugarConfig.DatabaseType.PostgreSQL => FakeMicro.DatabaseAccess.DatabaseType.PostgreSQL,
                 SqlSugarConfig.DatabaseType.MariaDB => FakeMicro.DatabaseAccess.DatabaseType.MariaDB,
+                SqlSugarConfig.DatabaseType.MongoDB => FakeMicro.DatabaseAccess.DatabaseType.MongoDB,
                 _ => FakeMicro.DatabaseAccess.DatabaseType.PostgreSQL
             };
         }
@@ -371,6 +373,7 @@ public static class SqlSugarConfig
             SqlSugarConfig.DatabaseType.SQLServer => FakeMicro.DatabaseAccess.DatabaseType.SQLServer,
             SqlSugarConfig.DatabaseType.PostgreSQL => FakeMicro.DatabaseAccess.DatabaseType.PostgreSQL,
             SqlSugarConfig.DatabaseType.MariaDB => FakeMicro.DatabaseAccess.DatabaseType.MariaDB,
+            SqlSugarConfig.DatabaseType.MongoDB => FakeMicro.DatabaseAccess.DatabaseType.MongoDB,
             _ => FakeMicro.DatabaseAccess.DatabaseType.PostgreSQL
         };
     }
@@ -386,6 +389,7 @@ public static class SqlSugarConfig
             FakeMicro.DatabaseAccess.DatabaseType.SQLServer => SqlSugar.DbType.SqlServer,
             FakeMicro.DatabaseAccess.DatabaseType.PostgreSQL => SqlSugar.DbType.PostgreSQL,
             FakeMicro.DatabaseAccess.DatabaseType.MariaDB => SqlSugar.DbType.MySql,
+            //FakeMicro.DatabaseAccess.DatabaseType.MongoDB => DbType.MongoDB,
             _ => SqlSugar.DbType.PostgreSQL // 默认PostgreSQL
         };
     }

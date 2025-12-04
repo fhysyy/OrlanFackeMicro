@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
+using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -169,6 +170,5 @@ public static class MongoDBConfig
             return _database;
         }
     }
-
-
 }
+

@@ -620,12 +620,12 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <summary>
     /// 获取分页实体
     /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         CancellationToken cancellationToken = default)
     {
-        return await GetPagedByConditionAsync(it => true, pageIndex, pageSize, orderBy, isDescending, cancellationToken);
+        return await GetPagedByConditionAsync(it => true, pageNumber, pageSize, orderBy, isDescending, cancellationToken);
     }
 
     /// <summary>
@@ -665,12 +665,12 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// 根据条件获取分页实体
     /// </summary>
     public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageIndex, int pageSize,
+        int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         CancellationToken cancellationToken = default)
     {
-        if (pageIndex < 1) pageIndex = 1;
+        if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 1000) pageSize = 1000;
 
@@ -696,7 +696,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
 
         // 分页
         var items = await findFluent
-            .Skip((pageIndex - 1) * pageSize)
+            .Skip((pageNumber - 1) * pageSize)
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
@@ -704,7 +704,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         {
             Items = items,
             TotalCount = (int)totalCount,
-            PageIndex = pageIndex,
+            PageIndex = pageNumber,
             PageSize = pageSize,
             TotalPages = totalPages
         };
@@ -735,7 +735,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <summary>
     /// 添加实体
     /// </summary>
-    public async Task AddAsync(TEntity entity,  CancellationToken cancellationToken = default)
+    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection();
         await collection.InsertOneAsync(entity, cancellationToken: cancellationToken);
@@ -1031,13 +1031,13 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <summary>
     /// 获取分页实体（指定数据库）
     /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
         CancellationToken cancellationToken = default)
     {
-        return await GetPagedByConditionAsync(it => true, pageIndex, pageSize, orderBy, isDescending, databaseName, cancellationToken);
+        return await GetPagedByConditionAsync(it => true, pageNumber, pageSize, orderBy, isDescending, databaseName, cancellationToken);
     }
 
     /// <summary>
@@ -1078,13 +1078,13 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// 根据条件获取分页实体（指定数据库）
     /// </summary>
     public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageIndex, int pageSize,
+        int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
         CancellationToken cancellationToken = default)
     {
-        if (pageIndex < 1) pageIndex = 1;
+        if (pageNumber < 1) pageNumber = 1;
         if (pageSize < 1) pageSize = 10;
         if (pageSize > 1000) pageSize = 1000;
 
@@ -1110,7 +1110,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
 
         // 分页
         var items = await findFluent
-            .Skip((pageIndex - 1) * pageSize)
+            .Skip((pageNumber - 1) * pageSize)
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
@@ -1118,7 +1118,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         {
             Items = items,
             TotalCount = (int)totalCount,
-            PageIndex = pageIndex,
+            PageIndex = pageNumber,
             PageSize = pageSize,
             TotalPages = totalPages
         };

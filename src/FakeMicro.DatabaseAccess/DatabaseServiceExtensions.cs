@@ -57,8 +57,15 @@ public static class DatabaseServiceExtensions
         // 移除Dapper相关配置和依赖，统一使用SqlSugar
         // Dapper相关服务已从依赖注入中移除
 
+        // 注册动态仓储工厂
+        services.AddSingleton<IRepositoryFactory, DynamicRepositoryFactory>();
+        
+        // 注册仓储创建策略
+        services.AddSingleton(typeof(IRepositoryCreationStrategy<,>), typeof(PostgreSqlRepositoryCreationStrategy<,>));
+        services.AddSingleton(typeof(IRepositoryCreationStrategy<,>), typeof(MongoDbRepositoryCreationStrategy<,>));
+
         // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
-        // services.AddHostedService<DatabaseInitializerHostedService>();
+        services.AddHostedService<DatabaseInitializerHostedService>();
         // services.AddDatabaseInitializer(configuration.GetConnectionString);
         return services;
     }

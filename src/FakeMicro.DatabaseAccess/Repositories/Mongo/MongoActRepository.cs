@@ -1,6 +1,7 @@
-﻿using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.DatabaseAccess.Interfaces.Mongo;
 using FakeMicro.Entities.ManagerVersion;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using SqlSugar;
@@ -22,7 +23,7 @@ namespace FakeMicro.DatabaseAccess.Repositories.Mongo
         /// </summary>
         /// <param name="db">SqlSugar客户端</param>
         /// <param name="logger">日志记录器</param>
-        public MongoActRepository(ISqlSugarClient db, ILogger<MongoActRepository> logger)
+        public MongoActRepository([FromKeyedServices("MongoDB")] ISqlSugarClient db, ILogger<MongoActRepository> logger)
             : base(db, logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));

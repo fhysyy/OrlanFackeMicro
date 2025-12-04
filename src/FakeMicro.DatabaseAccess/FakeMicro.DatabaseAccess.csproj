@@ -13,7 +13,6 @@
     <!-- SqlSugar ORM (统一使用的ORM框架) -->
     <PackageReference Include="MongoDB.Bson" Version="3.5.2" />
     <PackageReference Include="MongoDB.Driver" Version="3.5.2" />
-    <PackageReference Include="MongoDB.Driver.Core" Version="2.30.0" />
     <PackageReference Include="SqlSugar.MongoDbCore" Version="5.1.4.277" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.210" />
     

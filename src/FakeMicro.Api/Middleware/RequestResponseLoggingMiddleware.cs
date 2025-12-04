@@ -55,12 +55,8 @@ namespace FakeMicro.Api.Middleware
 
             try
             {
-                // 保存原始请求体
-                var originalRequestBody = context.Request.Body;
+                // 读取请求体并保存到审计日志
                 var requestBody = await ReadRequestBodyAsync(context);
-                context.Request.Body = originalRequestBody;
-
-                // 将请求体保存到审计日志
                 auditLog.Details = $"请求参数: {requestBody}";
 
                 // 创建响应体内存流

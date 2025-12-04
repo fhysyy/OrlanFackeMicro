@@ -155,4 +155,58 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     {
         return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepositoryInternal<TEntity, TKey>(null));
     }
+
+    /// <summary>
+    /// 创建通用仓储实例（带数据库类型，显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseType">数据库类型</param>
+    /// <returns>通用仓储实例</returns>
+    IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>(DatabaseType databaseType)
+    {
+        if (databaseType != DatabaseType.MongoDB)
+        {
+            throw new NotSupportedException($"MongoRepositoryFactory only supports MongoDB, but got {databaseType}");
+        }
+        return CreateRepositoryInternal<TEntity, TKey>(null);
+    }
+
+    /// <summary>
+    /// 创建通用仓储实例（异步，带数据库类型，显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseType">数据库类型</param>
+    /// <returns>通用仓储实例</returns>
+    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>(DatabaseType databaseType)
+    {
+        if (databaseType != DatabaseType.MongoDB)
+        {
+            throw new NotSupportedException($"MongoRepositoryFactory only supports MongoDB, but got {databaseType}");
+        }
+        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepositoryInternal<TEntity, TKey>(null));
+    }
+
+    /// <summary>
+    /// 注册仓储创建策略（显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseType">数据库类型</param>
+    /// <param name="strategy">创建策略</param>
+    void IRepositoryFactory.RegisterStrategy<TEntity, TKey>(DatabaseType databaseType, IRepositoryCreationStrategy<TEntity, TKey> strategy) where TEntity : class
+    {
+        throw new NotSupportedException($"MongoRepositoryFactory does not support registering custom strategies.");
+    }
+
+    /// <summary>
+    /// 检查是否支持指定的数据库类型（显式实现IRepositoryFactory接口）
+    /// </summary>
+    /// <param name="databaseType">数据库类型</param>
+    /// <returns>是否支持</returns>
+    bool IRepositoryFactory.IsDatabaseTypeSupported(DatabaseType databaseType)
+    {
+        return databaseType == DatabaseType.MongoDB;
+    }
 }

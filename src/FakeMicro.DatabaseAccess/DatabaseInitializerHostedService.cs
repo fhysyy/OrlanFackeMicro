@@ -41,6 +41,7 @@ public class DatabaseInitializerHostedService : IHostedService
                 typeof(FakeMicro.Entities.Message),
                 typeof(FakeMicro.Entities.DictionaryType),
                 typeof(FakeMicro.Entities.DictionaryItem),
+                typeof(FakeMicro.Entities.AuditLog),
               
             };
 

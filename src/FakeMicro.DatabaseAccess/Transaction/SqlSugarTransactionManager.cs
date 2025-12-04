@@ -145,31 +145,23 @@ public class SqlSugarTransactionManager : ITransactionService
                 _logger.LogInformation("开始新事务: TransactionId={TransactionId}, GrainKey={GrainKey}, OperationType={OperationType}, IsolationLevel={IsolationLevel}", 
                     transactionId, grainKey, operationType, isolationLevel);
                 
-                var sqlSugarResult = await _sqlSugarClient.Ado.UseTranAsync(async () =>
+                // 使用SqlSugar的事务方法，修复CS1662错误
+                var transactionResult = await _sqlSugarClient.Ado.UseTranAsync(async () =>
                 {
                     try
                     {
-                        result = await action();
-                        return new { Success = true, Data = (TResult?)result };
+                        return await action();
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "事务内部操作失败: TransactionId={TransactionId}", transactionId);
-                        return new { Success = false, Data = (TResult?)default };
+                        throw;
                     }
                 });
+                result = transactionResult.Data;
                 
-                if (sqlSugarResult.IsSuccess)
-                {
-                    result = sqlSugarResult.Data.Data;
-                    _logger.LogInformation("事务成功提交: TransactionId={TransactionId}, Duration={Duration}ms", 
-                        transactionId, (DateTime.UtcNow - context.StartTime).TotalMilliseconds);
-                }
-                else
-                {
-                    Interlocked.Increment(ref _failedTransactions);
-                    throw new TransactionException("事务执行失败");
-                }
+                _logger.LogInformation("事务成功提交: TransactionId={TransactionId}, Duration={Duration}ms", 
+                    transactionId, (DateTime.UtcNow - context.StartTime).TotalMilliseconds);
             }
             else
             {

@@ -198,13 +198,13 @@ namespace FakeMicro.Api
             });
             
             app.UseHttpsRedirection();
-            
+            app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
             // 添加认证和授权中间件
             app.UseAuthentication();
             app.UseAuthorization();
             
             // 添加请求响应日志记录中间件
-            app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
+        
             
             // 暂时注释掉CAP中间件，专注于测试Orleans连接
             // app.UseCap();
