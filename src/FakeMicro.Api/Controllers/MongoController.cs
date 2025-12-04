@@ -16,26 +16,35 @@ namespace FakeMicro.Api.Controllers
     public class MongoController : ControllerBase
     {
         private readonly IClusterClient clusterClient;
-        public MongoController(IClusterClient _clusterClient) {
+        public MongoController(IClusterClient _clusterClient)
+        {
             clusterClient = _clusterClient;
         }
-        [HttpPost("insert")]
-        public async Task<IActionResult> InsertData([FromBody]object data)
+        [HttpPost("insert/{formName}")]
+        public async Task<IActionResult> InsertData(string formName, [FromBody] object data)
         {
-            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("MongoGrain");
-            var para= JsonConvert.SerializeObject(data);
-            var result = await mongoGrain.InsertData(para);
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
+            var para = JsonConvert.SerializeObject(data);
+            var result = await mongoGrain.InsertData(formName, para);
             return Ok(JsonConvert.DeserializeObject(result));
             //return  Ok(JsonConvert.DeserializeObject<BaseResultModel>(result));
         }
-        [HttpPost("info/{id}")]
-        public async Task<IActionResult> info(string id)
+        [HttpPost("info/{formName}/{id}")]
+        public async Task<IActionResult> info(string formName, string id)
         {
-            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("MongoGrain");
-         
-            var result = await mongoGrain.DataInfo(id);
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
+
+            var result = await mongoGrain.DataInfo(formName, id);
             return Ok(JsonConvert.DeserializeObject(result));
-            
+
+        }
+        [HttpPost("delete/{formName}/{id}")]
+        public async Task<IActionResult> delete(string formName, string id)
+        {
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
+            var result = await mongoGrain.DeleteData(id);
+            return Ok(JsonConvert.DeserializeObject(result));
+
         }
     }
 }

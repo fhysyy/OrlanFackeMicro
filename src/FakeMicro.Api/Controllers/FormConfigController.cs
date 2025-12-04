@@ -88,7 +88,7 @@ namespace FakeMicro.Api.Controllers
                 var grain = _clusterClient.GetGrain<IFormConfigGrain>(tempId);
                 var result = await grain.CreateAsync(request, cancellationToken);
 
-                return CreatedAtAction(nameof(GetFormConfig), new { id = result.id }, result);
+                return CreatedAtAction(nameof(GetFormConfig), new { id = result.Id }, result);
             }
             catch (ArgumentException ex)
             {

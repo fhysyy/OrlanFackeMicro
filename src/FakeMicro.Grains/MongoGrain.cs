@@ -23,13 +23,13 @@ namespace FakeMicro.Grains
 
             mongoActRepository= _mongoActRepository;
         }
-        public async Task<string> DataInfo(string data)
+        public async Task<string> DataInfo(string formName, string data)
         {
             var expand=new BaseResultModel();
             try
             {
-              
-                var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(data), "FakeMicroDB", "activities");
+                var dbName = this.GetPrimaryKeyString();
+                var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(data), dbName, formName);
                 expand=BaseResultModel.SuccessResult(data:result, message: "操作成功");
             }
             catch (Exception ex)
@@ -47,7 +47,8 @@ namespace FakeMicro.Grains
             var expand = new BaseResultModel<object>();
             try
             {
-                await mongoActRepository.DeleteAsync(data, "FakeMicroDB", "activities");
+                var dbName = this.GetPrimaryKeyString();
+                await mongoActRepository.DeleteByIdAsync(ObjectId.Parse(data), dbName, "FormDefinition");
                 expand.Success = true;
                 expand.Data = data;
             }
@@ -61,14 +62,14 @@ namespace FakeMicro.Grains
 
         }
 
-        public async Task<string> InsertData(string data)
+        public async Task<string> InsertData(string formName,string data)
         {
             var expand = new BaseResultModel();
             try
             {
                 dynamic info = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
                 info._id = ObjectId.GenerateNewId();
-                await mongoActRepository.AddAsync(info, "FakeMicroDB", "activities");
+                await mongoActRepository.AddAsync(info, "FakeMicroDB",formName);
                 expand = BaseResultModel.SuccessResult(
                                         data: info._id,
                                         message: "操作成功"
@@ -86,9 +87,25 @@ namespace FakeMicro.Grains
             throw new NotImplementedException();
         }
 
-        public Task<BaseResultModel> UpdateData(string data)
+        public async Task<BaseResultModel> UpdateData(string data)
         {
-            throw new NotImplementedException();
+            var formName = "FormDefinition";
+            var expand = new BaseResultModel();
+            try
+            {
+                dynamic info = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
+                info._id = ObjectId.GenerateNewId();
+                await mongoActRepository.UpdateAsync(info, "FakeMicroDB",formName);
+                expand = BaseResultModel.SuccessResult(
+                                        data: info._id,
+                                        message: "操作成功"
+                                    );
+            }
+            catch (Exception ex)
+            {
+                expand = BaseResultModel.FailedResult(message: ex.Message);
+            }
+            return await Task.FromResult(JsonConvert.SerializeObject(expand));
         }
 
         public Task<BaseResultModel> ValidateData(string data)

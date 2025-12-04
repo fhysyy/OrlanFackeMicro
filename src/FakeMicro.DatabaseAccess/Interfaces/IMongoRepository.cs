@@ -159,9 +159,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>符合条件的实体集合</returns>
-    Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        string? databaseName,
-        CancellationToken cancellationToken = default);
+    Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate,string? databaseName,CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 根据条件获取实体（指定数据库和集合）
@@ -171,9 +169,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>符合条件的实体集合</returns>
-    Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default);
+    Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate,string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 根据条件获取分页实体（指定数据库）
@@ -186,10 +182,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageIndex, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
+    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false,
         string? databaseName = null,
         CancellationToken cancellationToken = default);
 
@@ -205,9 +198,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageIndex, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
+    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
         string? collectionName = null,
@@ -220,9 +211,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>是否存在</returns>
-    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate,
-        string? databaseName,
-        CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 检查实体是否存在（指定数据库和集合）
@@ -232,9 +221,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>是否存在</returns>
-    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate,
-        string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default);
+    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 获取实体数量（指定数据库）
@@ -243,9 +230,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>实体数量</returns>
-    Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate,
-        string? databaseName,
-        CancellationToken cancellationToken = default);
+    Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate, string? databaseName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 获取实体数量（指定数据库和集合）
@@ -255,9 +240,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>实体数量</returns>
-    Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate,
-        string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default);
+    Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate,string? databaseName, string? collectionName,CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 添加实体（指定数据库）
@@ -300,8 +283,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="batchSize">每批大小</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, int batchSize = 1000,
-        CancellationToken cancellationToken = default);
+    Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, int batchSize = 1000, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 分批添加实体（适用于大量数据，指定数据库和集合）
@@ -311,8 +293,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="batchSize">每批大小</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, int batchSize = 1000,
-        CancellationToken cancellationToken = default);
+    Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, int batchSize = 1000, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 更新实体（指定数据库）
