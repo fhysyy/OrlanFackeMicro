@@ -1,12 +1,13 @@
-﻿using FakeMicro.Interfaces;
+using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 using FakeMicro.Interfaces.Models.Results;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Orleans;
-using Orleans;
 using System;
+using System.Collections.Generic;
 using System.Text.Json;
 using System.Threading.Tasks;
 namespace FakeMicro.Api.Controllers
@@ -21,13 +22,11 @@ namespace FakeMicro.Api.Controllers
             clusterClient = _clusterClient;
         }
         [HttpPost("insert/{formName}")]
-        public async Task<IActionResult> InsertData(string formName, [FromBody] object data)
+        public async Task<IActionResult> InsertData(string formName, [FromBody] Dictionary<string, object> data)
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
-            var para = JsonConvert.SerializeObject(data);
-            var result = await mongoGrain.InsertData(formName, para);
-            return Ok(JsonConvert.DeserializeObject(result));
-            //return  Ok(JsonConvert.DeserializeObject<BaseResultModel>(result));
+            var result = await mongoGrain.InsertData(formName, data);
+            return Ok(result);
         }
         [HttpPost("info/{formName}/{id}")]
         public async Task<IActionResult> info(string formName, string id)
@@ -35,7 +34,7 @@ namespace FakeMicro.Api.Controllers
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
 
             var result = await mongoGrain.DataInfo(formName, id);
-            return Ok(JsonConvert.DeserializeObject(result));
+            return Ok(result);
 
         }
         [HttpPost("delete/{formName}/{id}")]
@@ -43,8 +42,25 @@ namespace FakeMicro.Api.Controllers
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
             var result = await mongoGrain.DeleteData(id);
-            return Ok(JsonConvert.DeserializeObject(result));
+            return Ok(result);
 
         }
+        [HttpPost("update/{formName}/{id}")]
+        public async Task<IActionResult> Update(string id, string formName, [FromBody] Dictionary<string, object> data)
+        {
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
+            var result = await mongoGrain.UpdateData(id, data);
+            return Ok(result);
+        
+        }
+        [HttpPost("search")]
+        public async Task<IActionResult> searchData([FromBody] PageQueryModel data)
+        {
+            var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
+            var result = await mongoGrain.SearchData(data);
+            return Ok(result);
+
+        }
+
     }
 }

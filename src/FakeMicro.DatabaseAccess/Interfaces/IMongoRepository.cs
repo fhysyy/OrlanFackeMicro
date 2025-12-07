@@ -1,14 +1,15 @@
+using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using MongoDB.Bson;
+using MongoDB.Driver;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
-using MongoDB.Driver;
 
 namespace FakeMicro.DatabaseAccess.Interfaces;
 
 /// <summary>
-/// MongoDB仓储接口
-/// 继承自通用仓储接口，并添加MongoDB特定方法
+/// MongoDB仓储接口，提供MongoDB特有的CRUD操作和高级查询功能
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
@@ -51,28 +52,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <returns>实体集合</returns>
     Task<IEnumerable<TEntity>> GetAllAsync(string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// 获取所有实体（带导航属性，指定数据库）
-    /// </summary>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体集合</returns>
-    Task<IEnumerable<TEntity>> GetAllWithIncludesAsync(string? databaseName,
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
 
-    /// <summary>
-    /// 获取所有实体（带导航属性，指定数据库和集合）
-    /// </summary>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体集合</returns>
-    Task<IEnumerable<TEntity>> GetAllWithIncludesAsync(string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
 
     /// <summary>
     /// 获取分页实体（指定数据库）
@@ -84,7 +64,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
+    Task<PageBaseResultModel> GetPagedAsync(int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -101,7 +81,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
+    Task<PageBaseResultModel> GetPagedAsync(int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -127,30 +107,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <returns>实体对象，如果不存在则返回null</returns>
     Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// 根据主键获取实体（带导航属性，指定数据库）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体对象，如果不存在则返回null</returns>
-    Task<TEntity?> GetByIdWithIncludesAsync(TKey id, string? databaseName,
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
 
-    /// <summary>
-    /// 根据主键获取实体（带导航属性，指定数据库和集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体对象，如果不存在则返回null</returns>
-    Task<TEntity?> GetByIdWithIncludesAsync(TKey id, string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
 
     /// <summary>
     /// 根据条件获取实体（指定数据库）
@@ -182,7 +139,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false,
+    Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false,
         string? databaseName = null,
         CancellationToken cancellationToken = default);
 
@@ -198,7 +155,27 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
+    Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
+        bool isDescending = false,
+        string? databaseName = null,
+        string? collectionName = null,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 根据条件获取分页实体（使用BsonDocument过滤条件，指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">MongoDB过滤条件</param>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>分页结果</returns>
+    Task<PageBaseResultModel> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
+        int pageIndex, int pageSize,
+        Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
         string? collectionName = null,
@@ -311,6 +288,33 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     Task UpdateAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 更新实体（直接指定主键值）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    Task UpdateAsync(TKey id, TEntity entity, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 更新实体（直接指定主键值，指定数据库）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    Task UpdateAsync(TKey id, TEntity entity, string? databaseName, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 更新实体（直接指定主键值，指定数据库和集合）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    Task UpdateAsync(TKey id, TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// 部分更新实体（仅更新指定属性，指定数据库）

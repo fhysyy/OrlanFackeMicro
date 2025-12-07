@@ -7,12 +7,11 @@ using System.Threading.Tasks;
 namespace FakeMicro.DatabaseAccess.Interfaces;
 
 /// <summary>
-/// 统一通用仓储接口
-/// 提供基本的CRUD操作和高级查询功能
-/// </summary>
-/// <typeparam name="TEntity">实体类型</typeparam>
-/// <typeparam name="TKey">主键类型</typeparam>
-public interface IRepository<TEntity, TKey> where TEntity : class
+    /// 通用仓储接口，提供基础的CRUD操作
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    public interface IRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey> where TEntity : class
 {
     /// <summary>
     /// 获取所有实体
@@ -21,15 +20,7 @@ public interface IRepository<TEntity, TKey> where TEntity : class
     /// <returns>实体集合</returns>
     Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     
-    /// <summary>
-    /// 获取所有实体（带导航属性）
-    /// </summary>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体集合</returns>
-    Task<IEnumerable<TEntity>> GetAllWithIncludesAsync(
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
+
     
     /// <summary>
     /// 获取分页实体
@@ -53,16 +44,7 @@ public interface IRepository<TEntity, TKey> where TEntity : class
     /// <returns>实体对象，如果不存在则返回null</returns>
     Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
     
-    /// <summary>
-    /// 根据主键获取实体（带导航属性）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="includes">要包含的导航属性</param>
-    /// <returns>实体对象，如果不存在则返回null</returns>
-    Task<TEntity?> GetByIdWithIncludesAsync(TKey id, 
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] includes);
+
     
     /// <summary>
     /// 根据条件获取实体

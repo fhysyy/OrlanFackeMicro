@@ -9,6 +9,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System;
 using Npgsql;
+using Orleans;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -58,31 +59,37 @@ public interface IPagedResult<T>
 /// 分页结果实现
 /// </summary>
 /// <typeparam name="T">数据类型</typeparam>
+[GenerateSerializer]
 public class PagedResult<T> : IPagedResult<T>
 {
     /// <summary>
     /// 数据项集合
     /// </summary>
+    [Id(0)]
     public List<T> Items { get; set; } = new List<T>();
-    
+
     /// <summary>
     /// 当前页码
     /// </summary>
+    [Id(1)]
     public int PageIndex { get; set; } = 1;
-    
+
     /// <summary>
     /// 每页大小
     /// </summary>
+    [Id(2)]
     public int PageSize { get; set; } = 100;
-    
+
     /// <summary>
     /// 总记录数
     /// </summary>
+    [Id(3)]
     public int TotalCount { get; set; } = 0;
-    
+
     /// <summary>
     /// 总页数
     /// </summary>
+    [Id(4)]
     public int TotalPages { get; set; } = 0;
     
     /// <summary>
@@ -102,7 +109,7 @@ public class PagedResult<T> : IPagedResult<T>
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
-public class SqlSugarRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class, new()
+    public class SqlSugarRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class, new()
     {
         private readonly ISqlSugarClient _db;
         private readonly ILogger<SqlSugarRepository<TEntity, TKey>> _logger;

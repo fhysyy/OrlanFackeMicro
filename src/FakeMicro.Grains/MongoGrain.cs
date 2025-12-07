@@ -1,35 +1,40 @@
 using FakeMicro.DatabaseAccess.Interfaces.Mongo;
 using FakeMicro.DatabaseAccess.Repositories.Mongo;
+using FakeMicro.Entities;
+
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 using FakeMicro.Utilities;
 using MongoDB.Bson;
+using MongoDB.Driver;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using ZstdSharp.Unsafe;
 namespace FakeMicro.Grains
 {
-    internal class MongoGrain : Grain, IMongoGrain
+    public class MongoGrain : Grain, IMongoGrain
     {
         private readonly IMongoActRepository mongoActRepository;
         public MongoGrain(IMongoActRepository _mongoActRepository) {
 
             mongoActRepository= _mongoActRepository;
         }
-        public async Task<string> DataInfo(string formName, string data)
+        public async Task<BaseResultModel> DataInfo(string formName, string id)
         {
             var expand=new BaseResultModel();
             try
             {
                 var dbName = this.GetPrimaryKeyString();
-                var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(data), dbName, formName);
+                var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(id), dbName, formName);
                 expand=BaseResultModel.SuccessResult(data:result, message: "操作成功");
             }
             catch (Exception ex)
@@ -38,19 +43,19 @@ namespace FakeMicro.Grains
                expand=BaseResultModel.FailedResult(message:ex.Message);
                 
             }
-            return await Task.FromResult(JsonConvert.SerializeObject(expand));
+            return expand;
         }
 
-        public async Task<string> DeleteData(string data)
+        public async Task<BaseResultModel> DeleteData(string id)
         {
             
-            var expand = new BaseResultModel<object>();
+            var expand = new BaseResultModel();
             try
             {
                 var dbName = this.GetPrimaryKeyString();
-                await mongoActRepository.DeleteByIdAsync(ObjectId.Parse(data), dbName, "FormDefinition");
+                await mongoActRepository.DeleteByIdAsync(ObjectId.Parse(id), dbName, "FormDefinition");
                 expand.Success = true;
-                expand.Data = data;
+                expand.Data = id;
             }
             catch (Exception ex)
             {
@@ -58,46 +63,22 @@ namespace FakeMicro.Grains
                 expand.Message = ex.Message;
                 expand.Success = false;
             }
-            return await Task.FromResult(JsonConvert.SerializeObject(expand));
+            return expand;
 
         }
 
-        public async Task<string> InsertData(string formName,string data)
+        public async Task<BaseResultModel> InsertData(string formName, Dictionary<string, object> data)
         {
             var expand = new BaseResultModel();
             try
             {
-                dynamic info = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
-                info._id = ObjectId.GenerateNewId();
-                await mongoActRepository.AddAsync(info, "FakeMicroDB",formName);
+                // 直接使用传入的字典数据，减少JSON序列化/反序列化
+                var objectId = ObjectId.GenerateNewId();
+                data["_id"] = objectId;
+                
+                await mongoActRepository.AddAsync(data, "FakeMicroDB", formName);
                 expand = BaseResultModel.SuccessResult(
-                                        data: info._id,
-                                        message: "操作成功"
-                                    );
-            }
-            catch (Exception ex)
-            {
-                expand=BaseResultModel.FailedResult(message:ex.Message);
-            }
-            return await Task.FromResult(JsonConvert.SerializeObject(expand));
-        }
-
-        public Task<BaseResultModel> SearchData(string data)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task<BaseResultModel> UpdateData(string data)
-        {
-            var formName = "FormDefinition";
-            var expand = new BaseResultModel();
-            try
-            {
-                dynamic info = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
-                info._id = ObjectId.GenerateNewId();
-                await mongoActRepository.UpdateAsync(info, "FakeMicroDB",formName);
-                expand = BaseResultModel.SuccessResult(
-                                        data: info._id,
+                                        data: objectId,
                                         message: "操作成功"
                                     );
             }
@@ -105,10 +86,86 @@ namespace FakeMicro.Grains
             {
                 expand = BaseResultModel.FailedResult(message: ex.Message);
             }
-            return await Task.FromResult(JsonConvert.SerializeObject(expand));
+            return expand;
         }
 
-        public Task<BaseResultModel> ValidateData(string data)
+        public async Task<string> SearchData(PageQueryModel queryModel)
+        {
+            var expand = new BaseResultModel();
+            try
+            {
+                // 直接使用传入的查询模型，减少JSON序列化/反序列化
+                
+                // 从查询模型中提取过滤条件
+                List<QueryFilter> filters = new List<QueryFilter>();
+                
+                // 如果Filter字典不为空，将其转换为QueryFilter列表
+                if (queryModel.Filter != null && queryModel.Filter.Any())
+                {
+                    // 检查是否是前端传递的特殊结构：{"additionalProp1":"字段名","additionalProp2":"操作符","additionalProp3":"值"}
+                    if (queryModel.Filter.ContainsKey("additionalProp1") && 
+                        queryModel.Filter.ContainsKey("additionalProp2") && 
+                        queryModel.Filter.ContainsKey("additionalProp3"))
+                    {
+                        // 解析为单个QueryFilter
+                        filters.Add(new QueryFilter
+                        {
+                            Field = queryModel.Filter["additionalProp1"].ToString(),
+                            Operator = queryModel.Filter["additionalProp2"].ToString(),
+                            Value = queryModel.Filter["additionalProp3"]
+                        });
+                    }
+                    else
+                    {
+                        // 普通键值对处理方式
+                        foreach (var kvp in queryModel.Filter)
+                        {
+                            // 默认使用相等操作符，可根据需要扩展
+                            filters.Add(new QueryFilter
+                            {
+                                Field = kvp.Key,
+                                Operator = "eq",
+                                Value = kvp.Value
+                            });
+                        }
+                    }
+                }
+                
+                // 使用查询构建器构建MongoDB过滤条件
+                var filter = MongoQueryBuilder.BuildFilter(filters);
+                
+                var result = await mongoActRepository.GetPagedByConditionAsync(filter, (int)queryModel.PageNumber, queryModel.PageSize,null,true, "FakeMicroDB", "FormDefinition");
+                
+                expand = BaseResultModel.SuccessResult(
+                                        data: result.Data,
+                                        message: "操作成功"
+                                    );
+            }
+            catch (Exception ex)
+            {
+                expand = BaseResultModel.FailedResult(message: ex.Message);
+            }
+            return await  Task.FromResult(JsonConvert.SerializeObject(expand));
+        }
+
+        public async Task<BaseResultModel> UpdateData(string id, Dictionary<string, object> data)
+        {
+            var formName = "FormDefinition";
+            var expand = new BaseResultModel();
+            try
+            {
+                // 直接使用传入的字典数据，减少JSON序列化/反序列化
+                await mongoActRepository.UpdateAsync(ObjectId.Parse(id), data, "FakeMicroDB", formName);
+                expand = BaseResultModel.SuccessResult(data: id, message: "操作成功");
+            }
+            catch (Exception ex)
+            {
+                expand = BaseResultModel.FailedResult(message: ex.Message);
+            }
+            return expand;
+        }
+
+        public Task<BaseResultModel> ValidateData(Dictionary<string, object> data)
         {
             throw new NotImplementedException();
         }
