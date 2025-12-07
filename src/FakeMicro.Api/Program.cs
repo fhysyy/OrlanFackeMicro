@@ -172,7 +172,7 @@ namespace FakeMicro.Api
             builder.Services.AddAuthorizationPolicies();
             
             // 暂时注释掉CAP事件总线服务，专注于测试Orleans连接
-            // builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
+            builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
             
             // 注册数据库服务
             builder.Services.AddDatabaseServices(builder.Configuration);
@@ -202,25 +202,25 @@ namespace FakeMicro.Api
             // 添加认证和授权中间件
             app.UseAuthentication();
             app.UseAuthorization();
-            
+
             // 添加请求响应日志记录中间件
-        
-            
+
+
             // 暂时注释掉CAP中间件，专注于测试Orleans连接
             // app.UseCap();
 
             // 暂时注释掉HangFire Dashboard，专注于测试Orleans连接
-            // app.UseHangfireDashboard("/hangfire"); 
-            //    new DashboardOptions
+            app.UseHangfireDashboard("/hangfire");
+            //new DashboardOptions
             //{
-            //    Authorization = new[] { new HangfireAuthorizationFilter() },
+            //   // Authorization = new[] { new HangfireAuthorizationFilter() },
             //    DashboardTitle = "FakeMicro任务调度中心"
             //});
-            
+
             // 暂时注释掉默认的定时任务，专注于测试Orleans连接
-            // ConfigureDefaultJobs();
-           
-            
+            ConfigureDefaultJobs();
+
+
             // 映射控制器路由
             app.MapControllers();
             
