@@ -73,7 +73,7 @@ namespace FakeMicro.DatabaseAccess.Repositories.Mongo
                 case "neq":
                 case "!=":
                     return Builders<BsonDocument>.Filter.Ne(filter.Field, filter.Value);
-                case "contains":
+                case "like":
                     return Builders<BsonDocument>.Filter.Regex(filter.Field, new BsonRegularExpression(filter.Value?.ToString() ?? "", "i"));
                 case "gt":
                 case ">":
