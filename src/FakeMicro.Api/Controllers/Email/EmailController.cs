@@ -92,11 +92,11 @@ namespace FakeMicro.Entities.Api.Controllers
                 var totalCount = await grain.GetCountAsync(cancellationToken);
                 var result = new PagedResult<EmailDto>
                 {
-                    Items = items,
+                    Data = items,
                     TotalCount = totalCount,
                     PageIndex = page,
                     PageSize = pageSize,
-                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                   
                 };
                 return Ok(result);
             }

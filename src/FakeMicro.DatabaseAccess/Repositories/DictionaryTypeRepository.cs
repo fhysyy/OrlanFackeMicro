@@ -93,7 +93,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
         {
             // 转换为我们已实现的分页方法格式
             var result = await base.GetPagedAsync(pageIndex + 1, pageSize, x => x.Id, false, cancellationToken);
-            return (result.Items, result.TotalCount);
+            return (result.Data, result.TotalCount);
         }
 
         public async Task<(IEnumerable<DictionaryType> Items, int TotalCount)> GetPagedByConditionAsync(
@@ -101,7 +101,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
         {
             // 转换为我们已实现的分页方法格式
             var result = await base.GetPagedByConditionAsync(predicate, pageIndex + 1, pageSize, x => x.Id, false, cancellationToken);
-            return (result.Items, result.TotalCount);
+            return (result.Data, result.TotalCount);
         }
 
         public void UpdatePartial(DictionaryType entity, params Expression<Func<DictionaryType, object>>[] properties)

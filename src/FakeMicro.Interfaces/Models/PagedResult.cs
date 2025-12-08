@@ -33,18 +33,18 @@ namespace FakeMicro.Interfaces.Models
         /// <summary>
         /// 总页数
         /// </summary>
-        [Id(8)]
-        public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
+        //[Id(8)]
+        //public int TotalPages => (int)Math.Ceiling(TotalCount / (double)PageSize);
         
         /// <summary>
         /// 是否有上一页
         /// </summary>
         public bool HasPrevious => PageIndex > 1;
         
-        /// <summary>
-        /// 是否有下一页
-        /// </summary>
-        public bool HasNext => PageIndex < TotalPages;
+        ///// <summary>
+        ///// 是否有下一页
+        ///// </summary>
+        //public bool HasNext => PageIndex < TotalPages;
         
         /// <summary>
         /// 创建成功的分页结果

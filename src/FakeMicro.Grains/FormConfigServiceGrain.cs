@@ -87,7 +87,7 @@ namespace FakeMicro.Grains
                     );
 
                     // 映射到DTO
-                    var dtos = _mapper.Map<List<FormConfigDto>>(pagedResult.Items);
+                    var dtos = _mapper.Map<List<FormConfigDto>>(pagedResult.Data);
 
                     _logger.LogInformation("获取表单配置列表成功，页码: {Page}, 每页大小: {PageSize}, 总条数: {TotalCount}",
                         page, pageSize, pagedResult.TotalCount);

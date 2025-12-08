@@ -35,12 +35,7 @@ namespace FakeMicro.Grains
             {
                 var dbName = this.GetPrimaryKeyString();
                 var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(id), dbName, formName);
-                
-                // 将结果转换为JSON字符串，然后再转换回对象，以避免ObjectId类型序列化问题
-                var jsonResult = JsonConvert.SerializeObject(result);
-                var safeResult = JsonConvert.DeserializeObject<object>(jsonResult);
-                
-                expand=BaseResultModel.SuccessResult(data:safeResult, message: "操作成功");
+                expand=BaseResultModel.SuccessResult(data:result, message: "操作成功");
             }
             catch (Exception ex)
             {
@@ -74,16 +69,23 @@ namespace FakeMicro.Grains
 
         public async Task<BaseResultModel> InsertData(string formName, string data)
         {
+            // 将string类型的data转换为Dictionary<string, object>
+            var dataDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
+            return await InsertData(formName, dataDict);
+        }
+
+        public async Task<BaseResultModel> InsertData(string formName, Dictionary<string, object> data)
+        {
             var expand = new BaseResultModel();
             try
             {
-                dynamic dynData = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
                 // 直接使用传入的字典数据，减少JSON序列化/反序列化
                 var objectId = ObjectId.GenerateNewId();
-                dynData._id = objectId;
-                await mongoActRepository.AddAsync(dynData, "FakeMicroDB", formName);
+                data["_id"] = objectId;
+                
+                await mongoActRepository.AddAsync(data, "FakeMicroDB", formName);
                 expand = BaseResultModel.SuccessResult(
-                                        data: objectId.ToString(),
+                                        data: objectId,
                                         message: "操作成功"
                                     );
             }
@@ -107,32 +109,15 @@ namespace FakeMicro.Grains
                 // 如果Filter字典不为空，将其转换为QueryFilter列表
                 if (queryModel.Filter != null && queryModel.Filter.Any())
                 {
-                    // 检查是否是前端传递的特殊结构：{"additionalProp1":"字段名","additionalProp2":"操作符","additionalProp3":"值"}
-                    if (queryModel.Filter.ContainsKey("additionalProp1") && 
-                        queryModel.Filter.ContainsKey("additionalProp2") && 
-                        queryModel.Filter.ContainsKey("additionalProp3"))
+                    foreach (var kvp in queryModel.Filter)
                     {
-                        // 解析为单个QueryFilter
+                        // 默认使用相等操作符，可根据需要扩展
                         filters.Add(new QueryFilter
                         {
-                            Field = queryModel.Filter["additionalProp1"].ToString(),
-                            Operator = queryModel.Filter["additionalProp2"].ToString(),
-                            Value = queryModel.Filter["additionalProp3"]
+                            Field = kvp.Key,
+                            Operator = "eq",
+                            Value = kvp.Value
                         });
-                    }
-                    else
-                    {
-                        // 普通键值对处理方式
-                        foreach (var kvp in queryModel.Filter)
-                        {
-                            // 默认使用相等操作符，可根据需要扩展
-                            filters.Add(new QueryFilter
-                            {
-                                Field = kvp.Key,
-                                Operator = "eq",
-                                Value = kvp.Value
-                            });
-                        }
                     }
                 }
                 
