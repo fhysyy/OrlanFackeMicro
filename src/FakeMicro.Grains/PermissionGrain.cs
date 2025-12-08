@@ -3,7 +3,6 @@ using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.DatabaseAccess.Entities;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
-using FakeMicro.Interfaces.Models;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using System;

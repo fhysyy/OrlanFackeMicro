@@ -91,8 +91,8 @@ namespace FakeMicro.Interfaces.Models.Requests
             if (author?.Length > 100)
                 errors.Add("author长度不能超过100个字符");
 
-            if (order == null)
-                errors.Add("order是必需的");
+            //if (order == null)
+            //    errors.Add("order是必需的");
 
             if (string.IsNullOrWhiteSpace(content))
                 errors.Add("content是必需的");
@@ -100,8 +100,8 @@ namespace FakeMicro.Interfaces.Models.Requests
             if (content?.Length > 10000)
                 errors.Add("content长度不能超过10000个字符");
 
-            if (Status == null)
-                errors.Add("Status是必需的");
+            //if (Status == null)
+            //    errors.Add("Status是必需的");
 
             if (Description?.Length > 500)
                 errors.Add("Description长度不能超过500个字符");

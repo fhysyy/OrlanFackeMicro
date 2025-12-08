@@ -25,14 +25,13 @@ namespace FakeMicro.Api.Controllers
         public async Task<IActionResult> InsertData(string formName, [FromBody] object data)
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
-            var result = await mongoGrain.InsertData(formName, JsonConvert.SerializeObject(data));
+            var result = await mongoGrain.InsertData(formName,JsonConvert.SerializeObject(data));
             return Ok(result);
         }
         [HttpPost("info/{formName}/{id}")]
         public async Task<IActionResult> info(string formName, string id)
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
-
             var result = await mongoGrain.DataInfo(formName, id);
             return Ok(result);
 
@@ -43,7 +42,6 @@ namespace FakeMicro.Api.Controllers
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
             var result = await mongoGrain.DeleteData(id);
             return Ok(result);
-
         }
         [HttpPost("update/{formName}/{id}")]
         public async Task<IActionResult> Update(string id, string formName, [FromBody] Dictionary<string, object> data)
@@ -51,7 +49,6 @@ namespace FakeMicro.Api.Controllers
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
             var result = await mongoGrain.UpdateData(id, data);
             return Ok(result);
-        
         }
         [HttpPost("search")]
         public async Task<IActionResult> searchData([FromBody] PageQueryModel data)
