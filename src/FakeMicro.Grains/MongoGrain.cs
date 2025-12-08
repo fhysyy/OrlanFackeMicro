@@ -67,25 +67,20 @@ namespace FakeMicro.Grains
 
         }
 
-        public async Task<BaseResultModel> InsertData(string formName, string data)
-        {
-            // 将string类型的data转换为Dictionary<string, object>
-            var dataDict = JsonConvert.DeserializeObject<Dictionary<string, object>>(data);
-            return await InsertData(formName, dataDict);
-        }
 
-        public async Task<BaseResultModel> InsertData(string formName, Dictionary<string, object> data)
+
+        public async Task<BaseResultModel> InsertData(string formName, string data)
         {
             var expand = new BaseResultModel();
             try
             {
                 // 直接使用传入的字典数据，减少JSON序列化/反序列化
+                dynamic dydata = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
                 var objectId = ObjectId.GenerateNewId();
-                data["_id"] = objectId;
-                
+                dydata._id = objectId.ToString();
                 await mongoActRepository.AddAsync(data, "FakeMicroDB", formName);
                 expand = BaseResultModel.SuccessResult(
-                                        data: objectId,
+                                        data: objectId.ToString(),
                                         message: "操作成功"
                                     );
             }
