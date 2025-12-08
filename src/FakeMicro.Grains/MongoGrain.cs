@@ -35,7 +35,12 @@ namespace FakeMicro.Grains
             {
                 var dbName = this.GetPrimaryKeyString();
                 var result=await mongoActRepository.GetByIdAsync(ObjectId.Parse(id), dbName, formName);
-                expand=BaseResultModel.SuccessResult(data:result, message: "操作成功");
+                
+                // 将结果转换为JSON字符串，然后再转换回对象，以避免ObjectId类型序列化问题
+                var jsonResult = JsonConvert.SerializeObject(result);
+                var safeResult = JsonConvert.DeserializeObject<object>(jsonResult);
+                
+                expand=BaseResultModel.SuccessResult(data:safeResult, message: "操作成功");
             }
             catch (Exception ex)
             {
@@ -67,18 +72,19 @@ namespace FakeMicro.Grains
 
         }
 
-        public async Task<BaseResultModel> InsertData(string formName, Dictionary<string, object> data)
+        public async Task<BaseResultModel> InsertData(string formName, string data)
         {
             var expand = new BaseResultModel();
             try
             {
+                dynamic dynData = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
                 // 直接使用传入的字典数据，减少JSON序列化/反序列化
                 var objectId = ObjectId.GenerateNewId();
-                data["_id"] = objectId;
+                dynData._id = objectId;
                 
-                await mongoActRepository.AddAsync(data, "FakeMicroDB", formName);
+                await mongoActRepository.AddAsync(dynData, "FakeMicroDB", formName);
                 expand = BaseResultModel.SuccessResult(
-                                        data: objectId,
+                                        data: objectId.ToString(),
                                         message: "操作成功"
                                     );
             }

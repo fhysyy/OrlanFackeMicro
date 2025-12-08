@@ -22,10 +22,10 @@ namespace FakeMicro.Api.Controllers
             clusterClient = _clusterClient;
         }
         [HttpPost("insert/{formName}")]
-        public async Task<IActionResult> InsertData(string formName, [FromBody] Dictionary<string, object> data)
+        public async Task<IActionResult> InsertData(string formName, [FromBody] object data)
         {
             var mongoGrain = clusterClient.GetGrain<IMongoGrain>("FakeMicroDB");
-            var result = await mongoGrain.InsertData(formName, data);
+            var result = await mongoGrain.InsertData(formName, JsonConvert.SerializeObject(data));
             return Ok(result);
         }
         [HttpPost("info/{formName}/{id}")]
