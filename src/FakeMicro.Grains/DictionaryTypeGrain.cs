@@ -141,7 +141,7 @@ namespace FakeMicro.Grains
 
                 // 将项目的分页结果转换为自定义的分页结果
                 return new FakeMicro.Interfaces.PaginatedResult<DictionaryType>(
-                    result.Items.ToList() as System.Collections.Generic.IReadOnlyCollection<DictionaryType>,
+                    result.Data.ToList() as System.Collections.Generic.IReadOnlyCollection<DictionaryType>,
                     result.PageIndex,
                     result.PageSize,
                     result.TotalCount);

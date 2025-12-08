@@ -199,7 +199,7 @@ namespace FakeMicro.Entities.Grains
             try
             {
                 var pagedResult = await _repository.GetPagedAsync(page, pageSize, x => x.CreatedAt, true, cancellationToken);
-                return _mapper.Map<List<FakeNewsDto>>(pagedResult.Items);
+                return _mapper.Map<List<FakeNewsDto>>(pagedResult.Data);
             }
             catch (Exception ex)
             {
@@ -272,7 +272,7 @@ namespace FakeMicro.Entities.Grains
                     x => x.CreatedAt,
                     true, // 降序
                     cancellationToken);
-                var entities = pagedResult.Items;
+                var entities = pagedResult.Data;
                 return _mapper.Map<List<FakeNewsDto>>(entities);
             }
             catch (Exception ex)
@@ -303,7 +303,7 @@ namespace FakeMicro.Entities.Grains
                     x => x.Id,
                     false,
                     cancellationToken);
-    var entities = pagedResult.Items;
+    var entities = pagedResult.Data;
                 if (!entities.Any())
                 {
                     return BatchDeleteFakeNewsResult.Failed(new List<string>{"未找到要删除的FakeNewsNOT_FOUND"});

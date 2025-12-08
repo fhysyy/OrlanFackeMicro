@@ -244,7 +244,7 @@ namespace FakeMicro.Entities.Grains
             try
             {
                 var pagedResult = await _repository.GetPagedAsync(page, pageSize, x => x.CreatedAt, true, cancellationToken);
-                return _mapper.Map<List<FakeStudentDto>>(pagedResult.Items);
+                return _mapper.Map<List<FakeStudentDto>>(pagedResult.Data);
             }
             catch (Exception ex)
             {
@@ -284,7 +284,7 @@ namespace FakeMicro.Entities.Grains
                 }
 
                 var pagedResult = await _repository.GetPagedByConditionAsync(predicate, page, pageSize, x => x.CreatedAt, true, cancellationToken);
-                return _mapper.Map<List<FakeStudentDto>>(pagedResult.Items);
+                return _mapper.Map<List<FakeStudentDto>>(pagedResult.Data);
             }
             catch (Exception ex)
             {
