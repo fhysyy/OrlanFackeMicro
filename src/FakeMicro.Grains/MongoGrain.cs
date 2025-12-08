@@ -78,7 +78,7 @@ namespace FakeMicro.Grains
                 dynamic dydata = ((JObject)JsonConvert.DeserializeObject<object>(data)).ToObject<IDictionary<string, object>>().ToExpando();
                 var objectId = ObjectId.GenerateNewId();
                 dydata._id = objectId.ToString();
-                await mongoActRepository.AddAsync(data, "FakeMicroDB", formName);
+                await mongoActRepository.AddAsync(dydata, "FakeMicroDB", formName);
                 expand = BaseResultModel.SuccessResult(
                                         data: objectId.ToString(),
                                         message: "操作成功"
