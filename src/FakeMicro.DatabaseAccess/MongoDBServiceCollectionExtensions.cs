@@ -1,11 +1,11 @@
-using System; 
-using System.Reflection;
+using System;
 using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.DatabaseAccess.Interfaces.Mongo;
+using FakeMicro.DatabaseAccess.Repositories.Mongo;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Driver;
-using SqlSugar;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -29,37 +29,26 @@ public static class MongoDBServiceCollectionExtensions
         var options = configuration.GetSection(sectionName).Get<MongoDBConfig.MongoDBOptions>() ?? throw new InvalidOperationException($"MongoDB配置未找到: {sectionName}");
         services.AddSingleton(options);
 
-        // 配置SqlSugar.MongoDbCore（命名注册，避免与PostgreSQL冲突）
-        services.AddKeyedSingleton<ISqlSugarClient>("MongoDB", (provider, serviceKey) =>
+        // 直接注册MongoClient
+        services.AddSingleton<MongoClient>(provider =>
         {
-            var logger = provider.GetService<ILogger<ISqlSugarClient>>();
+            var logger = provider.GetService<ILogger<MongoClient>>();
             try
             {
-                logger?.LogInformation("正在创建SqlSugar MongoDB客户端");
+                logger?.LogInformation("正在创建MongoDB客户端");
                 
-                // 注册DLL防止找不到DLL
-                InstanceFactory.CustomAssemblies = new Assembly[] { typeof(SqlSugar.MongoDb.MongoDbProvider).Assembly };
+                // 创建MongoDB客户端
+                var client = new MongoClient(options.ConnectionString);
                 
-                // 创建SqlSugar客户端，配置为MongoDB
-                var db = new SqlSugarClient(new ConnectionConfig()
-                {
-                    IsAutoCloseConnection = true,
-                    DbType = DbType.MongoDb,
-                    ConnectionString = options.ConnectionString
-                }, it =>
-                {
-                    it.Aop.OnLogExecuting = (sql, pars) =>
-                    {
-                        logger?.LogDebug("MongoDB SQL执行: {Sql}", sql);
-                    };
-                });
+                // 验证连接
+                client.ListDatabaseNames().FirstOrDefault();
                 
-                logger?.LogInformation("SqlSugar MongoDB客户端创建成功");
-                return db;
+                logger?.LogInformation("MongoDB客户端创建成功并已验证连接");
+                return client;
             }
             catch (Exception ex)
             {
-                logger?.LogError(ex, "创建SqlSugar MongoDB客户端失败");
+                logger?.LogError(ex, "创建MongoDB客户端失败");
                 throw;
             }
         });
@@ -69,6 +58,10 @@ public static class MongoDBServiceCollectionExtensions
 
         // 注册通用MongoDB仓储
         services.AddScoped(typeof(IMongoRepository<,>), typeof(MongoRepository<,>));
+        
+        // 注册MongoActRepository
+        services.AddScoped(typeof(IMongoActRepository<,>), typeof(MongoActRepository<,>));
+        services.AddScoped<IMongoActRepository, MongoActRepository>();
 
         return services;
     }

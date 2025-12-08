@@ -116,5 +116,74 @@ namespace FakeMicro.DatabaseAccess
             // SqlSugar支持多种关系型数据库
             return true;
         }
+
+        /// <summary>
+        /// 创建SQL仓储实例（显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <returns>SQL仓储实例</returns>
+        ISqlRepository<TEntity, TKey> IRepositoryFactory.CreateSqlRepository<TEntity, TKey>()
+        {
+            var logger = _loggerFactory.CreateLogger<SqlSugarRepository<TEntity, TKey>>();
+            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger);
+        }
+
+        /// <summary>
+        /// 创建SQL仓储实例（异步，显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <returns>SQL仓储实例</returns>
+        Task<ISqlRepository<TEntity, TKey>> IRepositoryFactory.CreateSqlRepositoryAsync<TEntity, TKey>()
+        {
+            return Task.FromResult<ISqlRepository<TEntity, TKey>>(((IRepositoryFactory)this).CreateSqlRepository<TEntity, TKey>());
+        }
+
+        /// <summary>
+        /// 创建MongoDB仓储实例（显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <returns>MongoDB仓储实例</returns>
+        IMongoRepository<TEntity, TKey> IRepositoryFactory.CreateMongoRepository<TEntity, TKey>()
+        {
+            throw new NotSupportedException("SqlSugarRepositoryFactory does not support creating MongoDB repositories.");
+        }
+
+        /// <summary>
+        /// 创建MongoDB仓储实例（异步，显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <returns>MongoDB仓储实例</returns>
+        Task<IMongoRepository<TEntity, TKey>> IRepositoryFactory.CreateMongoRepositoryAsync<TEntity, TKey>()
+        {
+            throw new NotSupportedException("SqlSugarRepositoryFactory does not support creating MongoDB repositories.");
+        }
+
+        /// <summary>
+        /// 创建MongoDB仓储实例（带数据库名称，显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <param name="databaseName">数据库名称</param>
+        /// <returns>MongoDB仓储实例</returns>
+        IMongoRepository<TEntity, TKey> IRepositoryFactory.CreateMongoRepository<TEntity, TKey>(string? databaseName)
+        {
+            throw new NotSupportedException("SqlSugarRepositoryFactory does not support creating MongoDB repositories.");
+        }
+
+        /// <summary>
+        /// 创建MongoDB仓储实例（异步，带数据库名称，显式实现IRepositoryFactory接口）
+        /// </summary>
+        /// <typeparam name="TEntity">实体类型</typeparam>
+        /// <typeparam name="TKey">主键类型</typeparam>
+        /// <param name="databaseName">数据库名称</param>
+        /// <returns>MongoDB仓储实例</returns>
+        Task<IMongoRepository<TEntity, TKey>> IRepositoryFactory.CreateMongoRepositoryAsync<TEntity, TKey>(string? databaseName)
+        {
+            throw new NotSupportedException("SqlSugarRepositoryFactory does not support creating MongoDB repositories.");
+        }
     }
 }

@@ -453,9 +453,9 @@ namespace FakeMicro.DatabaseAccess.Services
         {
             var checkIndexSql = _sqlSugarOptions.DbType switch
             {
-                SqlSugarConfig.DatabaseType.PostgreSQL => $"SELECT 1 FROM pg_indexes WHERE tablename = '{tableName.ToLower()}' AND indexname = '{indexName.ToLower()}'",
-                SqlSugarConfig.DatabaseType.MySQL => $"SHOW INDEX FROM {tableName} WHERE Key_name = '{indexName}'",
-                SqlSugarConfig.DatabaseType.SQLServer => $"SELECT 1 FROM sys.indexes WHERE name = '{indexName}'",
+               DatabaseType.PostgreSQL => $"SELECT 1 FROM pg_indexes WHERE tablename = '{tableName.ToLower()}' AND indexname = '{indexName.ToLower()}'",
+               DatabaseType.MySQL => $"SHOW INDEX FROM {tableName} WHERE Key_name = '{indexName}'",
+               DatabaseType.SQLServer => $"SELECT 1 FROM sys.indexes WHERE name = '{indexName}'",
                 _ => throw new NotSupportedException($"不支持的数据库类型: {_sqlSugarOptions.DbType}")
             };
 

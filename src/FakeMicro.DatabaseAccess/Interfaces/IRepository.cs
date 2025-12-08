@@ -1,3 +1,4 @@
+using FakeMicro.Interfaces.Models;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
@@ -7,18 +8,18 @@ using System.Threading.Tasks;
 namespace FakeMicro.DatabaseAccess.Interfaces;
 
 /// <summary>
-    /// 通用仓储接口，提供基础的CRUD操作
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    public interface IRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey> where TEntity : class
-{
-    /// <summary>
-    /// 获取所有实体
-    /// </summary>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>实体集合</returns>
-    Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
+/// 通用仓储接口，定义了数据库操作的基本契约
+/// </summary>
+/// <typeparam name="TEntity">实体类型</typeparam>
+/// <typeparam name="TKey">主键类型</typeparam>
+public interface IRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey> where TEntity : class
+    {
+        /// <summary>
+        /// 获取所有实体
+        /// </summary>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>实体集合</returns>
+        new Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default);
     
 
     
@@ -31,7 +32,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// <param name="isDescending">是否降序</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize, 
+    new Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize, 
         Expression<Func<TEntity, object>>? orderBy = null, 
         bool isDescending = false,
         CancellationToken cancellationToken = default);
@@ -42,7 +43,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// <param name="id">主键值</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>实体对象，如果不存在则返回null</returns>
-    Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
+    new Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default);
     
 
     
@@ -52,7 +53,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// <param name="predicate">查询条件</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>符合条件的实体集合</returns>
-    Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, 
+    new Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, 
         CancellationToken cancellationToken = default);
     
     /// <summary>
@@ -65,7 +66,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// <param name="isDescending">是否降序</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
+    new Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
         int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
@@ -77,7 +78,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// <param name="predicate">查询条件</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>是否存在</returns>
-    Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, 
+    new Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, 
         CancellationToken cancellationToken = default);
     
     /// <summary>
@@ -94,14 +95,14 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// </summary>
     /// <param name="entity">实体对象</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    new Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// 批量添加实体
     /// </summary>
     /// <param name="entities">实体集合</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    new Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// 分批添加实体（适用于大量数据）
@@ -117,7 +118,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// </summary>
     /// <param name="entity">实体对象</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+    new Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// 部分更新实体（仅更新指定属性）
@@ -146,7 +147,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// </summary>
     /// <param name="id">主键值</param>
     /// <param name="cancellationToken">取消令牌</param>
-    Task DeleteByIdAsync(TKey id, CancellationToken cancellationToken = default);
+    new Task DeleteByIdAsync(TKey id, CancellationToken cancellationToken = default);
     
     /// <summary>
     /// 批量删除实体
@@ -212,10 +213,4 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
     /// 清除实体跟踪缓存
     /// </summary>
     void ClearTracker();
-    
-    /// <summary>
-    /// 更新实体
-    /// </summary>
-    /// <param name="entity">实体对象</param>
-    /// <param name="cancellationToken">取消令牌</param>
 }

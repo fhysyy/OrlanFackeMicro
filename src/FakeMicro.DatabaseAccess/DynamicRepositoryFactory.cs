@@ -13,10 +13,18 @@ namespace FakeMicro.DatabaseAccess;
 /// </summary>
 public class DynamicRepositoryFactory : IRepositoryFactory
 {
+    // 数据库类型到仓储创建器的映射
     private readonly Dictionary<DatabaseType, Func<Type, Type, object>> _repositoryCreators;
     private readonly Dictionary<DatabaseType, Func<Type, Type, Task<object>>> _repositoryCreatorsAsync;
+    
+    // MongoDB特定的仓储创建器，支持数据库名称参数
+    private readonly Func<Type, Type, string?, object>? _mongoRepositoryCreator;
+    private readonly Func<Type, Type, string?, Task<object>>? _mongoRepositoryCreatorAsync;
+    
+    // 特定类型的仓储创建策略
     private readonly Dictionary<(Type entityType, Type keyType, DatabaseType dbType), Func<object>> _typedStrategies;
     private readonly Dictionary<(Type entityType, Type keyType, DatabaseType dbType), Func<Task<object>>> _typedStrategiesAsync;
+    
     private readonly ILogger<DynamicRepositoryFactory> _logger;
     private readonly DatabaseType _defaultDatabaseType;
 
@@ -33,6 +41,29 @@ public class DynamicRepositoryFactory : IRepositoryFactory
         _repositoryCreatorsAsync = new Dictionary<DatabaseType, Func<Type, Type, Task<object>>>();
         _typedStrategies = new Dictionary<(Type, Type, DatabaseType), Func<object>>();
         _typedStrategiesAsync = new Dictionary<(Type, Type, DatabaseType), Func<Task<object>>>();
+    }
+    
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="logger">日志记录器</param>
+    /// <param name="mongoRepositoryCreator">MongoDB仓储创建器</param>
+    /// <param name="mongoRepositoryCreatorAsync">异步MongoDB仓储创建器</param>
+    /// <param name="defaultDatabaseType">默认数据库类型</param>
+    public DynamicRepositoryFactory(
+        ILogger<DynamicRepositoryFactory> logger,
+        Func<Type, Type, string?, object>? mongoRepositoryCreator = null,
+        Func<Type, Type, string?, Task<object>>? mongoRepositoryCreatorAsync = null,
+        DatabaseType defaultDatabaseType = DatabaseType.PostgreSQL)
+    {
+        _logger = logger;
+        _defaultDatabaseType = defaultDatabaseType;
+        _repositoryCreators = new Dictionary<DatabaseType, Func<Type, Type, object>>();
+        _repositoryCreatorsAsync = new Dictionary<DatabaseType, Func<Type, Type, Task<object>>>();
+        _typedStrategies = new Dictionary<(Type, Type, DatabaseType), Func<object>>();
+        _typedStrategiesAsync = new Dictionary<(Type, Type, DatabaseType), Func<Task<object>>>();
+        _mongoRepositoryCreator = mongoRepositoryCreator;
+        _mongoRepositoryCreatorAsync = mongoRepositoryCreatorAsync;
     }
 
     /// <summary>
@@ -154,12 +185,154 @@ public class DynamicRepositoryFactory : IRepositoryFactory
     /// <param name="databaseType">数据库类型</param>
     /// <param name="strategy">创建策略</param>
     public void RegisterStrategy<TEntity, TKey>(DatabaseType databaseType, IRepositoryCreationStrategy<TEntity, TKey> strategy) where TEntity : class, new()
+    {
+        var key = (typeof(TEntity), typeof(TKey), databaseType);
+        _typedStrategies[key] = () => (object)strategy.CreateRepository();
+        _typedStrategiesAsync[key] = async () => (object)await strategy.CreateRepositoryAsync();
+        _logger.LogInformation("已注册 {EntityType} 类型的 {DatabaseType} 仓储创建策略", typeof(TEntity).Name, databaseType);
+    }
+
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>SQL仓储实例</returns>
+    public ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>() where TEntity : class, new()
+    {
+        return CreateSqlRepository<TEntity, TKey>(_defaultDatabaseType);
+    }
+
+    /// <summary>
+    /// 创建SQL仓储实例，指定SQL数据库类型
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseType">SQL数据库类型</param>
+    /// <returns>SQL仓储实例</returns>
+    public ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>(DatabaseType databaseType) where TEntity : class, new()
+    {
+        if (!IsSqlDatabaseType(databaseType))
         {
-            var key = (typeof(TEntity), typeof(TKey), databaseType);
-            _typedStrategies[key] = () => (object)strategy.CreateRepository();
-            _typedStrategiesAsync[key] = async () => (object)await strategy.CreateRepositoryAsync();
-            _logger.LogInformation("已注册 {EntityType} 类型的 {DatabaseType} 仓储创建策略", typeof(TEntity).Name, databaseType);
+            throw new NotSupportedException($"不支持的SQL数据库类型: {databaseType}");
         }
+        
+        return (ISqlRepository<TEntity, TKey>)CreateRepository<TEntity, TKey>(databaseType);
+    }
+
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>SQL仓储实例</returns>
+    public async Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>() where TEntity : class, new()
+    {
+        return await CreateSqlRepositoryAsync<TEntity, TKey>(_defaultDatabaseType);
+    }
+
+    /// <summary>
+    /// 创建SQL仓储实例，指定SQL数据库类型
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseType">SQL数据库类型</param>
+    /// <returns>SQL仓储实例</returns>
+    public async Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>(DatabaseType databaseType) where TEntity : class, new()
+    {
+        if (!IsSqlDatabaseType(databaseType))
+        {
+            throw new NotSupportedException($"不支持的SQL数据库类型: {databaseType}");
+        }
+        
+        return (ISqlRepository<TEntity, TKey>)await CreateRepositoryAsync<TEntity, TKey>(databaseType);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例，使用默认MongoDB数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    public IMongoRepository<TEntity, TKey> CreateMongoRepository<TEntity, TKey>() where TEntity : class, new()
+    {
+        return CreateMongoRepository<TEntity, TKey>(null);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例，指定数据库名称
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public IMongoRepository<TEntity, TKey> CreateMongoRepository<TEntity, TKey>(string? databaseName) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在为类型 {EntityType} 创建MongoDB仓储实例，数据库名称: {DatabaseName}", typeof(TEntity).Name, databaseName);
+            
+            // 使用MongoDB特定的创建器（如果已注册）
+            if (_mongoRepositoryCreator != null)
+            {
+                return (IMongoRepository<TEntity, TKey>)_mongoRepositoryCreator(typeof(TEntity), typeof(TKey), databaseName);
+            }
+            
+            // 否则使用通用创建器
+            return (IMongoRepository<TEntity, TKey>)CreateRepository<TEntity, TKey>(DatabaseType.MongoDB);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "创建MongoDB仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例，使用默认MongoDB数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    public async Task<IMongoRepository<TEntity, TKey>> CreateMongoRepositoryAsync<TEntity, TKey>() where TEntity : class, new()
+    {
+        return await CreateMongoRepositoryAsync<TEntity, TKey>(null);
+    }
+
+    /// <summary>
+    /// 创建MongoDB仓储实例，指定数据库名称
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    public async Task<IMongoRepository<TEntity, TKey>> CreateMongoRepositoryAsync<TEntity, TKey>(string? databaseName) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在异步为类型 {EntityType} 创建MongoDB仓储实例，数据库名称: {DatabaseName}", typeof(TEntity).Name, databaseName);
+            
+            // 使用MongoDB特定的异步创建器（如果已注册）
+            if (_mongoRepositoryCreatorAsync != null)
+            {
+                return (IMongoRepository<TEntity, TKey>)await _mongoRepositoryCreatorAsync(typeof(TEntity), typeof(TKey), databaseName);
+            }
+            
+            // 使用MongoDB特定的同步创建器（如果已注册）
+            if (_mongoRepositoryCreator != null)
+            {
+                return (IMongoRepository<TEntity, TKey>)_mongoRepositoryCreator(typeof(TEntity), typeof(TKey), databaseName);
+            }
+            
+            // 否则使用通用创建器
+            return (IMongoRepository<TEntity, TKey>)await CreateRepositoryAsync<TEntity, TKey>(DatabaseType.MongoDB);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "异步创建MongoDB仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
 
     /// <summary>
     /// 检查是否支持指定的数据库类型
@@ -169,6 +342,25 @@ public class DynamicRepositoryFactory : IRepositoryFactory
     public bool IsDatabaseTypeSupported(DatabaseType databaseType)
     {
         return _repositoryCreators.ContainsKey(databaseType) || 
-               _repositoryCreatorsAsync.ContainsKey(databaseType);
+               _repositoryCreatorsAsync.ContainsKey(databaseType) ||
+               (databaseType == DatabaseType.MongoDB && (_mongoRepositoryCreator != null || _mongoRepositoryCreatorAsync != null));
+    }
+    
+    /// <summary>
+    /// 检查是否为SQL数据库类型
+    /// </summary>
+    /// <param name="databaseType">数据库类型</param>
+    /// <returns>是否为SQL数据库类型</returns>
+    private bool IsSqlDatabaseType(DatabaseType databaseType)
+    {
+        return databaseType switch
+        {
+            DatabaseType.MySQL => true,
+            DatabaseType.PostgreSQL => true,
+            DatabaseType.MariaDB => true,
+            DatabaseType.SQLServer => true,
+            DatabaseType.SQLite => true,
+            _ => false
+        };
     }
 }

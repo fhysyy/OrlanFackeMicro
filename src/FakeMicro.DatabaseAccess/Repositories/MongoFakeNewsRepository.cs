@@ -5,6 +5,8 @@
 //     架构: 遵循Orleans最佳实践，继承MongoRepository
 // </auto-generated>
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +15,9 @@ using System.Threading;
 using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
+using FakeMicro.Interfaces.Models;
 using Microsoft.Extensions.Logging;
-using SqlSugar;
+using MongoDB.Driver;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
@@ -29,10 +32,10 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// <summary>
         /// FakeNews MongoDB仓储构造函数
         /// </summary>
-        /// <param name="db">SqlSugar客户端</param>
+        /// <param name="mongoClient">MongoDB客户端</param>
         /// <param name="logger">日志记录器</param>
-        public MongoFakeNewsRepository(ISqlSugarClient db, ILogger<MongoFakeNewsRepository> logger)
-            : base(db, logger)
+        public MongoFakeNewsRepository(MongoClient mongoClient, ILogger<MongoFakeNewsRepository> logger)
+            : base(mongoClient, logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

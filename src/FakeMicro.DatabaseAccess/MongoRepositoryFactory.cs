@@ -2,9 +2,8 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using SqlSugar;
+using MongoDB.Driver;
 
 namespace FakeMicro.DatabaseAccess;
 
@@ -14,25 +13,22 @@ namespace FakeMicro.DatabaseAccess;
 /// </summary>
 public class MongoRepositoryFactory : IMongoRepositoryFactory
 {
-    private readonly ISqlSugarClient _db;
+    private readonly MongoClient _mongoClient;
     private readonly ILoggerFactory _loggerFactory;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="serviceProvider">服务提供程序</param>
+    /// <param name="mongoClient">MongoDB客户端</param>
     /// <param name="loggerFactory">日志工厂</param>
-    public MongoRepositoryFactory(IServiceProvider serviceProvider, ILoggerFactory loggerFactory)
+    public MongoRepositoryFactory(MongoClient mongoClient, ILoggerFactory loggerFactory)
     {
-        if (serviceProvider == null) throw new ArgumentNullException(nameof(serviceProvider));
+        _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
         _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
-        
-        // 获取命名注册的MongoDB SqlSugar客户端
-        _db = serviceProvider.GetRequiredKeyedService<ISqlSugarClient>("MongoDB");
     }
 
     /// <summary>
-    /// 创建MongoDB仓储实例（实现IMongoRepositoryFactory接口）
+    /// 创建MongoDB仓储实例
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
@@ -55,20 +51,7 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     }
 
     /// <summary>
-    /// 内部创建MongoDB仓储实例
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <param name="connectionStringName">连接字符串名称</param>
-    /// <returns>MongoDB仓储实例</returns>
-    private IMongoRepository<TEntity, TKey> CreateRepositoryInternal<TEntity, TKey>(string? connectionStringName = null) where TEntity : class
-    {
-        var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
-        return new MongoRepository<TEntity, TKey>(_db, logger);
-    }
-
-    /// <summary>
-    /// 创建MongoDB仓储实例（异步，实现IMongoRepositoryFactory接口）
+    /// 创建MongoDB仓储实例（异步）
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
@@ -118,6 +101,19 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     }
 
     /// <summary>
+    /// 内部创建MongoDB仓储实例
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="connectionStringName">连接字符串名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    private IMongoRepository<TEntity, TKey> CreateRepositoryInternal<TEntity, TKey>(string? connectionStringName = null) where TEntity : class
+    {
+        var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
+        return new MongoRepository<TEntity, TKey>(_mongoClient, logger);
+    }
+
+    /// <summary>
     /// 内部创建MongoDB仓储实例（异步）
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>
@@ -128,85 +124,81 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     /// <returns>MongoDB仓储实例</returns>
     private Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsyncInternal<TEntity, TKey>(string? connectionStringName = null, string? databaseName = null, CancellationToken cancellationToken = default) where TEntity : class
     {
-        // 异步创建仓储实例
         var logger = _loggerFactory.CreateLogger<MongoRepository<TEntity, TKey>>();
-        IMongoRepository<TEntity, TKey> repository = new MongoRepository<TEntity, TKey>(_db, logger, databaseName);
+        IMongoRepository<TEntity, TKey> repository = new MongoRepository<TEntity, TKey>(_mongoClient, logger, databaseName);
         return Task.FromResult(repository);
     }
 
-    /// <summary>
-    /// 创建通用仓储实例（显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <returns>通用仓储实例</returns>
+    #region IRepositoryFactory Implementation
+    // 以下方法由DynamicRepositoryFactory统一实现，MongoRepositoryFactory只专注于MongoDB
+    // 显式实现IRepositoryFactory接口的方法，委托给DynamicRepositoryFactory处理
+
     IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>()
     {
-        return CreateRepositoryInternal<TEntity, TKey>(null);
+        return CreateRepository<TEntity, TKey>();
     }
 
-    /// <summary>
-    /// 创建通用仓储实例（异步，显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <returns>通用仓储实例</returns>
-    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>()
-    {
-        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepositoryInternal<TEntity, TKey>(null));
-    }
-
-    /// <summary>
-    /// 创建通用仓储实例（带数据库类型，显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <param name="databaseType">数据库类型</param>
-    /// <returns>通用仓储实例</returns>
     IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>(DatabaseType databaseType)
     {
         if (databaseType != DatabaseType.MongoDB)
         {
             throw new NotSupportedException($"MongoRepositoryFactory only supports MongoDB, but got {databaseType}");
         }
-        return CreateRepositoryInternal<TEntity, TKey>(null);
+        return CreateRepository<TEntity, TKey>();
     }
 
-    /// <summary>
-    /// 创建通用仓储实例（异步，带数据库类型，显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <param name="databaseType">数据库类型</param>
-    /// <returns>通用仓储实例</returns>
+    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>()
+    {
+        return CreateRepositoryAsync<TEntity, TKey>().ContinueWith(task => (IRepository<TEntity, TKey>)task.Result);
+    }
+
     Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>(DatabaseType databaseType)
     {
         if (databaseType != DatabaseType.MongoDB)
         {
             throw new NotSupportedException($"MongoRepositoryFactory only supports MongoDB, but got {databaseType}");
         }
-        return Task.FromResult<IRepository<TEntity, TKey>>(CreateRepositoryInternal<TEntity, TKey>(null));
+        return CreateRepositoryAsync<TEntity, TKey>().ContinueWith(task => (IRepository<TEntity, TKey>)task.Result);
     }
 
-    /// <summary>
-    /// 注册仓储创建策略（显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <typeparam name="TEntity">实体类型</typeparam>
-    /// <typeparam name="TKey">主键类型</typeparam>
-    /// <param name="databaseType">数据库类型</param>
-    /// <param name="strategy">创建策略</param>
     void IRepositoryFactory.RegisterStrategy<TEntity, TKey>(DatabaseType databaseType, IRepositoryCreationStrategy<TEntity, TKey> strategy) where TEntity : class
     {
         throw new NotSupportedException($"MongoRepositoryFactory does not support registering custom strategies.");
     }
 
-    /// <summary>
-    /// 检查是否支持指定的数据库类型（显式实现IRepositoryFactory接口）
-    /// </summary>
-    /// <param name="databaseType">数据库类型</param>
-    /// <returns>是否支持</returns>
     bool IRepositoryFactory.IsDatabaseTypeSupported(DatabaseType databaseType)
     {
         return databaseType == DatabaseType.MongoDB;
     }
+
+    ISqlRepository<TEntity, TKey> IRepositoryFactory.CreateSqlRepository<TEntity, TKey>()
+    {
+        throw new NotSupportedException("MongoRepositoryFactory does not support creating SQL repositories.");
+    }
+
+    Task<ISqlRepository<TEntity, TKey>> IRepositoryFactory.CreateSqlRepositoryAsync<TEntity, TKey>()
+    {
+        throw new NotSupportedException("MongoRepositoryFactory does not support creating SQL repositories.");
+    }
+
+    IMongoRepository<TEntity, TKey> IRepositoryFactory.CreateMongoRepository<TEntity, TKey>()
+    {
+        return CreateRepository<TEntity, TKey>();
+    }
+
+    Task<IMongoRepository<TEntity, TKey>> IRepositoryFactory.CreateMongoRepositoryAsync<TEntity, TKey>()
+    {
+        return CreateRepositoryAsync<TEntity, TKey>();
+    }
+
+    IMongoRepository<TEntity, TKey> IRepositoryFactory.CreateMongoRepository<TEntity, TKey>(string? databaseName)
+    {
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(null, databaseName, CancellationToken.None).Result;
+    }
+
+    Task<IMongoRepository<TEntity, TKey>> IRepositoryFactory.CreateMongoRepositoryAsync<TEntity, TKey>(string? databaseName)
+    {
+        return CreateRepositoryAsyncInternal<TEntity, TKey>(null, databaseName, CancellationToken.None);
+    }
+    #endregion
 }

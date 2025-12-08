@@ -32,7 +32,7 @@ public class AuditLog
     /// 操作类型
     /// </summary>
 
-    [MaxLength(200)]
+
     [SugarColumn(IsNullable = true,Length =200)]
     public string action { get; set; } = string.Empty;
     
@@ -40,35 +40,35 @@ public class AuditLog
     /// 资源类型
     /// </summary>
 
-    [MaxLength(200)]
+  
     [SugarColumn(IsNullable = true,Length =200)]
     public string resource { get; set; } = string.Empty;
     
     /// <summary>
     /// 资源ID
     /// </summary>
-    [MaxLength(200)]
+ 
     [SugarColumn(IsNullable = true, Length = 200)]
     public string? resource_id { get; set; } = null;
     
     /// <summary>
     /// 操作详情
     /// </summary>
-    [SugarColumn(ColumnName = "details",IsNullable =true,Length =2000)]
-    [MaxLength(2000)]
+    [SugarColumn(ColumnName = "details",IsNullable =true,Length =4000)]
+  
     public string? Details { get; set; }
     
     /// <summary>
     /// IP地址
     /// </summary>
-    [MaxLength(45)]
+
     [SugarColumn(IsNullable = true, Length = 200)]
     public string? ip_address { get; set; }
     
     /// <summary>
     /// 用户代理
     /// </summary>
-    [MaxLength(500)]
+
     [SugarColumn(IsNullable = true, Length = 200)]
     public string? user_agent { get; set; }
 
@@ -88,14 +88,14 @@ public class AuditLog
     /// <summary>
     /// 操作结果
     /// </summary>
-    [SugarColumn(ColumnName = "result",IsNullable =true,Length =2000)]
+    [SugarColumn(ColumnName = "result",IsNullable =true,Length =4000)]
 
     public string? Result { get; set; }
     
     /// <summary>
     /// 错误信息
     /// </summary>
-    [SugarColumn(ColumnName = "error_message", IsNullable = true,Length =2000)]
+    [SugarColumn(ColumnName = "error_message", IsNullable = true,Length =4000)]
 
     public string? ErrorMessage { get; set; }
     

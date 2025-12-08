@@ -16,6 +16,7 @@ using SqlSugar;
 using FakeMicro.DatabaseAccess;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {

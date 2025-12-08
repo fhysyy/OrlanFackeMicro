@@ -1,4 +1,5 @@
 using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Collections.Generic;
@@ -64,7 +65,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PageBaseResultModel> GetPagedAsync(int pageIndex, int pageSize,
+    Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -81,7 +82,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PageBaseResultModel> GetPagedAsync(int pageIndex, int pageSize,
+    Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -139,7 +140,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false,
+    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false,
         string? databaseName = null,
         CancellationToken cancellationToken = default);
 
@@ -155,7 +156,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
+    Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
         string? collectionName = null,
@@ -173,7 +174,7 @@ public interface IMongoRepository<TEntity, TKey> : IRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    Task<PageBaseResultModel> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
+    Task<PagedResult<TEntity>> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
         int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,

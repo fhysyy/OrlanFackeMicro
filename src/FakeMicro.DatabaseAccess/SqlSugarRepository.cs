@@ -10,106 +10,19 @@ using System.Diagnostics;
 using System;
 using Npgsql;
 using Orleans;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess;
 
-/// <summary>
-/// 分页结果接口
-/// </summary>
-/// <typeparam name="T">数据类型</typeparam>
-public interface IPagedResult<T>
-{
-    /// <summary>
-    /// 数据项集合
-    /// </summary>
-    List<T> Items { get; set; }
-    
-    /// <summary>
-    /// 当前页码
-    /// </summary>
-    int PageIndex { get; set; }
-    
-    /// <summary>
-    /// 每页大小
-    /// </summary>
-    int PageSize { get; set; }
-    
-    /// <summary>
-    /// 总记录数
-    /// </summary>
-    int TotalCount { get; set; }
-    
-    /// <summary>
-    /// 总页数
-    /// </summary>
-    int TotalPages { get; set; }
-    
-    /// <summary>
-    /// 是否有上一页
-    /// </summary>
-    bool HasPrevious => PageIndex > 1;
-    
-    /// <summary>
-    /// 是否有下一页
-    /// </summary>
-    bool HasNext => PageIndex < TotalPages;
-}
 
-/// <summary>
-/// 分页结果实现
-/// </summary>
-/// <typeparam name="T">数据类型</typeparam>
-[GenerateSerializer]
-public class PagedResult<T> : IPagedResult<T>
-{
-    /// <summary>
-    /// 数据项集合
-    /// </summary>
-    [Id(0)]
-    public List<T> Items { get; set; } = new List<T>();
-
-    /// <summary>
-    /// 当前页码
-    /// </summary>
-    [Id(1)]
-    public int PageIndex { get; set; } = 1;
-
-    /// <summary>
-    /// 每页大小
-    /// </summary>
-    [Id(2)]
-    public int PageSize { get; set; } = 100;
-
-    /// <summary>
-    /// 总记录数
-    /// </summary>
-    [Id(3)]
-    public int TotalCount { get; set; } = 0;
-
-    /// <summary>
-    /// 总页数
-    /// </summary>
-    [Id(4)]
-    public int TotalPages { get; set; } = 0;
-    
-    /// <summary>
-    /// 是否有上一页
-    /// </summary>
-    public bool HasPrevious => PageIndex > 1;
-    
-    /// <summary>
-    /// 是否有下一页
-    /// </summary>
-    public bool HasNext => PageIndex < TotalPages;
-}
 
 /// <summary>
 /// SqlSugar仓储实现
-/// 基于SqlSugar ORM实现通用仓储接口
+/// 基于SqlSugar ORM实现通用仓储接口和SQL特定接口
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
-    public class SqlSugarRepository<TEntity, TKey> : IRepository<TEntity, TKey> where TEntity : class, new()
+    public class SqlSugarRepository<TEntity, TKey> : IRepository<TEntity, TKey>, ISqlRepository<TEntity, TKey> where TEntity : class, new()
     {
         private readonly ISqlSugarClient _db;
         private readonly ILogger<SqlSugarRepository<TEntity, TKey>> _logger;
@@ -200,173 +113,6 @@ public class PagedResult<T> : IPagedResult<T>
         }
         
         /// <summary>
-        /// 重试策略类
-        /// 实现指数退避重试机制
-        /// </summary>
-        private class RetryPolicy
-        {
-            private readonly ILogger _logger;
-            private readonly int _maxRetries;
-            private readonly int _initialDelayMs;
-            private readonly int _maxDelayMs;
-            
-            public RetryPolicy(ILogger logger, int maxRetries = 3, int initialDelayMs = 100, int maxDelayMs = 2000)
-            {
-                _logger = logger;
-                _maxRetries = maxRetries;
-                _initialDelayMs = initialDelayMs;
-                _maxDelayMs = maxDelayMs;
-            }
-            
-            /// <summary>
-            /// 执行带重试的异步操作
-            /// </summary>
-            public async Task<TResult> ExecuteWithRetryAsync<TResult>(Func<Task<TResult>> operation, string operationName, CancellationToken cancellationToken = default)
-            {
-                int retries = 0;
-                while (true)
-                {
-                    try
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        return await operation();
-                    }
-                    catch (Exception ex) when (retries < _maxRetries && IsRetryableException(ex))
-                    {
-                        retries++;
-                        var delay = Math.Min(_initialDelayMs * Math.Pow(2, retries - 1), _maxDelayMs);
-                        
-                        _logger.LogWarning(ex, "操作 '{OperationName}' 失败，正在进行第 {RetryCount}/{MaxRetries} 次重试，延迟 {Delay}ms", 
-                            operationName, retries, _maxRetries, delay);
-                        
-                        await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationToken);
-                    }
-                }
-            }
-            
-            /// <summary>
-            /// 执行带重试的异步操作
-            /// </summary>
-            public async Task ExecuteWithRetryAsync(Func<Task> operation, string operationName, CancellationToken cancellationToken = default)
-            {
-                int retries = 0;
-                while (true)
-                {
-                    try
-                    {
-                        cancellationToken.ThrowIfCancellationRequested();
-                        await operation();
-                        return;
-                    }
-                    catch (Exception ex) when (retries < _maxRetries && IsRetryableException(ex))
-                    {
-                        retries++;
-                        var delay = Math.Min(_initialDelayMs * Math.Pow(2, retries - 1), _maxDelayMs);
-                        
-                        _logger.LogWarning(ex, "操作 '{OperationName}' 失败，正在进行第 {RetryCount}/{MaxRetries} 次重试，延迟 {Delay}ms", 
-                            operationName, retries, _maxRetries, delay);
-                        
-                        await Task.Delay(TimeSpan.FromMilliseconds(delay), cancellationToken);
-                    }
-                }
-            }
-            
-            /// <summary>
-            /// 判断异常是否可重试
-            /// </summary>
-            private bool IsRetryableException(Exception ex)
-              {
-                 if (ex == null) return false;
-                  
-                 // 递归检查内部异常
-                 if (ex.InnerException != null && IsRetryableException(ex.InnerException))
-                 {
-                     return true;
-                 }
-                  
-                 // 连接异常可重试
-                 if (ex is SqlSugarException sqlEx)
-                 {
-                     // 检查常见的连接、超时、死锁关键词
-                     if (ContainsRetryableKeywords(sqlEx.Message))
-                     {
-                         return true;
-                     }
-                 }
-                  
-                 // 检查PostgreSQL特定的异常类型和错误代码
-                 if (ex is NpgsqlException npgsqlEx)
-                 {
-                     // 检查PostgreSQL SQL状态代码
-                     var sqlState = npgsqlEx.SqlState;
-                     if (!string.IsNullOrEmpty(sqlState))
-                     {
-                         // 事务相关错误
-                         if (sqlState.StartsWith("40")) return true;
-                         // 资源相关错误
-                         if (sqlState.StartsWith("53")) return true;
-                         // 死锁错误
-                         if (sqlState == "40P01") return true;
-                     }
-                 }
-                  
-                 // 超时异常
-                 if (ex is TimeoutException) return true;
-                  
-                 // 检查消息中的关键词
-                 return ContainsRetryableKeywords(ex.Message);
-             }
-              
-             /// <summary>
-             /// 检查消息中是否包含可重试的关键词
-             /// 支持中英文关键词
-             /// </summary>
-             private bool ContainsRetryableKeywords(string message)
-             {
-                 if (string.IsNullOrEmpty(message)) return false;
-                  
-                 // 转换为小写进行匹配
-                 var lowerMessage = message.ToLower();
-                  
-                 // 连接相关关键词
-                 if (lowerMessage.Contains("connection") || 
-                     lowerMessage.Contains("connect") || 
-                     lowerMessage.Contains("连接") ||
-                     lowerMessage.Contains("无法连接"))
-                 {
-                     return true;
-                 }
-                  
-                 // 超时相关关键词
-                 if (lowerMessage.Contains("timeout") || 
-                     lowerMessage.Contains("timed out") || 
-                     lowerMessage.Contains("超时") ||
-                     lowerMessage.Contains("超时过期"))
-                 {
-                      return true;
-                  }
-                  
-                 // 死锁相关关键词
-                 if (lowerMessage.Contains("deadlock") || 
-                     lowerMessage.Contains("dead lock") || 
-                     lowerMessage.Contains("死锁"))
-                 {
-                     return true;
-                 }
-                  
-                 // 资源相关关键词
-                 if (lowerMessage.Contains("resource") || 
-                     lowerMessage.Contains("resources") || 
-                     lowerMessage.Contains("资源"))
-                 {
-                     return true;
-                 }
-                 
-                 return false;
-             }
-        }
-        
-        /// <summary>
         /// 自定义DataAccessException异常类
         /// </summary>
         public class DataAccessException : Exception
@@ -375,16 +121,7 @@ public class PagedResult<T> : IPagedResult<T>
             public DataAccessException(string message, Exception innerException) : base(message, innerException) { }
         }
 
-    /// <summary>
-    /// 获取所有实体
-    /// 实现分页强制约束和查询缓存，避免全表扫描
-    /// </summary>
-    /// <param name="pageIndex">页码，从1开始</param>
-    /// <param name="pageSize">每页大小，默认100，最大1000</param>
-    /// <param name="useCache">是否使用缓存，默认false</param>
-    /// <param name="cacheMinutes">缓存时间（分钟），默认5分钟</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <summary>
+        /// <summary>
         /// 获取所有实体（实现接口方法）
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
@@ -492,7 +229,7 @@ public class PagedResult<T> : IPagedResult<T>
         /// 获取所有实体的分页结果
         /// 支持缓存以提高查询性能
         /// </summary>
-        public async Task<IPagedResult<TEntity>> GetAllAsync(int pageIndex = 1, int pageSize = 100, bool useCache = false, int cacheMinutes = 5, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<TEntity>> GetAllAsync(int pageIndex = 1, int pageSize = 100, bool useCache = false, int cacheMinutes = 5, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
             
@@ -542,7 +279,7 @@ public class PagedResult<T> : IPagedResult<T>
         /// 执行分页查询的内部方法
         /// 包含重试策略以提高可靠性
         /// </summary>
-        private async Task<IPagedResult<TEntity>> ExecutePagedQuery(int pageIndex, int pageSize, CancellationToken cancellationToken)
+        private async Task<PagedResult<TEntity>> ExecutePagedQuery(int pageIndex, int pageSize, CancellationToken cancellationToken)
         {
             return await _retryPolicy.ExecuteWithRetryAsync(async () =>
             {
@@ -564,11 +301,11 @@ public class PagedResult<T> : IPagedResult<T>
                 // 返回分页结果
                 return new PagedResult<TEntity>
                 {
-                    Items = result,
+                    Data = result,
                     PageIndex = pageIndex,
                     PageSize = pageSize,
                     TotalCount = totalCount,
-                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                   
                 };
             }, $"获取所有实体分页结果-{typeof(TEntity).Name}", cancellationToken);
         }
@@ -606,11 +343,11 @@ public class PagedResult<T> : IPagedResult<T>
                 
                 return new PagedResult<TEntity>
                 {
-                    Items = pageResult,
+                    Data = pageResult,
                     PageIndex = pageNumber,
                     PageSize = pageSize,
                     TotalCount = totalCount,
-                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                   
                 };
             }, $"获取分页实体-{typeof(TEntity).Name}", cancellationToken);
         }
@@ -1002,11 +739,11 @@ public class PagedResult<T> : IPagedResult<T>
             // 创建分页结果
             return new PagedResult<TEntity> 
             { 
-                Items = items, 
+                Data = items, 
                 TotalCount = totalCount, 
                 PageIndex = pageNumber, 
                 PageSize = pageSize,
-                TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+           
             };
         }, $"条件分页查询-{typeof(TEntity).Name}", cancellationToken);
     }
@@ -1494,7 +1231,7 @@ public class PagedResult<T> : IPagedResult<T>
             var stopwatch = Stopwatch.StartNew();
             try
             {
-                _logger.LogInformation("开始事务处理: {EntityType}, 隔离级别: {IsolationLevel}", 
+                _logger.LogInformation("开始事务处理: {EntityType}", 
                     typeof(TEntity).Name);
                 
                 // 检查是否已经在事务中
@@ -1792,7 +1529,7 @@ public class PagedResult<T> : IPagedResult<T>
     /// <summary>
     /// 执行原始SQL查询
     /// </summary>
-    public async Task<List<T>> ExecuteQueryAsync<T>(string sql, object parameters = null, 
+    public async Task<List<T>> ExecuteQueryAsync<T>(string sql, object? parameters = null, 
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -1802,11 +1539,62 @@ public class PagedResult<T> : IPagedResult<T>
     /// <summary>
     /// 执行原始SQL命令
     /// </summary>
-    public async Task<int> ExecuteCommandAsync(string sql, object parameters = null, 
+    public async Task<int> ExecuteCommandAsync(string sql, object? parameters = null, 
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await _db.Ado.ExecuteCommandAsync(sql, parameters);
+    }
+
+    /// <summary>
+    /// 执行原生SQL语句
+    /// </summary>
+    /// <param name="sql">SQL语句</param>
+    /// <param name="parameters">参数</param>
+    /// <summary>
+    /// 执行原生SQL语句
+    /// </summary>
+    /// <param name="sql">SQL语句</param>
+    /// <param name="parameters">参数</param>
+    async Task<int> ISqlRepository<TEntity, TKey>.ExecuteSqlAsync(string sql, params object[] parameters)
+    {
+        return await ExecuteCommandAsync(sql, parameters);
+    }
+
+    /// <summary>
+    /// 执行原生SQL查询
+    /// </summary>
+    /// <typeparam name="T">返回类型</typeparam>
+    /// <param name="sql">SQL语句</param>
+    /// <param name="parameters">参数</param>
+    /// <returns>查询结果</returns>
+    async Task<IEnumerable<T>> ISqlRepository<TEntity, TKey>.QuerySqlAsync<T>(string sql, params object[] parameters)
+    {
+        return await ExecuteQueryAsync<T>(sql, parameters);
+    }
+
+    /// <summary>
+    /// 开始事务
+    /// </summary>
+    async Task ISqlRepository<TEntity, TKey>.BeginTransactionAsync()
+    {
+        _db.Ado.BeginTran();
+    }
+
+    /// <summary>
+    /// 提交事务
+    /// </summary>
+    async Task ISqlRepository<TEntity, TKey>.CommitTransactionAsync()
+    {
+        _db.Ado.CommitTran();
+    }
+
+    /// <summary>
+    /// 回滚事务
+    /// </summary>
+    async Task ISqlRepository<TEntity, TKey>.RollbackTransactionAsync()
+    {
+        _db.Ado.RollbackTran();
     }
 
     /// <summary>

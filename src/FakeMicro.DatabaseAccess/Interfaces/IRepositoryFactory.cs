@@ -42,6 +42,56 @@ public interface IRepositoryFactory
     Task<IRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(DatabaseType databaseType) where TEntity : class, new();
     
     /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>SQL仓储实例</returns>
+    ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>() where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>SQL仓储实例</returns>
+    Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>() where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建MongoDB仓储实例，使用默认MongoDB数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    IMongoRepository<TEntity, TKey> CreateMongoRepository<TEntity, TKey>() where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建MongoDB仓储实例，使用默认MongoDB数据库
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <returns>MongoDB仓储实例</returns>
+    Task<IMongoRepository<TEntity, TKey>> CreateMongoRepositoryAsync<TEntity, TKey>() where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建MongoDB仓储实例，指定数据库名称
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    IMongoRepository<TEntity, TKey> CreateMongoRepository<TEntity, TKey>(string? databaseName) where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建MongoDB仓储实例，指定数据库名称
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="databaseName">数据库名称</param>
+    /// <returns>MongoDB仓储实例</returns>
+    Task<IMongoRepository<TEntity, TKey>> CreateMongoRepositoryAsync<TEntity, TKey>(string? databaseName) where TEntity : class, new();
+    
+    /// <summary>
     /// 注册仓储创建策略
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>

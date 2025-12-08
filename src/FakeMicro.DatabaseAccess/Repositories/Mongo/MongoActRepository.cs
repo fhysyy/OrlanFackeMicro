@@ -1,10 +1,8 @@
-using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.DatabaseAccess.Interfaces.Mongo;
 using FakeMicro.Entities.ManagerVersion;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
-using SqlSugar;
+using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,10 +20,10 @@ namespace FakeMicro.DatabaseAccess.Repositories.Mongo
         /// <summary>
         /// MongoDB仓储构造函数
         /// </summary>
-        /// <param name="db">SqlSugar客户端</param>
+        /// <param name="mongoClient">MongoDB客户端</param>
         /// <param name="logger">日志记录器</param>
-        public MongoActRepository([FromKeyedServices("MongoDB")] ISqlSugarClient db, ILogger<MongoActRepository<TEntity, TKey>> logger)
-            : base(db, logger)
+        public MongoActRepository(MongoClient mongoClient, ILogger<MongoActRepository<TEntity, TKey>> logger)
+            : base(mongoClient, logger)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
@@ -33,8 +31,8 @@ namespace FakeMicro.DatabaseAccess.Repositories.Mongo
 
     public class MongoActRepository : MongoActRepository<object, ObjectId>, IMongoActRepository
     {
-        public MongoActRepository([FromKeyedServices("MongoDB")] ISqlSugarClient db, ILogger<MongoActRepository> logger)
-            : base(db, logger)
+        public MongoActRepository(MongoClient mongoClient, ILogger<MongoActRepository> logger)
+            : base(mongoClient, logger)
         {
         }
     }

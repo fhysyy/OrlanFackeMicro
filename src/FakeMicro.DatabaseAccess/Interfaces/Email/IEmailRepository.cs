@@ -12,6 +12,7 @@ using System.Linq.Expressions;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Utilities;
 using FakeMicro.Entities;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Interfaces
 {

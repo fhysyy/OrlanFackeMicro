@@ -5,6 +5,8 @@
 //     架构: 遵循Orleans最佳实践，继承SqlSugarRepository
 // </auto-generated>
 
+#nullable disable
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +18,7 @@ using SqlSugar;
 using FakeMicro.DatabaseAccess;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {

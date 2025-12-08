@@ -1,10 +1,10 @@
 #nullable enable
 using FakeMicro.DatabaseAccess.Interfaces;
-using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using SqlSugar;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,34 +16,28 @@ namespace FakeMicro.DatabaseAccess;
 
 /// <summary>
 /// MongoDB仓储实现
-/// 基于SqlSugar.MongoDbCore实现通用仓储接口和MongoDB特定接口
+/// 直接基于MongoDB.Driver实现通用仓储接口和MongoDB特定接口
 /// 遵循Orleans最佳实践
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
 public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> where TEntity : class
 {
-    private readonly ISqlSugarClient _db;
+    private readonly MongoClient _mongoClient;
     private readonly ILogger<MongoRepository<TEntity, TKey>> _logger;
     private readonly string? _defaultDatabaseName;
 
     /// <summary>
     /// 构造函数
     /// </summary>
-    /// <param name="db">SqlSugar客户端（配置为MongoDB）</param>
+    /// <param name="mongoClient">MongoDB客户端</param>
     /// <param name="logger">日志记录器</param>
-    /// <param name="defaultDatabaseName">默认数据库名称，未提供时使用连接字符串中的数据库名称</param>
-    public MongoRepository(ISqlSugarClient db, ILogger<MongoRepository<TEntity, TKey>> logger, string? defaultDatabaseName = null)
+    /// <param name="defaultDatabaseName">默认数据库名称</param>
+    public MongoRepository(MongoClient mongoClient, ILogger<MongoRepository<TEntity, TKey>> logger, string? defaultDatabaseName = null)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _db = db ?? throw new ArgumentNullException(nameof(db));
+        _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
         _defaultDatabaseName = defaultDatabaseName ?? "FakeMicroDB";
-
-        // 确保SqlSugar配置为MongoDB
-        if (_db.CurrentConnectionConfig.DbType != DbType.MongoDb)
-        {
-            throw new InvalidOperationException("SqlSugar客户端必须配置为MongoDB");
-        }
     }
 
     /// <summary>
@@ -54,14 +48,9 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <returns>MongoDB集合</returns>
     public IMongoCollection<TEntity> GetCollection(string? databaseName = null, string? collectionName = null)
     {
-        // SqlSugar.MongoDbCore不直接提供GetCollection方法
-        // 我们需要使用MongoDB.Driver直接获取集合
-        var connectionString = _db.CurrentConnectionConfig.ConnectionString;
-        var mongoClient = new MongoClient(connectionString);
-
-        // 优先级：方法参数 > 类构造函数参数 > 连接字符串中的数据库名称
-        var dbName = databaseName ?? _defaultDatabaseName ?? _db.CurrentConnectionConfig.ConnectionString.Split('/').Last().Split('?').First();
-        var database = mongoClient.GetDatabase(dbName);
+        // 优先级：方法参数 > 类构造函数参数
+        var dbName = databaseName ?? _defaultDatabaseName;
+        var database = _mongoClient.GetDatabase(dbName);
         // 优先级：方法参数 > 实体类名
         var collName = collectionName ?? typeof(TEntity).Name;
         return database.GetCollection<TEntity>(collName);
@@ -95,7 +84,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    public async Task<PageBaseResultModel> GetPagedAsync(int pageIndex, int pageSize,
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -119,12 +108,12 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PageBaseResultModel
-        {
-           Data = items,
-            TotalCount = (int)totalCount,
-        
-        };
+        return PagedResult<TEntity>.SuccessResult(
+            items,
+            (int)totalCount,
+            pageIndex,
+            pageSize
+        );
     }
 
 
@@ -141,7 +130,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    public async Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
         int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
@@ -166,11 +155,13 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PageBaseResultModel
+        return new PagedResult<TEntity>
         {
             Data = items,
             TotalCount = (int)totalCount,
-          
+            PageIndex = pageIndex,
+            PageSize = pageSize,
+           
         };
     }
 
@@ -186,7 +177,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    public async Task<PageBaseResultModel> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
         int pageIndex, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
@@ -196,13 +187,9 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     {
         try
         {
-            // 使用MongoDB.Driver获取客户端
-            var connectionString = _db.CurrentConnectionConfig.ConnectionString;
-            var mongoClient = new MongoClient(connectionString);
-
             // 确定数据库名称
-            var dbName = databaseName ?? _defaultDatabaseName ?? _db.CurrentConnectionConfig.ConnectionString.Split('/').Last().Split('?').First();
-            var database = mongoClient.GetDatabase(dbName);
+            var dbName = databaseName ?? _defaultDatabaseName;
+            var database = _mongoClient.GetDatabase(dbName);
 
             // 确定集合名称
             var collName = collectionName ?? typeof(TEntity).Name;
@@ -240,11 +227,14 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
             .Where(entity => entity != null)
             .ToList();
 
-            return new PageBaseResultModel
+            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+            return new PagedResult<TEntity>
             {
                 Data = items,
+                PageIndex = pageIndex,
+                PageSize = pageSize,
                 TotalCount = (int)totalCount,
-                Success = true
+               
             };
         }
         catch (Exception ex)
@@ -261,8 +251,8 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="databaseName">数据库名称</param>
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>实体对象</returns>
-    public async Task<TEntity> GetByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    /// <returns>实体对象，如果不存在则返回null</returns>
+    public async Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
         return await collection.Find(Builders<TEntity>.Filter.Eq("_id", id)).FirstOrDefaultAsync(cancellationToken);
@@ -302,7 +292,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    public async Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
         var totalCount = await collection.CountDocumentsAsync(predicate, cancellationToken: cancellationToken);
@@ -311,11 +301,14 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PageBaseResultModel
+        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
+        return new PagedResult<TEntity>
         {
             Data = items,
+            PageIndex = pageIndex,
+            PageSize = pageSize,
             TotalCount = (int)totalCount,
-            Success = true
+          
         };
     }
 
@@ -341,10 +334,11 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>实体数量</returns>
-    public async Task<int> CountAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
-        return (int)await collection.CountDocumentsAsync(predicate, cancellationToken: cancellationToken);
+        var filter = predicate != null ? Builders<TEntity>.Filter.Where(predicate) : Builders<TEntity>.Filter.Empty;
+        return (int)await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
     }
     #endregion
 
@@ -763,11 +757,11 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
 
         return new PagedResult<TEntity>
         {
-            Items = items,
+            Data = items,
             TotalCount = (int)totalCount,
             PageIndex = pageNumber,
             PageSize = pageSize,
-            TotalPages = totalPages
+           
         };
     }
 
@@ -1083,7 +1077,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
    // Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
     /// 获取分页实体（指定数据库） 
     /// </summary>
-    public async Task<PageBaseResultModel> GetPagedAsync(int pageNumber, int pageSize,
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
         string? databaseName = null,
@@ -1119,7 +1113,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
     /// <summary>
     /// 根据条件获取分页实体（指定数据库）
     /// </summary>
-    public async Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
         int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,
         bool isDescending = false,
@@ -1156,13 +1150,12 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
             .Limit(pageSize)
             .ToListAsync(cancellationToken);
 
-        return new PageBaseResultModel
+        return new PagedResult<TEntity>
         {
             Data = items,
+            PageIndex = pageNumber,
+            PageSize = pageSize,
             TotalCount = (int)totalCount,
-            //PageIndex = pageNumber,
-            //PageSize = pageSize,
-            //TotalPages = totalPages
         };
     }
 

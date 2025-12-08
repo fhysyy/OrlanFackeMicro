@@ -14,7 +14,7 @@ public interface IMongoRepositoryFactory : IRepositoryFactory
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
     /// <returns>MongoDB仓储实例</returns>
-    IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>() where TEntity : class;
+    new IMongoRepository<TEntity, TKey> CreateRepository<TEntity, TKey>() where TEntity : class;
 
     /// <summary>
     /// 创建MongoDB仓储实例（带数据库名称）
@@ -31,7 +31,7 @@ public interface IMongoRepositoryFactory : IRepositoryFactory
     /// <typeparam name="TEntity">实体类型</typeparam>
     /// <typeparam name="TKey">主键类型</typeparam>
     /// <returns>MongoDB仓储实例</returns>
-    Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>() where TEntity : class;
+    new Task<IMongoRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>() where TEntity : class;
 
     /// <summary>
     /// 创建MongoDB仓储实例（异步，带数据库名称）
