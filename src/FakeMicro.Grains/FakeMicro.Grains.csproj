@@ -32,6 +32,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
     <ProjectReference Include="..\FakeMicro.DatabaseAccess\FakeMicro.DatabaseAccess.csproj" />
+    <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
     <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
     
     <!-- 事件总线 -->

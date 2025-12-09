@@ -121,33 +121,36 @@ public static class DatabaseServiceExtensions
     }
 
     /// <summary>
-    /// 注册默认仓储服务
-    /// </summary>
-    /// <param name="services">服务集合</param>
-    /// <param name="options">数据库服务选项</param>
-    private static void RegisterDefaultRepositories(IServiceCollection services, DatabaseServiceOptions options)
-    {
-        // PostgreSQL仓储
-        if (options.UsePostgreSQL)
+        /// 注册默认仓储服务
+        /// </summary>
+        /// <param name="services">服务集合</param>
+        /// <param name="options">数据库服务选项</param>
+        private static void RegisterDefaultRepositories(IServiceCollection services, DatabaseServiceOptions options)
         {
-            services.AddScoped<IUserRepository, UserRepository>();
-            services.AddScoped<IMessageRepository, MessageRepository>();
-            services.AddScoped<IPermissionRepository, PermissionRepository>();
-            services.AddScoped<IRoleRepository, RoleRepository>();
-            services.AddScoped<IAuditLogRepository, AuditLogRepository>();
-            services.AddScoped<ISubjectRepository, SubjectRepository>();
-            services.AddScoped<IDictionaryTypeRepository, DictionaryTypeRepository>();
-            services.AddScoped<IDictionaryItemRepository, DictionaryItemRepository>();
-            services.AddScoped<ISysOpenRepository, SysOpenRepository>();
-            services.AddScoped<IManagerVersionRepository, ManagerVersionRepository>();
-        }
+            // PostgreSQL仓储
+            if (options.UsePostgreSQL)
+            {
+                services.AddScoped<IUserRepository, UserRepository>();
+                services.AddScoped<IMessageRepository, MessageRepository>();
+                services.AddScoped<IPermissionRepository, PermissionRepository>();
+                services.AddScoped<IRoleRepository, RoleRepository>();
+                services.AddScoped<IAuditLogRepository, AuditLogRepository>();
+                services.AddScoped<ISubjectRepository, SubjectRepository>();
+                services.AddScoped<IDictionaryTypeRepository, DictionaryTypeRepository>();
+                services.AddScoped<IDictionaryItemRepository, DictionaryItemRepository>();
+                services.AddScoped<ISysOpenRepository, SysOpenRepository>();
+                services.AddScoped<IManagerVersionRepository, ManagerVersionRepository>();
+            }
 
-        // MongoDB仓储
-        if (options.UseMongoDB)
-        {
-            services.AddScoped<IMongoActRepository, MongoActRepository>();
+            // MongoDB仓储
+            if (options.UseMongoDB)
+            {
+                services.AddScoped<IMongoActRepository, MongoActRepository>();
+                services.AddScoped<INoteRepository, NoteRepository>();
+                services.AddScoped<INotebookRepository, NotebookRepository>();
+                services.AddScoped<ITagRepository, TagRepository>();
+            }
         }
-    }
 
     /// <summary>
     /// 仅注册PostgreSQL服务
