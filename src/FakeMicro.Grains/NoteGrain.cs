@@ -65,8 +65,8 @@ namespace FakeMicro.Grains
 
                 // 设置默认值
                 note.Id = grainId;
-                note.created_at = DateTime.UtcNow;
-                note.updated_at = DateTime.UtcNow;
+                note.CreatedAt = DateTime.UtcNow;
+                note.UpdatedAt = DateTime.UtcNow;
                 note.Version = 0;
                 note.IsDeleted = false;
 
@@ -105,8 +105,8 @@ namespace FakeMicro.Grains
 
                 // 更新字段
                 note.Id = grainId;
-                note.created_at = existingNote.created_at;
-                note.updated_at = DateTime.UtcNow;
+                note.CreatedAt = existingNote.CreatedAt;
+                note.UpdatedAt = DateTime.UtcNow;
                 note.Version = existingNote.Version + 1;
 
                 await _repository.UpdateAsync(note, cancellationToken);

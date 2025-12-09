@@ -41,7 +41,7 @@ public class RolePermission
     /// </summary>
     [Required]
     [Id(3)]
-    public DateTime created_at { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 租户ID（多租户支持）

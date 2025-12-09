@@ -49,7 +49,7 @@ namespace FakeMicro.Api.Middleware
                 resource = context.Request.Path.ToString(),
                 ip_address = GetClientIpAddress(context),
                 user_agent = context.Request.Headers["User-Agent"].ToString(),
-                created_at = DateTime.UtcNow,
+                CreatedAt = DateTime.UtcNow,
                 Result = "Success"
             };
 

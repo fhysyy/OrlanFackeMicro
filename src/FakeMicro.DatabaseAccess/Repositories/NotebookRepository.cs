@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
@@ -8,6 +7,7 @@ using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
+using MongoDB.Driver;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {

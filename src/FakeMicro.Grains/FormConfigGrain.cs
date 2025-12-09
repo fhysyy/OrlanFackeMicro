@@ -86,8 +86,8 @@ namespace FakeMicro.Grains
 
                     // 映射到实体
                     var entity = _mapper.Map<FormConfig>(request);
-                    entity.created_at = DateTime.UtcNow;
-                    entity.updated_at = DateTime.UtcNow;
+                    entity.CreatedAt = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.UtcNow;
                     entity.is_deleted = false;
 
                     // 保存到数据库
@@ -134,7 +134,7 @@ namespace FakeMicro.Grains
 
                     // 更新字段
                     _mapper.Map(request, entity);
-                    entity.updated_at = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.UtcNow;
 
                     // 保存更新
                     await _repository.UpdateAsync(entity, cancellationToken);
@@ -172,7 +172,7 @@ namespace FakeMicro.Grains
                     // 软删除
                     entity.is_deleted = true;
                     entity.deleted_at = DateTime.UtcNow;
-                    entity.updated_at = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.UtcNow;
 
                     await _repository.UpdateAsync(entity, cancellationToken);
                     await _repository.SaveChangesAsync(cancellationToken);
@@ -208,7 +208,7 @@ namespace FakeMicro.Grains
 
                     // 更新状态
                     entity.status = status;
-                    entity.updated_at = DateTime.UtcNow;
+                    entity.UpdatedAt = DateTime.UtcNow;
 
                     await _repository.UpdateAsync(entity, cancellationToken);
                     await _repository.SaveChangesAsync(cancellationToken);

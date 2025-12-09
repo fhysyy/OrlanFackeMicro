@@ -61,8 +61,8 @@ namespace FakeMicro.Grains
 
                 // 设置默认值
                 tag.Id = grainId;
-                tag.created_at = DateTime.UtcNow;
-                tag.updated_at = DateTime.UtcNow;
+                tag.CreatedAt = DateTime.UtcNow;
+                tag.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.AddAsync(tag, cancellationToken);
                 _logger.LogInformation("标签创建成功: {Id}", tag.Id);
@@ -99,8 +99,8 @@ namespace FakeMicro.Grains
 
                 // 更新字段
                 tag.Id = grainId;
-                tag.created_at = existingTag.created_at;
-                tag.updated_at = DateTime.UtcNow;
+                tag.CreatedAt = existingTag.CreatedAt;
+                tag.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.UpdateAsync(tag, cancellationToken);
                 _logger.LogInformation("标签更新成功: {Id}", tag.Id);

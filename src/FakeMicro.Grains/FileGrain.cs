@@ -140,7 +140,7 @@ public class FileGrain : OrleansGrainBase, IFileGrain
             var fileData = await ReadFileFromStorage(fileInfo.file_path);
 
             // 更新访问统计
-            fileInfo.updated_at = DateTime.UtcNow;
+            fileInfo.UpdatedAt = DateTime.UtcNow;
             await _fileRepository.UpdateAsync(fileInfo);
             await _fileRepository.SaveChangesAsync();
 
@@ -228,7 +228,7 @@ public class FileGrain : OrleansGrainBase, IFileGrain
             var files = await _fileRepository.GetAllAsync();
             return files
                 .Where(f => f.uploader_id == userId && !f.is_deleted)
-                .OrderByDescending(f => f.created_at)
+                .OrderByDescending(f => f.CreatedAt)
                 .ToList();
         }, userId);
     }

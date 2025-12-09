@@ -33,8 +33,8 @@ namespace FakeMicro.Entities
         /// </summary>
         [Required]
         [Id(2)]
-        [SugarColumn(ColumnName = "created_at")]
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        [SugarColumn(ColumnName = "CreatedAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// 创建人
@@ -47,8 +47,8 @@ namespace FakeMicro.Entities
         /// 更新时间
         /// </summary>
         [Id(4)]
-        [SugarColumn(ColumnName = "updated_at", IsNullable = true)]
-        public DateTime? updated_at { get; set; }
+        [SugarColumn(ColumnName = "UpdatedAt", IsNullable = true)]
+        public DateTime? UpdatedAt { get; set; }
 
         /// <summary>
         /// 更新人

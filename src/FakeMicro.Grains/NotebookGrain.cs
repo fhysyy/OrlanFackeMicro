@@ -65,8 +65,8 @@ namespace FakeMicro.Grains
 
                 // 设置默认值
                 notebook.Id = grainId;
-                notebook.created_at = DateTime.UtcNow;
-                notebook.updated_at = DateTime.UtcNow;
+                notebook.CreatedAt = DateTime.UtcNow;
+                notebook.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.AddAsync(notebook, cancellationToken);
                 _logger.LogInformation("笔记本创建成功: {Id}", notebook.Id);
@@ -103,8 +103,8 @@ namespace FakeMicro.Grains
 
                 // 更新字段
                 notebook.Id = grainId;
-                notebook.created_at = existingNotebook.created_at;
-                notebook.updated_at = DateTime.UtcNow;
+                notebook.CreatedAt = existingNotebook.CreatedAt;
+                notebook.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.UpdateAsync(notebook, cancellationToken);
                 _logger.LogInformation("笔记本更新成功: {Id}", notebook.Id);

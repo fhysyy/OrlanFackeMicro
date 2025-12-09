@@ -142,16 +142,16 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 创建时间
         /// </summary>
-        [SqlSugar.SugarColumn(ColumnName = "created_at")]
+        [SqlSugar.SugarColumn(ColumnName = "CreatedAt")]
         [Id(17)]
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 更新时间
         /// </summary>
-        [SqlSugar.SugarColumn(ColumnName = "updated_at")]
+        [SqlSugar.SugarColumn(ColumnName = "UpdatedAt")]
         [Id(18)]
-        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 发送者用户信息
@@ -254,16 +254,16 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 创建时间
         /// </summary>
-        [SqlSugar.SugarColumn(ColumnName = "created_at")]
+        [SqlSugar.SugarColumn(ColumnName = "CreatedAt")]
         [Id(8)]
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 更新时间
         /// </summary>
-        [SqlSugar.SugarColumn(ColumnName = "updated_at")]
+        [SqlSugar.SugarColumn(ColumnName = "UpdatedAt")]
         [Id(9)]
-        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 是否删除

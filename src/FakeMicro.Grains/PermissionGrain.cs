@@ -102,7 +102,7 @@ namespace FakeMicro.Grains
                     Type = p.Type,
                     Description = p.Description,
                     IsEnabled = p.is_enabled,
-                    CreatedAt = p.created_at,
+                    CreatedAt = p.CreatedAt,
                     TenantId = p.tenant_id
                 }).ToList();
                 */
@@ -132,7 +132,7 @@ namespace FakeMicro.Grains
                     Type = p.Type,
                     Description = p.Description,
                     IsEnabled = p.is_enabled,
-                    CreatedAt = p.created_at,
+                    CreatedAt = p.CreatedAt,
                     TenantId = p.tenant_id
                 }).ToList();
                 */
@@ -164,8 +164,8 @@ namespace FakeMicro.Grains
                 {
                     user_id= userId,
                     role_id= roleId,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
 
                 // 修复AddUserRoleAsync调用，确保使用正确的类型转换
@@ -250,7 +250,7 @@ namespace FakeMicro.Grains
                 {
                     role_id = roleId,
                     permission_id= permissionId,
-                    created_at = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
                     tenant_id = role != null ? role.tenant_id.ToString() : (permission != null && permission.tenant_id != null ? permission.tenant_id : string.Empty)
                 };
 
@@ -318,8 +318,8 @@ namespace FakeMicro.Grains
                     Type = permissionDto.Type,
                     Description = permissionDto.Description,
                     is_enabled = permissionDto.IsEnabled,
-                    created_at = DateTime.UtcNow,
-                    updated_at= DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt= DateTime.UtcNow,
                     tenant_id = permissionDto.TenantId
                 };
 
@@ -327,7 +327,7 @@ namespace FakeMicro.Grains
                 await _permissionRepository.SaveChangesAsync();
 
                 permissionDto.Id = permission.id;
-                permissionDto.CreatedAt = permission.created_at;
+                permissionDto.CreatedAt = permission.CreatedAt;
 
                 // 记录审计日志
                 await LogAuditAsync(new AuditLogDto
@@ -369,8 +369,8 @@ namespace FakeMicro.Grains
                     description = roleDto.Description,
                     is_system_role = roleDto.IsSystemRole,
                     is_enabled = roleDto.IsEnabled,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                    tenant_id = string.IsNullOrEmpty(roleDto.TenantId) ? 0 : long.Parse(roleDto.TenantId)
                 };
 
@@ -378,7 +378,7 @@ namespace FakeMicro.Grains
                 await _roleRepository.SaveChangesAsync();
 
                 roleDto.Id = role.id;
-                roleDto.CreatedAt = role.created_at;
+                roleDto.CreatedAt = role.CreatedAt;
 
                 // 记录审计日志
                 await LogAuditAsync(new AuditLogDto
@@ -423,7 +423,7 @@ namespace FakeMicro.Grains
                     Type = p.Type,
                     Description = p.Description,
                     IsEnabled = p.is_enabled,
-                    CreatedAt = p.created_at,
+                    CreatedAt = p.CreatedAt,
                     TenantId = p.tenant_id
                 }).ToList();
                 */
@@ -452,7 +452,7 @@ namespace FakeMicro.Grains
                     Description = r.description,
                     IsSystemRole = r.is_system_role,
                     IsEnabled = r.is_enabled,
-                    CreatedAt = r.created_at,
+                    CreatedAt = r.CreatedAt,
                     TenantId = r.tenant_id.ToString()
                 }).ToList();
                 */
@@ -481,7 +481,7 @@ namespace FakeMicro.Grains
                     Description = r.description,
                     IsSystemRole = r.is_system_role,
                     IsEnabled = r.is_enabled,
-                    CreatedAt = r.created_at,
+                    CreatedAt = r.CreatedAt,
                     TenantId = r.tenant_id.ToString()
                 }).ToList();
                 */
@@ -510,7 +510,7 @@ namespace FakeMicro.Grains
                     Details = auditLogDto.Details,
                     ip_address = auditLogDto.IpAddress,
                     user_agent = auditLogDto.UserAgent,
-                    created_at = auditLogDto.CreatedAt,
+                    CreatedAt = auditLogDto.CreatedAt,
                     tenant_id = auditLogDto.TenantId,
                     Result = auditLogDto.Result,
                     ErrorMessage = auditLogDto.ErrorMessage,
@@ -547,7 +547,7 @@ namespace FakeMicro.Grains
                     Details = l.Details,
                     IpAddress = l.ip_address,
                     UserAgent = l.user_agent,
-                    CreatedAt = l.created_at,
+                    CreatedAt = l.CreatedAt,
                     TenantId = l.tenant_id,
                     Result = l.Result,
                     ErrorMessage = l.ErrorMessage,

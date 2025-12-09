@@ -49,15 +49,15 @@ public class Subject : IAuditable
     /// 创建时间
     /// </summary>
     [Id(4)]
-    [SqlSugar.SugarColumn(IsNullable = true,ColumnName = "created_at")]
-    public DateTime created_at { get; set; }
+    [SqlSugar.SugarColumn(IsNullable = true,ColumnName = "CreatedAt")]
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// 更新时间
     /// </summary>
     [Id(5)]
-    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_at")]
-    public DateTime? updated_at { get; set; }
+    [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "UpdatedAt")]
+    public DateTime? UpdatedAt { get; set; }
     
     
     [Id(6)]

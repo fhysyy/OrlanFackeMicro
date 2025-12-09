@@ -40,12 +40,12 @@ public class Tenant
     /// 创建时间
     /// </summary>
     [Required]
-    public DateTime created_at { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 更新时间
     /// </summary>
-    public DateTime updated_at { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 配置信息（JSON格式）

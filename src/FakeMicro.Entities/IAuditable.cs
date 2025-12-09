@@ -10,7 +10,7 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 创建时间
         /// </summary>
-        DateTime created_at { get; set; }
+        DateTime CreatedAt { get; set; }
         
         /// <summary>
         /// 创建人
@@ -20,7 +20,7 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 更新时间
         /// </summary>
-        DateTime? updated_at { get; set; }
+        DateTime? UpdatedAt { get; set; }
         
         /// <summary>
         /// 更新人

@@ -68,16 +68,16 @@ public class Role :IAuditable, ISoftDeletable
     /// <summary>
     /// 创建时间
     /// </summary>
-    [SqlSugar.SugarColumn(ColumnName = "created_at", IsNullable = true)]
+    [SqlSugar.SugarColumn(ColumnName = "CreatedAt", IsNullable = true)]
     [Id(7)]
-    public DateTime created_at { get; set; }
+    public DateTime CreatedAt { get; set; }
 
     /// <summary>
     /// 更新时间
     /// </summary>
-    [SqlSugar.SugarColumn(ColumnName = "updated_at", IsNullable = true)]
+    [SqlSugar.SugarColumn(ColumnName = "UpdatedAt", IsNullable = true)]
     [Id(8)]
-    public DateTime? updated_at { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
     /// <summary>
     /// 是否删除

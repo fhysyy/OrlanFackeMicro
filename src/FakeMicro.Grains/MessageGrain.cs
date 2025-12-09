@@ -113,8 +113,8 @@ namespace FakeMicro.Grains
                 Metadata = _currentMessage.metadata != null ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(_currentMessage.metadata) : new Dictionary<string, object>(),
                 ScheduledAt = _currentMessage.scheduled_at,
                 ExpiresAt = _currentMessage.expires_at,
-                CreatedAt = _currentMessage.created_at,
-                UpdatedAt = _currentMessage.updated_at.Value
+                CreatedAt = _currentMessage.CreatedAt,
+                UpdatedAt = _currentMessage.UpdatedAt.Value
             };
         }
 
@@ -126,7 +126,7 @@ namespace FakeMicro.Grains
             if (success)
             {
                 _currentMessage.status = status.ToString();
-                _currentMessage.updated_at = DateTime.UtcNow;
+                _currentMessage.UpdatedAt = DateTime.UtcNow;
 
                 if (status == FakeMicro.Entities.Enums.MessageStatus.Sent)
                 {
@@ -154,7 +154,7 @@ namespace FakeMicro.Grains
             {
                 _currentMessage.status = FakeMicro.Entities.Enums.MessageStatus.Delivered.ToString();
                 _currentMessage.delivered_at = DateTime.UtcNow;
-                _currentMessage.updated_at = DateTime.UtcNow;
+                _currentMessage.UpdatedAt = DateTime.UtcNow;
 
                 // 发布消息投递事件
                 await _eventPublisher.PublishCustomEventAsync("message.delivered", new MessageDeliveredEvent
@@ -178,7 +178,7 @@ namespace FakeMicro.Grains
             {
                 _currentMessage.status = FakeMicro.Entities.Enums.MessageStatus.Read.ToString();
                 _currentMessage.read_at = DateTime.UtcNow;
-                _currentMessage.updated_at= DateTime.UtcNow;
+                _currentMessage.UpdatedAt= DateTime.UtcNow;
 
                 // 发布消息阅读事件
                 await _eventPublisher.PublishCustomEventAsync("message.read", new MessageReadEvent
@@ -237,8 +237,8 @@ namespace FakeMicro.Grains
                 MessageType = Enum.TryParse<FakeMicro.Entities.Enums.MessageType>(_currentTemplate.message_type, true, out var messageType) ? messageType : FakeMicro.Entities.Enums.MessageType.System,
                 Variables = _currentTemplate.variables != null ? (System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, string>>(_currentTemplate.variables) ?? new Dictionary<string, string>()) : new Dictionary<string, string>(),
                 IsEnabled = _currentTemplate.is_enabled,
-                CreatedAt = _currentTemplate.created_at,
-                UpdatedAt = _currentTemplate.updated_at.Value
+                CreatedAt = _currentTemplate.CreatedAt,
+                UpdatedAt = _currentTemplate.UpdatedAt.Value
             };
         }
 

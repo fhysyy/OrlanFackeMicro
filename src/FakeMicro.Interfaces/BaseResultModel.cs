@@ -1,4 +1,4 @@
-﻿using Orleans;
+using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,12 +6,6 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace FakeMicro.Interfaces
-{
-    using Orleans;
-    using System;
-    using System.Collections.Generic;
-
-    namespace FakeMicro.Interfaces
     {
         [GenerateSerializer]
         public class BaseResultModel
@@ -104,5 +98,4 @@ namespace FakeMicro.Interfaces
             [Id(6)]
             public int TotalCount { get; set; } = 1;
         }
-    }
 }

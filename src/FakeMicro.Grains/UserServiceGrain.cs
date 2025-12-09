@@ -103,8 +103,8 @@ namespace FakeMicro.Grains
                         is_active = false,
                         email_verified = false,
                         phone_verified = false,
-                        created_at = DateTime.UtcNow,
-                        updated_at = DateTime.UtcNow,
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow,
                         last_login_at = null
                     };
 
@@ -136,8 +136,8 @@ namespace FakeMicro.Grains
                         DisplayName = user.display_name,
                         Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                         Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
-                        CreatedAt = user.created_at,
-                        UpdatedAt = user.updated_at.Value
+                        CreatedAt = user.CreatedAt,
+                        UpdatedAt = user.UpdatedAt.Value
                     };
 
                     response = new AuthResponse
@@ -213,8 +213,8 @@ namespace FakeMicro.Grains
                     Phone = user.phone,
                     Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
-                    CreatedAt = user.created_at,
-                    UpdatedAt = user.updated_at.Value
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt.Value
                 };
 
                 return new AuthResponse
@@ -277,7 +277,7 @@ namespace FakeMicro.Grains
 
                 // 更新数据库中的刷新令牌
                 user.refresh_token = newRefreshToken;
-                user.updated_at = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
                 await _userRepository.UpdateAsync(user);
 
                 _logger.LogInformation("刷新令牌成功: {UserId}", userId);
@@ -290,8 +290,8 @@ namespace FakeMicro.Grains
                     DisplayName = user.display_name,
                     Role = Enum.TryParse<UserRoleEnum>(user.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(user.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
-                    CreatedAt = user.created_at,
-                    UpdatedAt = user.updated_at.Value
+                    CreatedAt = user.CreatedAt,
+                    UpdatedAt = user.UpdatedAt.Value
                 };
 
                 return new AuthResponse
@@ -389,7 +389,7 @@ namespace FakeMicro.Grains
                 {
                     TotalUsers = users.Count(),
                     ActiveUsers = users.Count(u => u.status == UserStatusEnum.Active.ToString()),
-                    NewUsersToday = users.Count(u => u.created_at.Date == DateTime.UtcNow.Date),
+                    NewUsersToday = users.Count(u => u.CreatedAt.Date == DateTime.UtcNow.Date),
                     StatusDistribution = users.GroupBy(u => u.status).ToDictionary(g => g.Key, g => g.Count()),
                     RoleDistribution = users.GroupBy(u => u.role).ToDictionary(g => g.Key, g => g.Count())
                 };
@@ -416,8 +416,8 @@ namespace FakeMicro.Grains
                     Phone = u.phone,
                     Role = Enum.TryParse<UserRoleEnum>(u.role, out var role) ? role : UserRoleEnum.User,
                     Status = Enum.TryParse<UserStatusEnum>(u.status, out var statusEnum) ? statusEnum : UserStatusEnum.Pending,
-                    CreatedAt = u.created_at,
-                    UpdatedAt = u.updated_at.Value
+                    CreatedAt = u.CreatedAt,
+                    UpdatedAt = u.UpdatedAt.Value
                 }).ToList();
             }
             catch (Exception ex)

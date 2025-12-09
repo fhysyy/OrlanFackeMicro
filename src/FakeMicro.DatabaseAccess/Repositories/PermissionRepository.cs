@@ -80,7 +80,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             try
             {
                 // 设置创建时间
-                rolePermission.created_at = DateTime.UtcNow;
+                rolePermission.CreatedAt = DateTime.UtcNow;
                 await GetSqlSugarClient().Insertable(rolePermission).ExecuteCommandAsync();
             }
             catch (SqlSugarException ex)

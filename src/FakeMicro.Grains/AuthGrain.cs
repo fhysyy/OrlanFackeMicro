@@ -78,8 +78,8 @@ namespace FakeMicro.Grains
                     password_salt = passwordSalt,
                     role = FakeMicro.Entities.Enums.UserRole.User.ToString(),
                     status = FakeMicro.Entities.Enums.UserStatus.Active.ToString(),
-                    created_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
-                    updated_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
+                    CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
+                    UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc),
                     email_verified = false,
                     phone_verified = false,
                     is_deleted = false,
@@ -109,7 +109,7 @@ namespace FakeMicro.Grains
                         Email = user.email ?? string.Empty,
                         DisplayName = user.display_name ?? string.Empty,
                         Role = user.role ?? string.Empty,
-                        CreatedAt = user.created_at
+                        CreatedAt = user.CreatedAt
                     }
                 };
             }
@@ -146,7 +146,7 @@ namespace FakeMicro.Grains
 
                 // 更新用户信息
                 user.last_login_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                user.updated_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                user.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 user.refresh_token = refreshToken;
                 user.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshExpireDays);
 
@@ -169,7 +169,7 @@ namespace FakeMicro.Grains
                         Email = user.email ?? string.Empty,
                         DisplayName = user.display_name ?? string.Empty,
                         Role = user.role ?? string.Empty,
-                        CreatedAt = user.created_at
+                        CreatedAt = user.CreatedAt
                     }
                 };
             }
@@ -210,7 +210,7 @@ namespace FakeMicro.Grains
                 // 更新用户的刷新令牌和过期时间
                 user.refresh_token = newRefreshToken;
                 user.refresh_token_expiry = DateTime.UtcNow.AddDays(_jwtSettings.RefreshExpireDays);
-                user.updated_at = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
 
                 await _userRepository.UpdateAsync(user);
                 await _userRepository.SaveChangesAsync();
@@ -231,7 +231,7 @@ namespace FakeMicro.Grains
                         Email = user.email ?? string.Empty,
                         DisplayName = user.display_name ?? string.Empty,
                         Role = user.role ?? string.Empty,
-                        CreatedAt = user.created_at
+                        CreatedAt = user.CreatedAt
                     }
                 };
             }

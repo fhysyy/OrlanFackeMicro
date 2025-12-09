@@ -1,4 +1,4 @@
-using FakeMicro.Interfaces.FakeMicro.Interfaces;
+using FakeMicro.Interfaces;
 using Orleans;
 using System;
 using System.Collections.Generic;

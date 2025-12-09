@@ -145,6 +145,7 @@ namespace FakeMicro.DatabaseAccess
                     //typeof(FakeMicro.Entities.FileInfo), // 使用完全限定名解决冲突
                     typeof(DictionaryType),
                     typeof(DictionaryItem),
+                    typeof(Notebook),
                     //typeof(ApiKey)
                 };
 

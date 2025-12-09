@@ -18,10 +18,10 @@ namespace FakeMicro.DatabaseAccess.Repositories
         public async Task<List<AuditLog>> GetAuditLogsAsync(DateTime? startDate = null, DateTime? endDate = null, long? userId = null, CancellationToken cancellationToken = default)
         {
             return await GetSqlSugarClient().Queryable<AuditLog>()
-                .WhereIF(startDate.HasValue, a => a.created_at >= startDate.Value)
-                .WhereIF(endDate.HasValue, a => a.created_at <= endDate.Value)
+                .WhereIF(startDate.HasValue, a => a.CreatedAt >= startDate.Value)
+                .WhereIF(endDate.HasValue, a => a.CreatedAt <= endDate.Value)
                 .WhereIF(userId.HasValue, a => a.user_id == userId.Value)
-                .OrderBy(a => a.created_at, OrderByType.Desc)
+                .OrderBy(a => a.CreatedAt, OrderByType.Desc)
                 .ToListAsync(cancellationToken);
         }
 
@@ -29,9 +29,9 @@ namespace FakeMicro.DatabaseAccess.Repositories
         {
             return await GetSqlSugarClient().Queryable<AuditLog>()
                 .Where(a => a.user_id == userId)
-                .WhereIF(startDate.HasValue, a => a.created_at >= startDate.Value)
-                .WhereIF(endDate.HasValue, a => a.created_at <= endDate.Value)
-                .OrderBy(a => a.created_at, OrderByType.Desc)
+                .WhereIF(startDate.HasValue, a => a.CreatedAt >= startDate.Value)
+                .WhereIF(endDate.HasValue, a => a.CreatedAt <= endDate.Value)
+                .OrderBy(a => a.CreatedAt, OrderByType.Desc)
                 .ToListAsync(cancellationToken);
         }
 
@@ -40,10 +40,10 @@ namespace FakeMicro.DatabaseAccess.Repositories
             var query = GetSqlSugarClient().Queryable<AuditLog>();
             
             if (startDate.HasValue)
-                query = query.Where(a => a.created_at >= startDate.Value);
+                query = query.Where(a => a.CreatedAt >= startDate.Value);
             
             if (endDate.HasValue)
-                query = query.Where(a => a.created_at <= endDate.Value);
+                query = query.Where(a => a.CreatedAt <= endDate.Value);
             
             var totalCount = await query.CountAsync(cancellationToken);
             var uniqueUserCount = await query.GroupBy(a => a.user_id).CountAsync(cancellationToken);

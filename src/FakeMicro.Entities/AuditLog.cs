@@ -76,7 +76,7 @@ public class AuditLog
     /// 操作时间
     /// </summary>
     [SugarColumn(IsNullable = true)]
-    public DateTime created_at { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 租户ID（多租户支持）

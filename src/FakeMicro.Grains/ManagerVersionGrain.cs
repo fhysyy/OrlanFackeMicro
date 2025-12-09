@@ -1,7 +1,6 @@
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities.ManagerVersion;
 using FakeMicro.Interfaces;
-using FakeMicro.Interfaces.FakeMicro.Interfaces;
 using MongoDB.Bson;
 using Newtonsoft.Json;
 using SqlSugar;
@@ -68,7 +67,7 @@ namespace FakeMicro.Grains
                 var json = JsonConvert.DeserializeObject<dynamic>(data);
                 // 使用Guid生成唯一ID，避免使用ObjectId类型
                 var id=ObjectId.GenerateNewId().ToString();
-                var entity = new ManagerVersion() {Id=id,created_at=DateTime.UtcNow, count=new Random().Next(1000,9999)/21,   updated_at =DateTime.Now};
+                var entity = new ManagerVersion() {Id=id,CreatedAt=DateTime.UtcNow, count=new Random().Next(1000,9999)/21,   UpdatedAt =DateTime.Now};
                 
                 // 使用仓储自带的AddAsync方法，并传入databaseName参数
                 await _managerVersionRepository.AddAsync(entity, "FakeMicroDB");

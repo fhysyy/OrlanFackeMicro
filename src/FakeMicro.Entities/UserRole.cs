@@ -31,16 +31,16 @@ public class UserRole : IAuditable
     /// <summary>
     /// 创建时间
     /// </summary>
-    [SugarColumn(ColumnName = "created_at")]
+    [SugarColumn(ColumnName = "CreatedAt")]
     [Id(2)]
-    public DateTime created_at { get; set; }
+    public DateTime CreatedAt { get; set; }
     
     /// <summary>
     /// 更新时间
     /// </summary>
-    [SugarColumn(ColumnName = "updated_at")]
+    [SugarColumn(ColumnName = "UpdatedAt")]
     [Id(3)]
-    public DateTime? updated_at { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 
 
     [Id(4)]

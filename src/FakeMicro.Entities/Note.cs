@@ -79,15 +79,15 @@ namespace FakeMicro.Entities
         /// </summary>
         [Required]
         [Id(8)]
-        [SugarColumn(ColumnName = "created_at")]
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        [SugarColumn(ColumnName = "CreatedAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// 更新时间
         /// </summary>
         [Id(9)]
-        [SugarColumn(ColumnName = "updated_at")]
-        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
+        [SugarColumn(ColumnName = "UpdatedAt")]
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
 
         /// <summary>
         /// 删除时间

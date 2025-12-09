@@ -158,8 +158,8 @@ namespace FakeMicro.Grains
                         UserState!.State!.IsActive = user.is_active;
                         UserState!.State!.EmailVerified = user.email_verified;
                         UserState!.State!.PhoneVerified = user.phone_verified;
-                        UserState!.State!.CreatedAt = user.created_at;
-                        UserState!.State!.UpdatedAt = user.updated_at.Value;
+                        UserState!.State!.CreatedAt = user.CreatedAt;
+                        UserState!.State!.UpdatedAt = user.UpdatedAt.Value;
                         UserState!.State!.IsLoaded = true;
                     
                         // 批量更新状态 - Orleans状态管理最佳实践
@@ -313,8 +313,8 @@ namespace FakeMicro.Grains
                         DisplayName = user.display_name ?? string.Empty,
                         Role = userRole,
                         Status = userStatus,
-                        CreatedAt = user.created_at,
-                        UpdatedAt = user.updated_at.Value
+                        CreatedAt = user.CreatedAt,
+                        UpdatedAt = user.UpdatedAt.Value
                     };
                 }
                 catch (Exception ex)
@@ -410,7 +410,7 @@ namespace FakeMicro.Grains
                     user.display_name = userDto.DisplayName;
                     user.role = userDto.Role.ToString();
                     user.status = userDto.Status.ToString();
-                    user.updated_at = DateTime.UtcNow;
+                    user.UpdatedAt = DateTime.UtcNow;
 
                     await _repository.UpdateAsync(user);
                     

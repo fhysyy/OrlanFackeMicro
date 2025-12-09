@@ -13,8 +13,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
     /// 笔记本仓储接口
     /// 遵循DDD原则，集成MongoDB和Orleans架构
     /// </summary>
-    public interface INotebookRepository
-        : IMongoRepository<Notebook, Guid>
+    public interface INotebookRepository : IMongoRepository<Notebook, Guid>
     {
         #region Orleans Grain特定操作
 

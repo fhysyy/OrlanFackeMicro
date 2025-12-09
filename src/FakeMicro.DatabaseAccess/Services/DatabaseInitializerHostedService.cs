@@ -323,8 +323,8 @@ namespace FakeMicro.DatabaseAccess.Services
                     is_enabled = true,
                     is_system_role = true,
                     tenant_id = 0,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 },
                 new Role
                 {
@@ -334,8 +334,8 @@ namespace FakeMicro.DatabaseAccess.Services
                     is_enabled = true,
                     is_system_role = true,
                     tenant_id = 0,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 },
                 new Role
                 {
@@ -345,8 +345,8 @@ namespace FakeMicro.DatabaseAccess.Services
                     is_enabled = true,
                     is_system_role = true,
                     tenant_id = 0,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 }
             };
 
@@ -395,8 +395,8 @@ namespace FakeMicro.DatabaseAccess.Services
                     email_verified = true,
                     phone_verified = false,
                     login_attempts = 0,
-                    created_at = DateTime.UtcNow,
-                    updated_at = DateTime.UtcNow,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
                     last_login_at = DateTime.UtcNow,
                     tenant_id = 100,
                     locked_until = DateTime.UtcNow,

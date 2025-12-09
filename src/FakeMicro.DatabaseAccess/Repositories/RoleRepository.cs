@@ -52,8 +52,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
             try
             {
                 // 设置创建时间
-                userRole.created_at = DateTime.UtcNow;
-                userRole.updated_at = DateTime.UtcNow;
+                userRole.CreatedAt = DateTime.UtcNow;
+                userRole.UpdatedAt = DateTime.UtcNow;
                 await GetSqlSugarClient().Insertable(userRole).ExecuteCommandAsync();
             }
             catch (SqlSugarException ex)

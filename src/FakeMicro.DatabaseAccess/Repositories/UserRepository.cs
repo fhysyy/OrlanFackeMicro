@@ -220,8 +220,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 }
                 
                 // 设置创建时间
-                user.created_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-                user.updated_at = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                user.CreatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+                user.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
                 
                 // 使用SqlSugar插入用户实体
                 var result = await GetSqlSugarClient().Insertable(user).ExecuteCommandAsync();
@@ -255,7 +255,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 }
 
                 // 更新时间戳
-                user.updated_at = DateTime.UtcNow;
+                user.UpdatedAt = DateTime.UtcNow;
                 
                 // 使用SqlSugar更新，添加乐观锁检查
                 var result = await GetSqlSugarClient().Updateable(user)
@@ -284,7 +284,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 var result = await GetSqlSugarClient().Updateable<User>()
                     .SetColumns(u => new User { 
                         is_deleted = true, 
-                        updated_at = DateTime.UtcNow 
+                        UpdatedAt = DateTime.UtcNow 
                     })
                     .WhereColumns(u => new { u.id })
                     .ExecuteCommandAsync();
@@ -378,7 +378,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             {
                 var cutoffDate = DateTime.UtcNow.AddDays(-days);
                 return await GetSqlSugarClient().Queryable<User>()
-                    .Where(u => u.created_at >= cutoffDate)
+                    .Where(u => u.CreatedAt >= cutoffDate)
                     .ToListAsync();
             }
             catch (SqlSugarException ex)
@@ -517,7 +517,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             try
             {
                 await GetSqlSugarClient().Updateable<User>()
-                    .SetColumns(u => new User { refresh_token = newRefreshToken, updated_at = DateTime.UtcNow })
+                    .SetColumns(u => new User { refresh_token = newRefreshToken, UpdatedAt = DateTime.UtcNow })
                     .Where(u => u.id == userId && !u.is_deleted)
                     .ExecuteCommandAsync(cancellationToken);
                 
@@ -556,7 +556,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                     updateColumns["last_login_ip"] = loginIp;
                 }
                 
-                updateColumns["updated_at"] = DateTime.UtcNow;
+                updateColumns["UpdatedAt"] = DateTime.UtcNow;
                 
                 //await GetSqlSugarClient().Updateable<User>()
                 //    .SetColumns(updateColumns)

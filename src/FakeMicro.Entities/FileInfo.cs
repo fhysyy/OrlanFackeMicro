@@ -97,16 +97,16 @@ namespace FakeMicro.Entities
         /// </summary>
         [JsonPropertyOrder(9)]
         [Id(9)]
-        [SugarColumn(IsNullable = true, ColumnName = "created_at")]
-        public DateTime created_at { get; set; } = DateTime.UtcNow;
+        [SugarColumn(IsNullable = true, ColumnName = "CreatedAt")]
+        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 更新时间
         /// </summary>
         [JsonPropertyOrder(10)]
         [Id(10)]
-        [SugarColumn(IsNullable = true, ColumnName = "updated_at")]
-        public DateTime? updated_at { get; set; } = DateTime.UtcNow;
+        [SugarColumn(IsNullable = true, ColumnName = "UpdatedAt")]
+        public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 是否已删除（软删除标记）
@@ -131,8 +131,8 @@ namespace FakeMicro.Entities
         [Id(13)]
         public DateTime upload_time 
         { 
-            get => created_at; 
-            set => created_at = value; 
+            get => CreatedAt; 
+            set => CreatedAt = value; 
         }
         
         /// <summary>

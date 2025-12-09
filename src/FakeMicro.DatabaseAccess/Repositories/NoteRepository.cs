@@ -109,7 +109,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// </summary>
         public async Task<PagedResult<Note>> GetPagedAsync(int pageNumber, int pageSize, Expression<Func<Note, object>>? orderBy = null, CancellationToken cancellationToken = default)
         {
-            var orderByExpression = orderBy ?? (x => x.updated_at);
+            var orderByExpression = orderBy ?? (x => x.UpdatedAt);
             return await base.GetPagedAsync(pageNumber, pageSize, orderByExpression, true, cancellationToken);
         }
 
@@ -118,7 +118,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// </summary>
         public async Task<PagedResult<Note>> GetPagedByConditionAsync(Expression<Func<Note, bool>> predicate, int pageNumber, int pageSize, Expression<Func<Note, object>>? orderBy = null, CancellationToken cancellationToken = default)
         {
-            var orderByExpression = orderBy ?? (x => x.updated_at);
+            var orderByExpression = orderBy ?? (x => x.UpdatedAt);
             return await base.GetPagedByConditionAsync(predicate, pageNumber, pageSize, orderByExpression, true, cancellationToken);
         }
     }

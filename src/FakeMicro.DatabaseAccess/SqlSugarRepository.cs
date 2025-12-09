@@ -871,12 +871,12 @@ namespace FakeMicro.DatabaseAccess;
             var now = DateTime.UtcNow;
             var entityType = entity.GetType();
             
-            var createdAtProp = entityType.GetProperty("created_at");
+            var createdAtProp = entityType.GetProperty("CreatedAt");
             if (createdAtProp != null)
             {
                 createdAtProp.SetValue(entity, now);
             }
-            var updatedAtProp = entityType.GetProperty("updated_at");
+            var updatedAtProp = entityType.GetProperty("UpdatedAt");
             if (updatedAtProp != null)
             {
                 updatedAtProp.SetValue(entity, now);
@@ -969,7 +969,7 @@ namespace FakeMicro.DatabaseAccess;
             _logger.LogInformation("开始更新实体: {EntityType}", typeof(TEntity).Name);
             
             // 检查是否有更新时间字段，如果有则自动更新
-            //var updatedAtProperty = typeof(TEntity).GetProperty("updated_at");
+            //var updatedAtProperty = typeof(TEntity).GetProperty("UpdatedAt");
             //if (updatedAtProperty != null)
             //{
             //    updatedAtProperty.SetValue(entity, DateTime.UtcNow);
@@ -1110,7 +1110,7 @@ namespace FakeMicro.DatabaseAccess;
                     {
                         isDeletedProperty.SetValue(entity, true);
                         
-                        var updatedAtProperty = typeof(TEntity).GetProperty("updated_at");
+                        var updatedAtProperty = typeof(TEntity).GetProperty("UpdatedAt");
                         if (updatedAtProperty != null)
                         {
                             updatedAtProperty.SetValue(entity, DateTime.UtcNow);

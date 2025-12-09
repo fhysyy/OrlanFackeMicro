@@ -1,5 +1,4 @@
 using FakeMicro.Interfaces;
-using FakeMicro.Interfaces.FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Interfaces.Models.Results;
 using Microsoft.AspNetCore.Http;

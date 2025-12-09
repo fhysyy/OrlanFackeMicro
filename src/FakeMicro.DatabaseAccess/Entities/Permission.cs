@@ -68,13 +68,13 @@ public class Permission
     /// </summary>
     [Required]
     [Id(7)]
-    public DateTime created_at { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 更新时间
     /// </summary>
     [Id(8)]
-    public DateTime updated_at { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
     
     /// <summary>
     /// 租户ID（多租户支持）

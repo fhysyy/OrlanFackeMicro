@@ -3,7 +3,6 @@ using FakeMicro.DatabaseAccess.Repositories.Mongo;
 using FakeMicro.Entities;
 
 using FakeMicro.Interfaces;
-using FakeMicro.Interfaces.FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Utilities;
 using MongoDB.Bson;

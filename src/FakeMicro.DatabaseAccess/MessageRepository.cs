@@ -34,7 +34,7 @@ namespace FakeMicro.DatabaseAccess
             
             return await GetSqlSugarClient().Queryable<Message>()
                 .Where(m => m.receiver_id == userId || m.sender_id == userId)
-                .OrderBy(m => m.created_at, OrderByType.Desc)
+                .OrderBy(m => m.CreatedAt, OrderByType.Desc)
                 .Skip(skip)
                 .Take(pageSize)
                 .ToListAsync();
@@ -47,7 +47,7 @@ namespace FakeMicro.DatabaseAccess
             return await GetSqlSugarClient().Queryable<Message>()
                 .Where(m => m.status == MessageStatus.Pending.ToString() && 
                            (m.scheduled_at == null || m.scheduled_at <= now))
-                .OrderBy(m => m.created_at)
+                .OrderBy(m => m.CreatedAt)
                 .Take(batchSize)
                 .ToListAsync();
         }
@@ -61,7 +61,7 @@ namespace FakeMicro.DatabaseAccess
 
         public async Task<Message> UpdateAsync(Message message)
         {
-            message.updated_at = DateTime.UtcNow;
+            message.UpdatedAt = DateTime.UtcNow;
             await GetSqlSugarClient().Updateable(message).ExecuteCommandAsync();
             return message;
         }
@@ -71,7 +71,7 @@ namespace FakeMicro.DatabaseAccess
             var updateable = GetSqlSugarClient().Updateable<Message>()
                 .SetColumns(m => m.status == status.ToString())
                 .SetColumns(m => m.error_message == errorMessage)
-                .SetColumns(m => m.updated_at == DateTime.UtcNow)
+                .SetColumns(m => m.UpdatedAt == DateTime.UtcNow)
                 .Where(m => m.id == messageId);
             
             switch (status)
@@ -94,7 +94,7 @@ namespace FakeMicro.DatabaseAccess
             var affectedRows = await GetSqlSugarClient().Updateable<Message>()
                 .SetColumns(m => m.status == MessageStatus.Delivered.ToString())
                   .SetColumns(m => m.delivered_at == DateTime.UtcNow)
-                .SetColumns(m => m.updated_at == DateTime.UtcNow)
+                .SetColumns(m => m.UpdatedAt == DateTime.UtcNow)
                 .Where(m => m.id == messageId)
                 .ExecuteCommandAsync();
             
@@ -106,7 +106,7 @@ namespace FakeMicro.DatabaseAccess
             var affectedRows = await GetSqlSugarClient().Updateable<Message>()
                 .SetColumns(m => m.status == MessageStatus.Read.ToString())
                   .SetColumns(m => m.read_at == DateTime.UtcNow)
-                .SetColumns(m => m.updated_at == DateTime.UtcNow)
+                .SetColumns(m => m.UpdatedAt == DateTime.UtcNow)
                 .Where(m => m.id == messageId)
                 .ExecuteCommandAsync();
             
@@ -119,12 +119,12 @@ namespace FakeMicro.DatabaseAccess
             
             if (startDate.HasValue)
             {
-                queryable = queryable.Where(m => m.created_at >= startDate.Value);
+                queryable = queryable.Where(m => m.CreatedAt >= startDate.Value);
             }
             
             if (endDate.HasValue)
             {
-                queryable = queryable.Where(m => m.created_at <= endDate.Value);
+                queryable = queryable.Where(m => m.CreatedAt <= endDate.Value);
             }
             
             var totalMessages = await queryable.CountAsync();
@@ -192,7 +192,7 @@ namespace FakeMicro.DatabaseAccess
 
         public async Task<MessageTemplate> UpdateAsync(MessageTemplate template)
         {
-            template.updated_at = DateTime.UtcNow;
+            template.UpdatedAt = DateTime.UtcNow;
             await GetSqlSugarClient().Updateable(template).ExecuteCommandAsync();
             return template;
         }
