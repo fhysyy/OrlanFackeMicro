@@ -19,11 +19,11 @@ namespace FakeMicro.Entities.ManagerVersion
         [Id(1)]
         public DateTime CreatedAt { get  ; set  ; }
         [Id(2)]
-        public string created_by { get  ; set  ; }
+        public string CreatedBy { get  ; set  ; }
         [Id(3)]
         public DateTime? UpdatedAt { get  ; set  ; }
         [Id(4)]
-        public string? updated_by { get  ; set  ; }
+        public string? UpdatedBy { get  ; set  ; }
 
         [Id(5)]
         public decimal count { get  ; set  ; }

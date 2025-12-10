@@ -12,7 +12,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
-public interface IRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey> where TEntity : class
+    public interface IRepository<TEntity, TKey> : IBaseRepository<TEntity, TKey> where TEntity : class
     {
         /// <summary>
         /// 获取所有实体

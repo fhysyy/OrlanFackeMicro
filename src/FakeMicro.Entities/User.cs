@@ -170,13 +170,13 @@ namespace FakeMicro.Entities
         public DateTime? deleted_at { get; set; }
 
         [Id(22)]
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
-        public string created_by { get; set; }
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "CreatedBy")]
+        public string CreatedBy { get; set; }
 
         [Id(23)]
 
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
-        public string updated_by { get; set; }
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "UpdatedBy")]
+        public string UpdatedBy { get; set; }
  
 
     }

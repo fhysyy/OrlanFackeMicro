@@ -9,22 +9,22 @@ namespace FakeMicro.Interfaces
     /// <summary>
     /// 标签Grain接口
     /// </summary>
-    public interface ITagGrain : IGrainWithStringKey
+    public interface INoteTagGrain : IGrainWithStringKey
     {
         /// <summary>
         /// 获取标签
         /// </summary>
-        Task<Tag?> GetAsync(CancellationToken cancellationToken = default);
+        Task<NoteTag?> GetAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 创建标签
         /// </summary>
-        Task<Tag?> CreateAsync(Tag tag, CancellationToken cancellationToken = default);
+        Task<NoteTag?> CreateAsync(NoteTag tag, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 更新标签
         /// </summary>
-        Task<Tag?> UpdateAsync(Tag tag, CancellationToken cancellationToken = default);
+        Task<NoteTag?> UpdateAsync(NoteTag tag, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 删除标签
@@ -34,12 +34,12 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 根据用户ID获取标签列表
         /// </summary>
-        Task<List<Tag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<List<NoteTag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据用户ID和标签名称获取标签
         /// </summary>
-        Task<Tag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default);
+        Task<NoteTag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 检查标签名称是否存在

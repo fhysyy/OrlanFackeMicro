@@ -64,7 +64,7 @@
     <Compile Include="Controllers\PermissionController.cs" />
     <Compile Include="Controllers\ProtectedController.cs" />
     <Compile Include="Controllers\SysOpenController.cs" />
-    <Compile Include="Controllers\TagController.cs" />
+    <Compile Include="Controllers\NoteTagController.cs" />
     <Compile Include="Controllers\UserController.cs" />
   </ItemGroup>
 

@@ -13,8 +13,9 @@ namespace FakeMicro.DatabaseAccess.Repositories
 {
     /// <summary>
     /// 标签仓储实现类
+    /// 遵循DDD原则，集成MongoDB和Orleans架构
     /// </summary>
-    public class TagRepository : MongoRepository<FakeMicro.Entities.Tag, Guid>, ITagRepository
+    public class TagRepository : MongoRepository<NoteTag, Guid>, ITagRepository
     {
         private readonly ILogger<TagRepository> _logger;
 
@@ -23,32 +24,36 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// </summary>
         /// <param name="mongoClient">MongoDB客户端</param>
         /// <param name="logger">日志记录器</param>
-        public TagRepository(MongoClient mongoClient, ILogger<TagRepository> logger) : base(mongoClient, logger)
+        public TagRepository(
+            MongoClient mongoClient,
+            ILogger<TagRepository> logger,
+            string? defaultDatabaseName = null
+        ) : base(mongoClient, logger, defaultDatabaseName)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         /// <summary>
-        /// 通过ID获取标签
+        /// 通过Orleans Grain ID获取标签实体
         /// </summary>
-        public new async Task<FakeMicro.Entities.Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
+        public new async Task<NoteTag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default)
         {
             return await base.GetByIdAsync(id, cancellationToken);
         }
 
         /// <summary>
-        /// 创建标签并返回
+        /// 创建标签实体并返回创建后的实体
         /// </summary>
-        public async Task<FakeMicro.Entities.Tag?> CreateAndReturnAsync(FakeMicro.Entities.Tag entity, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> CreateAndReturnAsync(NoteTag entity, CancellationToken cancellationToken = default)
         {
             await base.AddAsync(entity, cancellationToken);
             return entity;
         }
 
         /// <summary>
-        /// 更新标签并返回
+        /// 更新标签实体并返回更新后的实体
         /// </summary>
-        public async Task<FakeMicro.Entities.Tag?> UpdateAndReturnAsync(FakeMicro.Entities.Tag entity, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> UpdateAndReturnAsync(NoteTag entity, CancellationToken cancellationToken = default)
         {
             await base.UpdateAsync(entity, cancellationToken);
             return entity;
@@ -57,7 +62,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// <summary>
         /// 根据用户ID获取标签列表
         /// </summary>
-        public async Task<IEnumerable<FakeMicro.Entities.Tag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<IEnumerable<NoteTag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             return await base.GetByConditionAsync(x => x.UserId == userId, cancellationToken);
         }
@@ -65,9 +70,10 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// <summary>
         /// 根据用户ID和标签名称获取标签
         /// </summary>
-        public async Task<FakeMicro.Entities.Tag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default)
         {
-            return await base.GetByConditionAsync(x => x.UserId == userId && x.Name == name, cancellationToken).ContinueWith(t => t.Result.FirstOrDefault(), cancellationToken);
+            var tags = await base.GetByConditionAsync(x => x.UserId == userId && x.Name == name, cancellationToken);
+            return tags.FirstOrDefault();
         }
 
         /// <summary>
@@ -75,10 +81,14 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// </summary>
         public async Task<bool> NameExistsAsync(Guid userId, string name, Guid excludeId = default, CancellationToken cancellationToken = default)
         {
-            Expression<Func<FakeMicro.Entities.Tag, bool>> predicate = x => x.UserId == userId && x.Name == name;
-            if (excludeId != default(Guid))
+            Expression<Func<NoteTag, bool>> predicate;
+            if (excludeId != default)
             {
-                predicate = x => x.UserId == userId && x.Name == name && x.Id != excludeId;
+                predicate = x => x.UserId == userId && x.Name == name && x.NoteId != excludeId;
+            }
+            else
+            {
+                predicate = x => x.UserId == userId && x.Name == name;
             }
             return await base.ExistsAsync(predicate, cancellationToken);
         }
@@ -86,20 +96,22 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// <summary>
         /// 获取标签分页列表
         /// </summary>
-        public async Task<PagedResult<FakeMicro.Entities.Tag>> GetPagedAsync(int pageNumber, int pageSize, 
-            Expression<Func<FakeMicro.Entities.Tag, object>>? orderBy = null, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<NoteTag>> GetPagedAsync(int pageNumber, int pageSize,
+            Expression<Func<NoteTag, object>>? orderBy = null, CancellationToken cancellationToken = default)
         {
-            return await base.GetPagedAsync(pageNumber, pageSize, orderBy, false, cancellationToken);
+            var orderByExpression = orderBy ?? (x => x.Name);
+            return await base.GetPagedAsync(pageNumber, pageSize, orderByExpression, false, cancellationToken);
         }
 
         /// <summary>
         /// 根据条件获取标签分页列表
         /// </summary>
-        public async Task<PagedResult<FakeMicro.Entities.Tag>> GetPagedByConditionAsync(
-            Expression<Func<FakeMicro.Entities.Tag, bool>> predicate, int pageNumber, int pageSize,
-            Expression<Func<FakeMicro.Entities.Tag, object>>? orderBy = null, CancellationToken cancellationToken = default)
+        public async Task<PagedResult<NoteTag>> GetPagedByConditionAsync(
+            Expression<Func<NoteTag, bool>> predicate, int pageNumber, int pageSize,
+            Expression<Func<NoteTag, object>>? orderBy = null, CancellationToken cancellationToken = default)
         {
-            return await base.GetPagedByConditionAsync(predicate, pageNumber, pageSize, orderBy, false, cancellationToken);
+            var orderByExpression = orderBy ?? (x => x.Name);
+            return await base.GetPagedByConditionAsync(predicate, pageNumber, pageSize, orderByExpression, false, cancellationToken);
         }
     }
 }

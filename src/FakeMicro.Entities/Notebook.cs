@@ -63,18 +63,26 @@ namespace FakeMicro.Entities
         /// 创建人
         /// </summary>
         [Id(7)]
-        [SugarColumn(ColumnName = "created_by", IsNullable = true)]
-        public string created_by { get; set; } = string.Empty;
+        [SugarColumn(ColumnName = "CreatedBy", IsNullable = true)]
+        public string CreatedBy { get; set; } = string.Empty;
 
         /// <summary>
         /// 更新人
         /// </summary>
         [Id(8)]
-        [SugarColumn(ColumnName = "updated_by", IsNullable = true)]
-        public string? updated_by { get; set; }
+        [SugarColumn(ColumnName = "UpdatedBy", IsNullable = true)]
+        public string? UpdatedBy { get; set; }
 
         [Id(9)]
         [SugarColumn(ColumnName = "title")]
         public string Title { get; set; }
+
+        [Id(10)]
+        [SugarColumn(ColumnName = "is_deleted")]
+        public bool IsDeleted { get; set; }
+        [Id(11)]
+        [SugarColumn(ColumnName = "deleted_at")]
+        public DateTime? DeletedAt { get; set; }
     }
+
 }

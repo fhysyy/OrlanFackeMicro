@@ -15,7 +15,7 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 创建人
         /// </summary>
-        string created_by { get; set; }
+        string CreatedBy { get; set; }
         
         /// <summary>
         /// 更新时间
@@ -25,6 +25,6 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 更新人
         /// </summary>
-        string? updated_by { get; set; }
+        string? UpdatedBy { get; set; }
     }
 }

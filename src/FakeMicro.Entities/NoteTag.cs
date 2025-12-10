@@ -40,8 +40,8 @@ namespace FakeMicro.Entities
         /// 创建人
         /// </summary>
         [Id(3)]
-        [SugarColumn(ColumnName = "created_by")]
-        public string created_by { get; set; } = string.Empty;
+        [SugarColumn(ColumnName = "CreatedBy")]
+        public string CreatedBy { get; set; } = string.Empty;
 
         /// <summary>
         /// 更新时间
@@ -54,7 +54,13 @@ namespace FakeMicro.Entities
         /// 更新人
         /// </summary>
         [Id(5)]
-        [SugarColumn(ColumnName = "updated_by", IsNullable = true)]
-        public string? updated_by { get; set; }
+        [SugarColumn(ColumnName = "UpdatedBy", IsNullable = true)]
+        public string? UpdatedBy { get; set; }
+        [Id(6)]
+        [SugarColumn(ColumnName = "user_id")]
+        public Guid UserId { get; set; }
+        [Id(7)]
+        [SugarColumn(ColumnName = "name")]
+        public string Name { get; set; } = string.Empty;
     }
 }

@@ -9,13 +9,13 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 标签Grain实现
     /// </summary>
-    public class TagGrain : Grain, ITagGrain
+    public class NoteTagGrain : Grain, INoteTagGrain
     {
-        private readonly ILogger<TagGrain> _logger;
+        private readonly ILogger<NoteTagGrain> _logger;
         private readonly ITagRepository _repository; 
 
-        public TagGrain(
-            ILogger<TagGrain> logger,
+        public NoteTagGrain(
+            ILogger<NoteTagGrain> logger,
             ITagRepository repository)
         {
             _logger = logger;
@@ -25,7 +25,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 获取标签
         /// </summary>
-        public async Task<Tag?> GetAsync(CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> GetAsync(CancellationToken cancellationToken = default)
         {
             try
             {
@@ -48,7 +48,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 创建标签
         /// </summary>
-        public async Task<Tag?> CreateAsync(Tag tag, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> CreateAsync(NoteTag tag, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -60,12 +60,12 @@ namespace FakeMicro.Grains
                 }
 
                 // 设置默认值
-                tag.Id = grainId;
+                tag.NoteId = grainId;
                 tag.CreatedAt = DateTime.UtcNow;
                 tag.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.AddAsync(tag, cancellationToken);
-                _logger.LogInformation("标签创建成功: {Id}", tag.Id);
+                _logger.LogInformation("标签创建成功: {Id}", tag.NoteId);
 
                 return tag;
             }
@@ -79,7 +79,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 更新标签
         /// </summary>
-        public async Task<Tag?> UpdateAsync(Tag tag, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> UpdateAsync(NoteTag tag, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -98,12 +98,12 @@ namespace FakeMicro.Grains
                 }
 
                 // 更新字段
-                tag.Id = grainId;
+                tag.NoteId = grainId;
                 tag.CreatedAt = existingTag.CreatedAt;
                 tag.UpdatedAt = DateTime.UtcNow;
 
                 await _repository.UpdateAsync(tag, cancellationToken);
-                _logger.LogInformation("标签更新成功: {Id}", tag.Id);
+                _logger.LogInformation("标签更新成功: {Id}", tag.NoteId);
 
                 return tag;
             }
@@ -143,7 +143,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 根据用户ID获取标签列表
         /// </summary>
-        public async Task<List<Tag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
+        public async Task<List<NoteTag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default)
         {
             try
             {
@@ -160,7 +160,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 根据用户ID和标签名称获取标签
         /// </summary>
-        public async Task<Tag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default)
+        public async Task<NoteTag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default)
         {
             try
             {

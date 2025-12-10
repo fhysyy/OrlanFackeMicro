@@ -20,8 +20,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
     /// FakeNews仓储接口
     /// 遵循DDD原则，集成SqlSugar ORM和Orleans架构
     /// </summary>
-    public interface IFakeNewsRepository
-        : IRepository<FakeNews, long>
+    public interface IFakeNewsRepository:IRepository<FakeNews, long>
     {
         #region Orleans Grain特定操作
 

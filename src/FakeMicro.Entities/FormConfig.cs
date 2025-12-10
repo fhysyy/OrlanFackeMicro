@@ -111,14 +111,14 @@ namespace FakeMicro.Entities
         /// 创建人
         /// </summary>
         [Id(13)]
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "created_by")]
-        public string created_by { get; set; }
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "CreatedBy")]
+        public string CreatedBy { get; set; }
 
         /// <summary>
         /// 更新人
         /// </summary>
         [Id(14)]
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updated_by")]
-        public string updated_by { get; set; }
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "UpdatedBy")]
+        public string UpdatedBy { get; set; }
     }
 }

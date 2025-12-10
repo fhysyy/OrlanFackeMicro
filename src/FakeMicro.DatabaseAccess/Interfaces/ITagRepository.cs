@@ -13,7 +13,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
     /// 标签仓储接口
     /// 遵循DDD原则，集成MongoDB和Orleans架构
     /// </summary>
-    public interface ITagRepository: IMongoRepository<Tag, Guid>
+    public interface ITagRepository: IMongoRepository<NoteTag, Guid>
     {
         #region Orleans Grain特定操作
 
@@ -22,7 +22,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>实体对象，如果不存在则返回null</returns>
-        new Task<Tag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
+        new Task<NoteTag?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 创建标签实体并返回创建后的实体
@@ -30,7 +30,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="entity">标签实体</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>创建后的实体对象</returns>
-        Task<Tag?> CreateAndReturnAsync(Tag entity, CancellationToken cancellationToken = default);
+        Task<NoteTag?> CreateAndReturnAsync(NoteTag entity, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 更新标签实体并返回更新后的实体
@@ -38,7 +38,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="entity">标签实体</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>更新后的实体对象</returns>
-        Task<Tag?> UpdateAndReturnAsync(Tag entity, CancellationToken cancellationToken = default);
+        Task<NoteTag?> UpdateAndReturnAsync(NoteTag entity, CancellationToken cancellationToken = default);
 
         #endregion
 
@@ -50,7 +50,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="userId">用户ID</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>标签列表</returns>
-        Task<IEnumerable<Tag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
+        Task<IEnumerable<NoteTag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据用户ID和标签名称获取标签
@@ -59,7 +59,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="name">标签名称</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>标签对象，如果不存在则返回null</returns>
-        Task<Tag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default);
+        Task<NoteTag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 检查标签名称是否存在
@@ -83,8 +83,8 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="orderBy">排序表达式</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>分页结果</returns>
-        Task<PagedResult<Tag>> GetPagedAsync(int pageNumber, int pageSize, 
-            Expression<Func<Tag, object>>? orderBy = null, CancellationToken cancellationToken = default);
+        Task<PagedResult<NoteTag>> GetPagedAsync(int pageNumber, int pageSize, 
+            Expression<Func<NoteTag, object>>? orderBy = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据条件获取标签分页列表
@@ -95,9 +95,9 @@ namespace FakeMicro.DatabaseAccess.Interfaces
         /// <param name="orderBy">排序表达式</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>分页结果</returns>
-        Task<PagedResult<Tag>> GetPagedByConditionAsync(
-            Expression<Func<Tag, bool>> predicate, int pageNumber, int pageSize,
-            Expression<Func<Tag, object>>? orderBy = null, CancellationToken cancellationToken = default);
+        Task<PagedResult<NoteTag>> GetPagedByConditionAsync(
+            Expression<Func<NoteTag, bool>> predicate, int pageNumber, int pageSize,
+            Expression<Func<NoteTag, object>>? orderBy = null, CancellationToken cancellationToken = default);
 
         #endregion
     }

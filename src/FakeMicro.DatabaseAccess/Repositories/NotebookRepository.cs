@@ -91,5 +91,39 @@ namespace FakeMicro.DatabaseAccess.Repositories
             var orderByExpression = orderBy ?? (x => x.SortOrder);
             return await base.GetPagedByConditionAsync(predicate, pageNumber, pageSize, orderByExpression, false, cancellationToken);
         }
+
+        /// <summary>
+        /// 软删除笔记本
+        /// </summary>
+        public async Task<bool> SoftDeleteAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            var notebook = await base.GetByIdAsync(id, cancellationToken);
+            if (notebook == null)
+            {
+                return false;
+            }
+
+            notebook.IsDeleted = true;
+            notebook.DeletedAt = DateTime.UtcNow;
+            await base.UpdateAsync(notebook, cancellationToken);
+            return true;
+        }
+
+        /// <summary>
+        /// 软删除笔记本（指定数据库）
+        /// </summary>
+        public async Task<bool> SoftDeleteAsync(Guid id, string? databaseName, CancellationToken cancellationToken = default)
+        {
+            var notebook = await base.GetByIdAsync(id, databaseName, cancellationToken);
+            if (notebook == null)
+            {
+                return false;
+            }
+
+            notebook.IsDeleted = true;
+            notebook.DeletedAt = DateTime.UtcNow;
+            await base.UpdateAsync(notebook, databaseName, cancellationToken);
+            return true;
+        }
     }
 }

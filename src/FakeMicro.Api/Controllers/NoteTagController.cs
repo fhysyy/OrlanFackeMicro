@@ -19,12 +19,12 @@ namespace FakeMicro.Api.Controllers
     [ApiController]
     [Route("api/[controller]")]
     //[Authorize]
-    public class TagController : ControllerBase
+    public class NoteTagController : ControllerBase
     {
         private readonly IClusterClient _clusterClient;
-        private readonly ILogger<TagController> _logger;
+        private readonly ILogger<NoteTagController> _logger;
 
-        public TagController(IClusterClient clusterClient, ILogger<TagController> logger)
+        public NoteTagController(IClusterClient clusterClient, ILogger<NoteTagController> logger)
         {
             _clusterClient = clusterClient;
             _logger = logger;
@@ -46,7 +46,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始获取标签，ID: {Id}", traceId, id);
-                var grain = _clusterClient.GetGrain<ITagGrain>(id.ToString());
+                var grain = _clusterClient.GetGrain<INoteTagGrain>(id.ToString());
                 var result = await grain.GetAsync(cancellationToken);
                 if (result == null)
                 {
@@ -78,7 +78,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始根据用户ID获取标签列表，用户ID: {UserId}", traceId, userId);
-                var grain = _clusterClient.GetGrain<ITagGrain>("list");
+                var grain = _clusterClient.GetGrain<INoteTagGrain>("list");
                 var result = await grain.GetByUserIdAsync(userId, cancellationToken);
                 
                 _logger.LogInformation("[TraceId: {TraceId}] 根据用户ID获取标签列表成功，用户ID: {UserId}，数量: {Count}", traceId, userId, result.Count);
@@ -113,7 +113,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始根据用户ID和名称获取标签，用户ID: {UserId}, 标签名称: {Name}", traceId, userId, name);
-                var grain = _clusterClient.GetGrain<ITagGrain>("list");
+                var grain = _clusterClient.GetGrain<INoteTagGrain>("list");
                 var result = await grain.GetByUserIdAndNameAsync(userId, name, cancellationToken);
                 if (result == null)
                 {
@@ -151,7 +151,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始检查标签名称是否存在，用户ID: {UserId}, 标签名称: {Name}, 排除ID: {ExcludeId}", traceId, userId, name, excludeId);
-                var grain = _clusterClient.GetGrain<ITagGrain>("list");
+                var grain = _clusterClient.GetGrain<INoteTagGrain>("list");
                 var result = await grain.NameExistsAsync(userId, name, excludeId, cancellationToken);
                 
                 _logger.LogInformation("[TraceId: {TraceId}] 检查标签名称是否存在成功，用户ID: {UserId}, 标签名称: {Name}, 结果: {Result}", traceId, userId, name, result);
@@ -168,7 +168,7 @@ namespace FakeMicro.Api.Controllers
         /// 创建标签
         /// </summary>
         [HttpPost]
-        public async Task<ActionResult<BaseResultModel>> CreateTag([FromBody] Tag tag, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<BaseResultModel>> CreateTag([FromBody] NoteTag tag, CancellationToken cancellationToken = default)
         {
             var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
             try
@@ -194,17 +194,17 @@ namespace FakeMicro.Api.Controllers
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始创建标签，用户ID: {UserId}, 标签名称: {TagName}", traceId, tag.UserId, tag.Name);
                 var newId = Guid.NewGuid();
-                tag.Id = newId;
+                tag.NoteId = newId;
                 tag.CreatedAt = DateTime.UtcNow;
                 tag.UpdatedAt = DateTime.UtcNow;
                 
-                var grain = _clusterClient.GetGrain<ITagGrain>(newId.ToString());
+                var grain = _clusterClient.GetGrain<INoteTagGrain>(newId.ToString());
                 var result = await grain.CreateAsync(tag, cancellationToken);
                 
                 if (result != null)
                 {
-                    _logger.LogInformation("[TraceId: {TraceId}] 创建标签成功，ID: {Id}", traceId, result.Id);
-                    return CreatedAtAction(nameof(GetTag), new { id = result.Id }, BaseResultModel.SuccessResult(result, "创建标签成功"));
+                    _logger.LogInformation("[TraceId: {TraceId}] 创建标签成功，ID: {Id}", traceId, result.NoteId);
+                    return CreatedAtAction(nameof(GetTag), new { id = result.NoteId }, BaseResultModel.SuccessResult(result, "创建标签成功"));
                 }
                 
                 _logger.LogWarning("[TraceId: {TraceId}] 创建标签失败，用户ID: {UserId}, 标签名称: {TagName}", traceId, tag.UserId, tag.Name);
@@ -221,7 +221,7 @@ namespace FakeMicro.Api.Controllers
         /// 更新标签
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<ActionResult<BaseResultModel>> UpdateTag(Guid id, [FromBody] Tag tag, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<BaseResultModel>> UpdateTag(Guid id, [FromBody] NoteTag tag, CancellationToken cancellationToken = default)
         {
             var traceId = Activity.Current?.Id ?? Guid.NewGuid().ToString();
             try
@@ -239,7 +239,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 // 确保ID一致
-                if (tag.Id != id)
+                if (tag.NoteId != id)
                 {
                     _logger.LogWarning("[TraceId: {TraceId}] 更新标签请求参数无效，URL中的ID与请求体中的ID不一致", traceId);
                     return BadRequest(BaseResultModel.FailedResult("400", "URL中的ID与请求体中的ID不一致",400));
@@ -261,7 +261,7 @@ namespace FakeMicro.Api.Controllers
                 _logger.LogInformation("[TraceId: {TraceId}] 开始更新标签，ID: {Id}", traceId, id);
                 tag.UpdatedAt = DateTime.UtcNow;
                 
-                var grain = _clusterClient.GetGrain<ITagGrain>(id.ToString());
+                var grain = _clusterClient.GetGrain<INoteTagGrain>(id.ToString());
                 var result = await grain.UpdateAsync(tag, cancellationToken);
                 
                 if (result != null)
@@ -296,7 +296,7 @@ namespace FakeMicro.Api.Controllers
                 }
 
                 _logger.LogInformation("[TraceId: {TraceId}] 开始删除标签，ID: {Id}", traceId, id);
-                var grain = _clusterClient.GetGrain<ITagGrain>(id.ToString());
+                var grain = _clusterClient.GetGrain<INoteTagGrain>(id.ToString());
                 var result = await grain.DeleteAsync(cancellationToken);
                 
                 if (result)
