@@ -148,7 +148,7 @@ public static class DatabaseServiceExtensions
                 services.AddScoped<IMongoActRepository, MongoActRepository>();
                 services.AddScoped<INoteRepository, NoteRepository>();
                 services.AddScoped<INotebookRepository, NotebookRepository>();
-                services.AddScoped<ITagRepository, TagRepository>();
+                services.AddScoped<INoteTagRepository, NoteTagRepository>();
             }
         }
 

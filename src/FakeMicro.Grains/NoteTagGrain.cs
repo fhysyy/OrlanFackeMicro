@@ -12,11 +12,11 @@ namespace FakeMicro.Grains
     public class NoteTagGrain : Grain, INoteTagGrain
     {
         private readonly ILogger<NoteTagGrain> _logger;
-        private readonly ITagRepository _repository; 
+        private readonly INoteTagRepository _repository; 
 
         public NoteTagGrain(
             ILogger<NoteTagGrain> logger,
-            ITagRepository repository)
+            INoteTagRepository repository)
         {
             _logger = logger;
             _repository = repository;
