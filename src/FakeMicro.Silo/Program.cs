@@ -93,12 +93,18 @@ namespace FakeMicro.Silo
 
                 // 3. 尝试绑定配置到 SqlSugarOptions
                 Console.WriteLine("2. 尝试绑定配置到 SqlSugarOptions:");
-                var sqlSugarOptions = new SqlSugarConfig.SqlSugarOptions();
-                sqlSugarSection.Bind(sqlSugarOptions);
-                Console.WriteLine($"   DbType: {sqlSugarOptions.DbType}");
-                Console.WriteLine($"   ConnectionString: {sqlSugarOptions.ConnectionString}");
-                Console.WriteLine($"   EnableSqlLog: {sqlSugarOptions.EnableSqlLog}");
-                Console.WriteLine($"   SlaveConnectionStrings: {(sqlSugarOptions.SlaveConnectionStrings?.Count ?? 0)} 个从库");
+                var sqlSugarOptions = sqlSugarSection.Get<SqlSugarConfig.SqlSugarOptions>();
+                if (sqlSugarOptions != null)
+                {
+                    Console.WriteLine($"   DbType: {sqlSugarOptions.DbType}");
+                    Console.WriteLine($"   ConnectionString: {sqlSugarOptions.ConnectionString}");
+                    Console.WriteLine($"   EnableSqlLog: {sqlSugarOptions.EnableSqlLog}");
+                    Console.WriteLine($"   SlaveConnectionStrings: {(sqlSugarOptions.SlaveConnectionStrings?.Count ?? 0)} 个从库");
+                }
+                else
+                {
+                    Console.WriteLine("   ❌ 无法绑定到 SqlSugarOptions");
+                }
 
                 // 4. 检查服务是否已注册
                 Console.WriteLine("3. 检查 SqlSugar 相关服务注册:");
@@ -208,6 +214,12 @@ namespace FakeMicro.Silo
                     // 添加 SqlSugar 配置绑定
                     services.Configure<SqlSugarConfig.SqlSugarOptions>(context.Configuration.GetSection("SqlSugar"));
                     
+                    // 添加 Orleans 配置绑定
+                    services.Configure<OrleansConfig>(context.Configuration.GetSection("Orleans"));
+                    
+                    // 添加连接字符串配置绑定
+                    services.Configure<ConnectionStringsOptions>(context.Configuration.GetSection("ConnectionStrings"));
+                    
                     // 添加 Orleans 数据库初始化服务
                     services.AddTransient<Services.OrleansDatabaseInitializer>();
 
@@ -234,7 +246,7 @@ namespace FakeMicro.Silo
                 {
                     // 从配置中获取Orleans设置
                     var orleansConfig = context.Configuration.GetSection("Orleans").Get<OrleansConfig>() ?? new OrleansConfig();
-
+                    
                     // 获取数据库连接字符串
                     var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
 

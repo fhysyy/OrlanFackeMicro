@@ -1,10 +1,12 @@
 using DotNetCore.CAP;
 using FakeMicro.Api.Middleware;
 using FakeMicro.Api.Services;
+using FakeMicro.DatabaseAccess;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace FakeMicro.Api.Extensions
 {
@@ -24,8 +26,12 @@ namespace FakeMicro.Api.Extensions
         public static IServiceCollection AddCapEventBus(this IServiceCollection services, 
             IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
+            // 配置连接字符串选项
+            services.Configure<ConnectionStringsOptions>(configuration.GetSection("ConnectionStrings"));
+            
             // 从配置中获取CAP相关配置，提供默认值以防配置中不存在
-            string connectionString = configuration.GetConnectionString("CAPConnection") ?? "Host=localhost;Database=capdb;Username=postgres;Password=123456";
+            var connectionStringsOptions = configuration.GetSection("ConnectionStrings").Get<ConnectionStringsOptions>() ?? new ConnectionStringsOptions();
+            string connectionString = connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=capdb;Username=postgres;Password=123456";
             int failedRetryCount = configuration.GetValue<int>("CAP:FailedRetryCount", 3);
             int failedRetryInterval = configuration.GetValue<int>("CAP:FailedRetryInterval", 30);
             int succeedMessageExpiredAfter = configuration.GetValue<int>("CAP:SucceedMessageExpiredAfter", 3600);
