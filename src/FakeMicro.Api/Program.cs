@@ -180,6 +180,9 @@ namespace FakeMicro.Api
             // 注册表单配置相关服务
             builder.Services.AddFormConfigServices();
             builder.Services.AddFormConfigGrainProxies();
+            
+            // 注册文件存储服务
+            builder.Services.AddFileStorage(builder.Configuration);
              
             // 构建应用，添加异常处理以获取详细错误信息
             var app = builder.Build();

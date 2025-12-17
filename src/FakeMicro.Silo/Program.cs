@@ -216,6 +216,9 @@ namespace FakeMicro.Silo
 
                     // 添加代码生成器服务
                     services.AddCodeGenerator(context.Configuration);
+                    
+                    // 注册文件存储服务
+                    services.AddFileStorage(context.Configuration);
 
                     Console.WriteLine("服务注册中...");
                     

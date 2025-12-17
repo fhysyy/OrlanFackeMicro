@@ -2,9 +2,12 @@ using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces;
 using FakeMicro.Utilities;
+using FakeMicro.Utilities.ContentScan;
+using FakeMicro.Utilities.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Orleans;
+using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 using FileInfo = FakeMicro.Entities.FileInfo;
@@ -19,14 +22,20 @@ public class FileGrain : OrleansGrainBase, IFileGrain
 {
     private readonly IRepository<FileInfo, long> _fileRepository;
     private readonly FileStorageConfig _storageConfig;
+    private readonly IFileStorageProvider _fileStorageProvider;
+    private readonly IFileContentScanner _fileContentScanner;
 
     public FileGrain(
         IRepository<FileInfo, long> fileRepository,
         IOptions<FileStorageConfig> storageConfig,
+        IFileStorageProvider fileStorageProvider,
+        IFileContentScanner fileContentScanner,
         ILogger<FileGrain> logger) : base(logger)
     {
         _fileRepository = fileRepository;
         _storageConfig = storageConfig.Value;
+        _fileStorageProvider = fileStorageProvider;
+        _fileContentScanner = fileContentScanner;
     }
 
     public async Task<FileUploadResult> UploadFileAsync(FileUploadRequest request)
@@ -53,8 +62,29 @@ public class FileGrain : OrleansGrainBase, IFileGrain
                 };
             }
 
+            // 将字节数组转换为流
+            using var fileStream = new MemoryStream(request.FileData);
+            
+            // 扫描文件内容是否安全
+            var scanResult = await _fileContentScanner.ScanFileContentAsync(fileStream, request.FileName, request.ContentType);
+            
+            if (!scanResult.IsSafe)
+            {
+                return new FileUploadResult
+                {
+                    Success = false,
+                    Message = scanResult.Message
+                };
+            }
+
+            // 重置流位置
+            fileStream.Position = 0;
+            
             // 计算文件哈希
-            var fileHash = CalculateFileHash(request.FileData);
+            var fileHash = CalculateFileHash(fileStream);
+            
+            // 重置流位置
+            fileStream.Position = 0;
 
             // 检查是否已存在相同文件
             var allFiles = await _fileRepository.GetAllAsync();
@@ -76,7 +106,7 @@ public class FileGrain : OrleansGrainBase, IFileGrain
             var storagePath = GenerateStoragePath(request.FileName, request.UserId);
 
             // 保存文件到存储
-            await SaveFileToStorage(storagePath, request.FileData);
+            await _fileStorageProvider.SaveFileAsync(storagePath, fileStream, request.ContentType);
 
             // 创建文件记录
             var fileInfo = new FileInfo
@@ -137,7 +167,10 @@ public class FileGrain : OrleansGrainBase, IFileGrain
             }
 
             // 从存储中读取文件
-            var fileData = await ReadFileFromStorage(fileInfo.file_path);
+            using var fileStream = await _fileStorageProvider.ReadFileAsync(fileInfo.file_path);
+            using var memoryStream = new MemoryStream();
+            await fileStream.CopyToAsync(memoryStream);
+            var fileData = memoryStream.ToArray();
 
             // 更新访问统计
             fileInfo.UpdatedAt = DateTime.UtcNow;
@@ -237,8 +270,14 @@ public class FileGrain : OrleansGrainBase, IFileGrain
 
     private string CalculateFileHash(byte[] fileData)
     {
+        using var stream = new MemoryStream(fileData);
+        return CalculateFileHash(stream);
+    }
+
+    private string CalculateFileHash(Stream fileStream)
+    {
         using var sha256 = SHA256.Create();
-        var hashBytes = sha256.ComputeHash(fileData);
+        var hashBytes = sha256.ComputeHash(fileStream);
         return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
     }
 
@@ -287,11 +326,6 @@ public class FileGrain : OrleansGrainBase, IFileGrain
         }
     }
 
-    /// <summary>
-    /// 获取当前用户ID（简化的实现，实际项目中应从认证上下文中获取）
-    /// </summary>
-  
-
     private string GenerateStoragePath(string fileName, int userId)
     {
         var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
@@ -302,25 +336,6 @@ public class FileGrain : OrleansGrainBase, IFileGrain
             userId.ToString(),
             timestamp + "_" + randomString + fileExtension
         ).Replace("\\", "/");
-    }
-
-    private async Task SaveFileToStorage(string storagePath, byte[] fileData)
-    {
-        var fullPath = Path.Combine(_storageConfig.LocalStoragePath, storagePath);
-        var directory = Path.GetDirectoryName(fullPath);
-        
-        if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-        {
-            Directory.CreateDirectory(directory);
-        }
-
-        await File.WriteAllBytesAsync(fullPath, fileData);
-    }
-
-    private async Task<byte[]> ReadFileFromStorage(string storagePath)
-    {
-        var fullPath = Path.Combine(_storageConfig.LocalStoragePath, storagePath);
-        return await File.ReadAllBytesAsync(fullPath);
     }
 
     private string GeneratePreviewToken(long fileId, int expiryMinutes)
