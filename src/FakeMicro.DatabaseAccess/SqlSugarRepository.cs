@@ -329,10 +329,10 @@ namespace FakeMicro.DatabaseAccess;
                     // 为简化示例，这里暂不实现
                 }
                 
-                // 添加排序
+                // 排序
                 if (orderBy != null)
                 {
-                    query = isDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
+                    query = isDescending ? query.OrderBy(orderBy, OrderByType.Desc) : query.OrderBy(orderBy);
                 }
                 
                 // 执行分页查询
@@ -729,7 +729,7 @@ namespace FakeMicro.DatabaseAccess;
             // 排序
             if (orderBy != null)
             {
-                query = isDescending ? query.OrderBy(orderBy, OrderByType.Desc) : query.OrderBy(orderBy);
+                query = isDescending ? query.OrderByDescending(orderBy) : query.OrderBy(orderBy);
             }
             
             // 执行分页查询
@@ -954,6 +954,13 @@ namespace FakeMicro.DatabaseAccess;
             
             cancellationToken.ThrowIfCancellationRequested();
         }
+        
+        // 清除实体类型缓存
+        if (_queryCacheManager != null)
+        {
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
     }
 
     /// <summary>
@@ -1055,14 +1062,36 @@ namespace FakeMicro.DatabaseAccess;
         {
             throw new ArgumentException("至少需要指定一个要更新的属性", nameof(properties));
         }
-        
+
         var update = _db.Updateable(entity);
         foreach (var property in properties)
         {
             update = update.UpdateColumns(property);
         }
-        
+
         await update.ExecuteCommandAsync();
+
+        // 清除实体类型缓存
+        if (_queryCacheManager != null)
+        {
+            // 清除单个实体缓存
+            var entityType = typeof(TEntity);
+            var idProperty = entityType.GetProperty("id") ?? entityType.GetProperty("Id") ?? entityType.GetProperty("ID");
+            if (idProperty != null)
+            {
+                var idValue = idProperty.GetValue(entity)?.ToString();
+                if (!string.IsNullOrEmpty(idValue))
+                {
+                    var cacheKey = _queryCacheManager.GenerateCacheKey<TEntity>(idValue);
+                    await _queryCacheManager.RemoveAsync(cacheKey);
+                    _logger.LogDebug("已清除单个实体缓存: {EntityType}, ID: {Id}", typeof(TEntity).Name, idValue);
+                }
+            }
+
+            // 同时清除实体类型的所有缓存
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
     }
 
     /// <summary>
@@ -1072,6 +1101,13 @@ namespace FakeMicro.DatabaseAccess;
     {
         cancellationToken.ThrowIfCancellationRequested();
         await _db.Updateable(entities.ToList()).ExecuteCommandAsync();
+        
+        // 清除实体类型缓存
+        if (_queryCacheManager != null)
+        {
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
     }
 
     /// <summary>
@@ -1193,6 +1229,13 @@ namespace FakeMicro.DatabaseAccess;
             
             cancellationToken.ThrowIfCancellationRequested();
         }
+        
+        // 清除实体类型缓存
+        if (_queryCacheManager != null)
+        {
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
     }
 
     /// <summary>
@@ -1202,7 +1245,16 @@ namespace FakeMicro.DatabaseAccess;
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return await _db.Deleteable<TEntity>().Where(predicate).ExecuteCommandAsync();
+        var result = await _db.Deleteable<TEntity>().Where(predicate).ExecuteCommandAsync();
+        
+        // 清除实体类型缓存
+        if (_queryCacheManager != null && result > 0)
+        {
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
+        
+        return result;
     }
 
     /// <summary>
@@ -1212,6 +1264,14 @@ namespace FakeMicro.DatabaseAccess;
     {
         cancellationToken.ThrowIfCancellationRequested();
         // SqlSugar的更改是立即执行的，这里返回0表示没有需要保存的更改
+        
+        // 清除实体类型缓存
+        if (_queryCacheManager != null)
+        {
+            await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            _logger.LogDebug("已清除实体类型缓存: {EntityType}", typeof(TEntity).Name);
+        }
+        
         return await Task.FromResult(0);
     }
 
@@ -1543,14 +1603,30 @@ namespace FakeMicro.DatabaseAccess;
         CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        return await _db.Ado.ExecuteCommandAsync(sql, parameters);
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            var client = GetSqlSugarClient();
+            var result = await client.Ado.ExecuteCommandAsync(sql, parameters);
+            
+            // 缓存清除逻辑
+            if (result > 0 && _queryCacheManager != null)
+            {
+                await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+            }
+            
+            stopwatch.Stop();
+            _logger.LogInformation("执行SQL命令成功: {EntityType}, SQL: {Sql}, 影响行数: {AffectedRows}, 耗时: {ElapsedMs}ms", typeof(TEntity).Name, sql, result, stopwatch.ElapsedMilliseconds);
+            return result;
+        }
+        catch (Exception ex)
+        {
+            stopwatch.Stop();
+            _logger.LogError(ex, "执行SQL命令失败: {EntityType}, SQL: {Sql}", typeof(TEntity).Name, sql);
+            throw new DataAccessException($"执行SQL命令失败: {sql}", ex);
+        }
     }
 
-    /// <summary>
-    /// 执行原生SQL语句
-    /// </summary>
-    /// <param name="sql">SQL语句</param>
-    /// <param name="parameters">参数</param>
     /// <summary>
     /// 执行原生SQL语句
     /// </summary>

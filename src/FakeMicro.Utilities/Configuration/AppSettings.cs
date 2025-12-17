@@ -18,6 +18,18 @@ public class AppSettings
     public FileStorageConfig FileStorage { get; set; } = new();
     public CorsConfig Cors { get; set; } = new();
     public AnomalyDetectionConfig AnomalyDetection { get; set; } = new();
+    public HangfireConfig Hangfire { get; set; } = new();
+}
+
+/// <summary>
+/// Hangfire配置
+/// </summary>
+public class HangfireConfig
+{
+    public string ConnectionString { get; set; } = "Host=localhost;Database=fakemicro_hangfire;Username=postgres;Password=123456";
+    public int WorkerCount { get; set; } = 5;
+    public bool UseDashboard { get; set; } = true;
+    public string DashboardPath { get; set; } = "/hangfire";
 }
 
 /// <summary>
@@ -52,7 +64,7 @@ public class DatabaseConfig
         var database = Environment.GetEnvironmentVariable("DB_NAME") ?? Database;
         var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username; // 兼容两种命名
         
-        return $"Server={server};Port={port};Database={database};User Id={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};";
+        return $"Host={server};Port={port};Database={database};Username={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};";
     }
 }
 

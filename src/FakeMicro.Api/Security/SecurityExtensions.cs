@@ -22,42 +22,8 @@ namespace FakeMicro.Api.Extensions
         {
             services.AddAuthentication(options =>
             {
-                // options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                //options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                // JWT认证配置已移至集中式配置服务
             });
-            //.AddJwtBearer(options =>
-            //{
-            //    // 使用配置工厂来获取JWT配置
-            //    var serviceProvider = services.BuildServiceProvider();
-            //    var jwtConfig = serviceProvider.GetRequiredService<IOptions<JwtConfig>>().Value;
-                
-            //    options.TokenValidationParameters = new TokenValidationParameters
-            //    {
-            //        ValidateIssuerSigningKey = true,
-            //        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtConfig.Secret)),
-            //        ValidateIssuer = jwtConfig.ValidateIssuer,
-            //        ValidIssuer = jwtConfig.Issuer,
-            //        ValidateAudience = jwtConfig.ValidateAudience,
-            //        ValidAudience = jwtConfig.Audience,
-            //        ValidateLifetime = jwtConfig.ValidateLifetime,
-            //        ClockSkew = TimeSpan.FromSeconds(jwtConfig.ClockSkewSeconds)
-            //    };
-
-            //    options.Events = new JwtBearerEvents
-            //    {
-            //        OnAuthenticationFailed = context =>
-            //        {
-            //            // 记录认证失败日志
-            //            return Task.CompletedTask;
-            //        },
-            //        OnTokenValidated = context =>
-            //        {
-            //            // Token验证成功后的处理
-            //            return Task.CompletedTask;
-            //        }
-            //    };
-            //});
-
             return services;
         }
 

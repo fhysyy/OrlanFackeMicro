@@ -84,7 +84,7 @@ public class DatabaseConfig
             DatabaseType.MySQL => $"Server={Server};Port={Port};Database={Database};User={Username};Password={Password};Connection Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +
                               (TrustServerCertificate ? "SslMode=Required;" : ""),
             
-            DatabaseType.PostgreSQL => $"Host={Server};Port={Port};Database={Database};Username={Username};Password={Password};Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +
+            DatabaseType.PostgreSQL => $"Host={Server};Port={Port};Database={Database};Username={Username};Password={Password};Timeout={ConnectionTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};" +
                                     (TrustServerCertificate ? "Trust Server Certificate=true;" : ""),
             
             DatabaseType.MariaDB => $"Server={Server};Port={Port};Database={Database};User={Username};Password={Password};Connection Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +

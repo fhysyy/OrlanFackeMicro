@@ -51,7 +51,6 @@ namespace FakeMicro.Utilities.CodeGenerator.Test
                     PrimaryKeyProperty = entityInfo.PrimaryKeyName ?? "Id",
                     PrimaryKeyType = entityInfo.PrimaryKeyType,
                     IsSoftDeletable = entityInfo.SupportSoftDelete,
-                    //SupportMultiTenant = entityInfo.SupportMultiTenant,
                     Properties = entityInfo.Properties.Select(p => new PropertyMetadata
                     {
                         Name = p.Name,
@@ -59,9 +58,6 @@ namespace FakeMicro.Utilities.CodeGenerator.Test
                         IsNullable = p.IsNullable,
                         IsRequired = p.IsRequired,
                         IsPrimaryKey = p.IsPrimaryKey,
-                        //IsForeignKey = p.IsForeignKey,
-                        //IsNavigationProperty = !string.IsNullOrEmpty(p.ForeignEntityName),
-                        //RelatedEntityName = p.ForeignEntityName,
                         DefaultValue = p.DefaultValue,
                         MaxLength = p.MaxLength
                     }).ToList()

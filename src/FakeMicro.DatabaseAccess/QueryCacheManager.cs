@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Reflection;
@@ -20,6 +21,11 @@ namespace FakeMicro.DatabaseAccess
         private readonly JsonSerializerOptions _jsonOptions;
         private readonly int _defaultCacheMinutes = 5;
         private readonly int _maxCacheMinutes = 60;
+        
+        // 缓存键管理：跟踪所有缓存键及其关联的实体类型
+        private readonly ConcurrentDictionary<string, HashSet<string>> _entityCacheKeys = new();
+        // 用于实体缓存键集合的缓存键前缀
+        private const string ENTITY_CACHE_KEY_PREFIX = "EntityCacheKeys:";
 
         /// <summary>
         /// 构造函数
@@ -111,6 +117,9 @@ namespace FakeMicro.DatabaseAccess
                 
                 // 设置缓存
                 _memoryCache.Set(cacheKey, value, cacheEntryOptions);
+                
+                // 跟踪缓存键与实体类型的关联
+                TrackCacheKeyForEntity<T>(cacheKey);
                 
                 _logger.LogDebug("缓存设置成功: {CacheKey}, 类型: {Type}, 缓存时间: {Minutes}分钟", 
                     cacheKey, typeof(T).Name, cacheMinutes);
@@ -242,14 +251,39 @@ namespace FakeMicro.DatabaseAccess
             if (entityType == null)
                 throw new ArgumentNullException(nameof(entityType));
                 
-            // 由于MemoryCache没有公开所有缓存键的方法
-            // 这里实现一个简化版本，实际项目中可能需要使用自定义的缓存键跟踪机制
-            string entityTypeName = entityType.Name;
+            string entityTypeName = entityType.FullName ?? entityType.Name;
+            string entityCacheKey = ENTITY_CACHE_KEY_PREFIX + entityTypeName;
             
             _logger.LogInformation("尝试移除实体类型 {EntityTypeName} 的相关缓存", entityTypeName);
             
-            // 在真实项目中，这里应该使用一个更复杂的机制来跟踪和删除特定实体类型的缓存
-            // 例如，可以使用分布式缓存或自定义的缓存键管理
+            // 获取该实体类型的所有缓存键
+            if (_entityCacheKeys.TryGetValue(entityCacheKey, out HashSet<string>? cacheKeys))
+            {
+                int removedCount = 0;
+                foreach (var cacheKey in cacheKeys)
+                {
+                    try
+                    {
+                        _memoryCache.Remove(cacheKey);
+                        removedCount++;
+                        _logger.LogDebug("已移除实体 {EntityTypeName} 的缓存键: {CacheKey}", entityTypeName, cacheKey);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "移除缓存键失败: {CacheKey}", cacheKey);
+                    }
+                }
+                
+                // 清除实体缓存键集合
+                _entityCacheKeys.TryRemove(entityCacheKey, out _);
+                
+                _logger.LogInformation("成功移除实体类型 {EntityTypeName} 的 {RemovedCount} 个缓存项", entityTypeName, removedCount);
+            }
+            else
+            {
+                _logger.LogInformation("未找到实体类型 {EntityTypeName} 的相关缓存", entityTypeName);
+            }
+            
             return Task.CompletedTask;
         }
 
@@ -322,9 +356,13 @@ namespace FakeMicro.DatabaseAccess
         /// <typeparam name="T">实体类型</typeparam>
         public void ClearTypeCache<T>()
         {
-            // 注意：MemoryCache不支持直接按模式清除
-            // 在实际应用中，可能需要维护一个缓存键的集合，或者使用分布式缓存
-            _logger.LogInformation("清除类型缓存: {Type}", typeof(T).Name);
+            Type entityType = typeof(T);
+            string entityTypeName = entityType.FullName ?? entityType.Name;
+            
+            _logger.LogInformation("清除类型缓存: {Type}", entityTypeName);
+            
+            // 调用RemoveEntityCacheAsync方法清除该类型的所有缓存
+            RemoveEntityCacheAsync(entityType).Wait();
         }
 
         /// <summary>
@@ -335,6 +373,60 @@ namespace FakeMicro.DatabaseAccess
             if (key is string cacheKey)
             {
                 _logger.LogDebug("缓存项被移除: {CacheKey}, 原因: {Reason}", cacheKey, reason);
+                
+                // 从实体缓存键跟踪集合中移除
+                RemoveCacheKeyFromTracking(cacheKey);
+            }
+        }
+        
+        /// <summary>
+        /// 跟踪缓存键与实体类型的关联
+        /// </summary>
+        /// <typeparam name="T">实体类型</typeparam>
+        /// <param name="cacheKey">缓存键</param>
+        private void TrackCacheKeyForEntity<T>(string cacheKey)
+        {
+            string entityTypeName = typeof(T).FullName ?? typeof(T).Name;
+            string entityCacheKey = ENTITY_CACHE_KEY_PREFIX + entityTypeName;
+            
+            // 将缓存键添加到实体类型的缓存键集合中
+            _entityCacheKeys.AddOrUpdate(
+                entityCacheKey,
+                (key) => new HashSet<string> { cacheKey },
+                (key, existingSet) =>
+                {
+                    existingSet.Add(cacheKey);
+                    return existingSet;
+                }
+            );
+            
+            _logger.LogDebug("已跟踪缓存键 {CacheKey} 与实体类型 {EntityTypeName} 的关联", cacheKey, entityTypeName);
+        }
+        
+        /// <summary>
+        /// 从实体缓存键跟踪集合中移除缓存键
+        /// </summary>
+        /// <param name="cacheKey">缓存键</param>
+        private void RemoveCacheKeyFromTracking(string cacheKey)
+        {
+            // 遍历所有实体缓存键集合
+            foreach (var entityCacheEntry in _entityCacheKeys)
+            {
+                // 从集合中移除缓存键
+                if (entityCacheEntry.Value.Remove(cacheKey))
+                {
+                    _logger.LogDebug("已从实体缓存键跟踪集合中移除缓存键: {CacheKey}", cacheKey);
+                    
+                    // 如果集合为空，移除该实体的跟踪条目
+                    if (entityCacheEntry.Value.Count == 0)
+                    {
+                        _entityCacheKeys.TryRemove(entityCacheEntry.Key, out _);
+                        _logger.LogDebug("已移除空的实体缓存键集合: {EntityCacheKey}", entityCacheEntry.Key);
+                    }
+                    
+                    // 假设一个缓存键只属于一个实体类型，所以找到后可以退出循环
+                    break;
+                }
             }
         }
 

@@ -90,13 +90,11 @@ public static class ConfigurationValidator
         if (settings.Database.Password == "123456")
         {
             // 开发环境警告：数据库密码使用默认值
-            // 注：这里没有记录警告，因为配置验证主要在启动时执行
         }
         
         if (settings.Jwt.SecretKey == "your-super-secret-key-change-in-production")
         {
             // 开发环境警告：JWT密钥使用默认值
-            // 注：这里没有记录警告，因为配置验证主要在启动时执行
         }
     }
     

@@ -2,6 +2,8 @@ using FakeMicro.Api.Extensions;
 using FakeMicro.Api.Security;
 using FakeMicro.Api.Services;
 using FakeMicro.DatabaseAccess;
+using FakeMicro.Utilities.Storage;
+using FakeMicro.Utilities.Configuration;
 // 添加代码生成器相关的using语句
 using FakeMicro.Utilities.CodeGenerator;
 using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
@@ -35,23 +37,13 @@ namespace FakeMicro.Api
         {
             var builder = WebApplication.CreateBuilder(args);
             
-            // 配置连接字符串选项
-            builder.Services.Configure<ConnectionStringsOptions>(builder.Configuration.GetSection("ConnectionStrings"));
-            
-            // 获取HangFire连接字符串
-            var connectionStringsOptions = builder.Configuration.GetSection("ConnectionStrings").Get<ConnectionStringsOptions>() ?? new ConnectionStringsOptions();
-            string hangfireConnectionString = connectionStringsOptions.HangfireConnection ?? connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=fakemicro_hangfire;Username=postgres;Password=123456";
+            // 使用集中式配置管理
+            var appSettings = builder.Configuration.GetAppSettings();
             
             // 添加必要的服务
-            builder.Services.AddControllers(); // 注册控制器
             builder.Services.AddEndpointsApiExplorer();
             
             // 配置 JWT 认证
-            var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["SecretKey"] ?? "a-string-secret-at-least-256-bits-long";
-            var issuer = jwtSettings["Issuer"] ?? "FakeMicro";
-            var audience = jwtSettings["Audience"] ?? "FakeMicro-Users";
-            
             builder.Services.AddAuthentication(options =>
             {
                 options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
@@ -62,11 +54,11 @@ namespace FakeMicro.Api
                 options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
                 {
                     ValidateIssuer = true,
-                    ValidIssuer = issuer,
+                    ValidIssuer = appSettings.Jwt.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = audience,
+                    ValidAudience = appSettings.Jwt.Audience,
                     ValidateLifetime = true,
-                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(secretKey)),
+                    IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(appSettings.Jwt.SecretKey)),
                     ClockSkew = TimeSpan.Zero
                 };
             });
@@ -101,141 +93,24 @@ namespace FakeMicro.Api
                 });
             });
 
-            // 配置OrleansConfig强类型配置
-            builder.Services.Configure<FakeMicro.Utilities.Configuration.OrleansConfig>(builder.Configuration.GetSection("Orleans"));
-            
-            // 使用推荐的方式配置Orleans客户端
-            builder.Services.AddOrleansClient(clientBuilder =>
-            {
-                // 从配置中获取Orleans设置
-                var orleansConfig = builder.Configuration.GetSection("Orleans").Get<FakeMicro.Utilities.Configuration.OrleansConfig>() ?? new FakeMicro.Utilities.Configuration.OrleansConfig();
-                
-                // 配置集群ID和服务ID，必须与Silo配置一致
-                clientBuilder.Configure<ClusterOptions>(options =>
-                {
-                    options.ClusterId = orleansConfig.ClusterId ?? "FakeMicroCluster";
-                    options.ServiceId = orleansConfig.ServiceId ?? "FakeMicroService";
-                });
-                
-                // 配置本地集群连接
-                clientBuilder.UseLocalhostClustering(
-                    gatewayPort: orleansConfig.GatewayPort,
-                    serviceId: orleansConfig.ServiceId ?? "FakeMicroService",
-                    clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster"
-                );
+            // 使用集中式依赖注入注册所有服务
+            builder.AddAllServices();
 
-                // Orleans 客户端的日志配置应该通过 WebApplicationBuilder 的 logging 配置来处理
-                // 这里不需要单独配置日志
-            });
-
-            // 暂时移除自定义的Orleans客户端服务，只保留基本配置
-            // 后续可以根据需要重新添加这些服务
-
-            builder.Services.Configure<ClientMessagingOptions>(options =>
-            {
-                options.ResponseTimeout = TimeSpan.FromSeconds(45);
-                options.MaxMessageBodySize = 50 * 1024 * 1024; // 50MB
-            });
-          
-
-            // 添加模拟的ILogger服务以解决依赖问题
-            builder.Services.AddLogging();
-            builder.Services.AddControllers().AddNewtonsoftJson(op => {
-            op.SerializerSettings.DateTimeZoneHandling = Newtonsoft.Json.DateTimeZoneHandling.Utc;
-            op.SerializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
-            op.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
-            op.SerializerSettings.DateFormatString = "yyyy-MM-ddTHH:mm:ss.fffZ";
-            
-
-            }).
-            AddJsonOptions(options =>
-            {
-                options.JsonSerializerOptions.Encoder = JavaScriptEncoder.Create(UnicodeRanges.All);
-            });
-            // 添加系统健康服务
-            builder.Services.AddTransient<SystemHealthService>();
-            
-            // 注册OrleansTaskExecutor服务
-            builder.Services.AddTransient<OrleansTaskExecutor>();
-            
-            // 注册代码生成器服务
-            RegisterCodeGeneratorServices(builder);
-            
-            // 注册OrleansConfig配置
-            builder.Services.Configure<FakeMicro.Utilities.Configuration.OrleansConfig>(builder.Configuration.GetSection("Orleans"));
-
-            // 配置HangFire
-            builder.Services.AddHangfire(configuration => configuration
-                //.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
-                //.UseSimpleAssemblyNameTypeSerializer()
-                //.UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(hangfireConnectionString));
-            
-            // 添加HangFire服务器
-            builder.Services.AddHangfireServer();
-            
-            // 添加认证和授权策略
-            builder.Services.AddAuthorizationPolicies();
-            
-            // 暂时注释掉CAP事件总线服务，专注于测试Orleans连接
-            builder.Services.AddCapEventBus(builder.Configuration, builder.Environment);
-            
-            // 注册数据库服务
-            builder.Services.AddDatabaseServices(builder.Configuration);
-            
-            // 注册表单配置相关服务
-            builder.Services.AddFormConfigServices();
-            builder.Services.AddFormConfigGrainProxies();
-            
-            // 注册文件存储服务
-            builder.Services.AddFileStorage(builder.Configuration);
-             
             // 构建应用，添加异常处理以获取详细错误信息
             var app = builder.Build();
             
-            // 配置中间件
-            app.UseSwagger();
-            app.UseSwaggerUI(c =>
+            // 配置所有中间件
+            app.ConfigureAllMiddleware();
+
+            // 使用配置的Hangfire Dashboard路径
+            if (appSettings.Hangfire.UseDashboard)
             {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FakeMicro API V1");
-                c.RoutePrefix = "swagger";
-                c.DocumentTitle = "FakeMicro API Documentation";
-                c.DefaultModelsExpandDepth(-1); // 隐藏模型
-                c.DisplayRequestDuration(); // 显示请求耗时
-                c.EnableDeepLinking();
-                c.ShowExtensions();
-            });
-            
-            app.UseHttpsRedirection();
-            app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
-            // 添加认证和授权中间件
-            app.UseAuthentication();
-            app.UseAuthorization();
-
-            // 添加请求响应日志记录中间件
-
-
-            // 暂时注释掉CAP中间件，专注于测试Orleans连接
-            // app.UseCap();
-
-            // 暂时注释掉HangFire Dashboard，专注于测试Orleans连接
-            app.UseHangfireDashboard("/hangfire");
-            //new DashboardOptions
-            //{
-            //   // Authorization = new[] { new HangfireAuthorizationFilter() },
-            //    DashboardTitle = "FakeMicro任务调度中心"
-            //});
+                app.UseHangfireDashboard(appSettings.Hangfire.DashboardPath);
+            }
 
             // 暂时注释掉默认的定时任务，专注于测试Orleans连接
             ConfigureDefaultJobs();
 
-
-            // 映射控制器路由
-            app.MapControllers();
-            
-            // 添加健康检查端点
-            app.MapGet("/health", () => "Healthy");
-            
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");
             Console.WriteLine("按Ctrl+C退出");
@@ -344,16 +219,6 @@ namespace FakeMicro.Api
                     _logger.LogError(ex, "断开Orleans连接时发生错误");
                 }
             }
-        }
-        
-        /// <summary>
-        /// 注册代码生成器相关服务
-        /// </summary>
-        /// <param name="builder">Web应用程序构建器</param>
-        private static void RegisterCodeGeneratorServices(WebApplicationBuilder builder)
-        {
-            // 使用扩展方法注册代码生成器服务，支持动态OutputPath参数
-            builder.Services.AddCodeGenerator(builder.Configuration);
         }
     } 
 }

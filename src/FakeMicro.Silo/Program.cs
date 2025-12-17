@@ -1,5 +1,6 @@
 using FakeMicro.Utilities.Configuration;
 using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
+using FakeMicro.Utilities.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -186,6 +187,9 @@ namespace FakeMicro.Silo
                     Console.WriteLine($"配置环境: {context.HostingEnvironment.EnvironmentName}");
                     Console.WriteLine($"内容根路径: {context.HostingEnvironment.ContentRootPath}");
                     
+                    // 使用集中式配置管理
+                    var appSettings = context.Configuration.GetAppSettings();
+                    
                     // 配置字符串详细诊断
                     Console.WriteLine("=== 配置字符串诊断 ===");
                     var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
@@ -214,9 +218,6 @@ namespace FakeMicro.Silo
                     // 添加 SqlSugar 配置绑定
                     services.Configure<SqlSugarConfig.SqlSugarOptions>(context.Configuration.GetSection("SqlSugar"));
                     
-                    // 添加 Orleans 配置绑定
-                    services.Configure<OrleansConfig>(context.Configuration.GetSection("Orleans"));
-                    
                     // 添加连接字符串配置绑定
                     services.Configure<ConnectionStringsOptions>(context.Configuration.GetSection("ConnectionStrings"));
                     
@@ -234,9 +235,6 @@ namespace FakeMicro.Silo
 
                     Console.WriteLine("服务注册中...");
                     
-                    // 修正 JWT 配置注册 - 使用 JwtSettings
-                    services.Configure<JwtSettings>(context.Configuration.GetSection("Jwt"));
-                    
                     Console.WriteLine("服务注册完成");
                     
                     // SqlSugar 配置诊断
@@ -247,18 +245,17 @@ namespace FakeMicro.Silo
                 // 配置Orleans
                 hostBuilder.UseOrleans((context, siloBuilder) =>
                 {
-                    // 从配置中获取Orleans设置
-                    var orleansConfig = context.Configuration.GetSection("Orleans").Get<OrleansConfig>() ?? new OrleansConfig();
+                    // 使用集中式配置管理
+                    var appSettings = context.Configuration.GetAppSettings();
                     
                     // 获取数据库连接字符串
-                    var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
+                    var connectionString = appSettings.Database.GetConnectionString();
 
                     // 对于本地集群开发环境，使用简化的配置
                     // 在Orleans 9.x中，UseLocalhostClustering会自动设置必要的IMembershipTable
                     siloBuilder.UseLocalhostClustering(
-                        clusterId: orleansConfig.ClusterId ?? "FakeMicroCluster",
-                        serviceId: orleansConfig.ServiceId ?? "FakeMicroService");
-
+                        clusterId: appSettings.Orleans.ClusterId,
+                        serviceId: appSettings.Orleans.ServiceId);
 
 
                     // 🚀 配置PostgreSQL持久化存储（生产模式 - 无内存存储）
@@ -298,14 +295,6 @@ namespace FakeMicro.Silo
                                 options.Invariant = "Npgsql";
                                 options.ConnectionString = connectionString;
                             });
-
-                            siloBuilder.AddAdoNetGrainStorage("OrleansSystemStore", options =>
-                            {
-                                options.Invariant = "Npgsql";
-                                options.ConnectionString = connectionString;
-                            });
-                            
-                            Console.WriteLine("✅ PostgreSQL持久化存储配置完成 - 全平台无内存存储");
                         }
                         catch (Exception ex)
                         {

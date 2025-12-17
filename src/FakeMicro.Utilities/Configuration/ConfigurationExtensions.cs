@@ -85,8 +85,5 @@ public static class ConfigurationExtensions
         return builder
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
-        // .AddJsonFile($"appsettings.json", optional: true, reloadOnChange: true)
-        //.AddEnvironmentVariables(prefix: envPrefix)
-        //.AddEnvironmentPlaceholders();
     }
 }

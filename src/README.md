@@ -95,8 +95,141 @@ public class SqlSugarRepository<Entity, Key> : IRepository<Entity, Key>
     // 异常处理和重试
     // 性能监控
     // AOP拦截器
+    // 自动缓存管理
 }
 ```
+
+### 3. 缓存管理 (QueryCacheManager)
+
+```csharp
+// 缓存管理器实现
+public class QueryCacheManager : IQueryCacheManager
+{
+    // 缓存键生成和管理
+    public string GenerateCacheKey<TEntity>(string idValue);
+    
+    // 缓存操作
+    public Task<T> GetAsync<T>(string cacheKey);
+    public Task SetAsync<T>(string cacheKey, T value, TimeSpan expiration);
+    public Task RemoveAsync(string cacheKey);
+    
+    // 实体类型缓存管理
+    public Task RemoveEntityCacheAsync(Type entityType);
+    
+    // 缓存键跟踪
+    private void TrackCacheKeyForEntity(string cacheKey, Type entityType);
+    private void RemoveCacheKeyFromTracking(string cacheKey);
+}
+```
+
+## 性能优化特性
+
+### 1. 智能缓存机制
+
+#### 缓存一致性保障
+- **自动缓存清除**: 所有数据变更操作（增删改）自动清除相关缓存
+- **实体类型跟踪**: 维护实体类型与缓存键的关联关系
+- **批量缓存清除**: 支持按实体类型批量清除缓存
+
+#### 缓存实现
+```csharp
+// 数据修改时自动清除缓存示例
+public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+{
+    // 数据添加操作
+    await _db.Insertable(entity).ExecuteCommandAsync();
+    
+    // 自动清除相关缓存
+    if (_queryCacheManager != null)
+    {
+        // 清除单个实体缓存
+        var cacheKey = _queryCacheManager.GenerateCacheKey<TEntity>(idValue);
+        await _queryCacheManager.RemoveAsync(cacheKey);
+        
+        // 清除实体类型的所有缓存
+        await _queryCacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+    }
+}
+```
+
+### 2. 高效的数据库操作
+
+#### 批量操作优化
+- **批量插入**: 支持批量插入大量数据，减少网络往返
+- **批量更新**: 支持批量更新操作
+- **批量删除**: 支持批量删除操作
+
+#### 事务管理
+- **分布式事务支持**: 基于Orleans的分布式事务管理
+- **事务重试机制**: 自动重试失败的事务操作
+- **事务隔离级别控制**: 支持不同的事务隔离级别
+
+### 3. 性能监控和日志
+
+#### 执行时间监控
+```csharp
+// 性能监控示例
+public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
+{
+    cancellationToken.ThrowIfCancellationRequested();
+    var stopwatch = Stopwatch.StartNew();
+    
+    try
+    {
+        // 查询操作
+        var entity = await _db.Queryable<TEntity>().With(SqlWith.NoLock)
+            .Where(CreateIdWhereExpression(id)).FirstAsync();
+        
+        stopwatch.Stop();
+        _logger.LogInformation("GetByIdAsync查询完成: {EntityType}, ID: {Id}, 耗时: {ElapsedMs}ms",
+            typeof(TEntity).Name, id, stopwatch.ElapsedMilliseconds);
+        
+        return entity;
+    }
+    catch (Exception ex)
+    {
+        stopwatch.Stop();
+        _logger.LogError(ex, "GetByIdAsync查询失败: {EntityType}, ID: {Id}, 耗时: {ElapsedMs}ms",
+            typeof(TEntity).Name, id, stopwatch.ElapsedMilliseconds);
+        throw;
+    }
+}
+```
+
+## 最佳实践
+
+### 1. 缓存策略
+
+#### 缓存使用建议
+- 对频繁查询的热点数据使用缓存
+- 设置合理的缓存过期时间
+- 避免缓存过大的数据集合
+
+#### 缓存键设计
+```csharp
+// 缓存键设计示例
+public string GenerateCacheKey<TEntity>(string idValue)
+{
+    return $"{typeof(TEntity).Name}:{idValue}";
+}
+
+public string GenerateConditionCacheKey<TEntity>(string conditionKey)
+{
+    return $"{typeof(TEntity).Name}:Condition:{conditionKey}";
+}
+```
+
+### 2. 性能优化建议
+
+#### 数据库查询优化
+- 使用NoLock索引提示提高查询性能
+- 避免SELECT *查询，只选择需要的字段
+- 添加合适的索引
+
+#### 代码优化
+- 使用异步方法避免阻塞
+- 合理使用事务，避免长事务
+- 批量处理大量数据
 
 ### 3. Orleans Grain模板
 
