@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Threading.Tasks;
 using System.Threading;
 using System.Collections.Concurrent;
+using System.Reflection;
 namespace FakeMicro.Grains
 {
     /// <summary>
@@ -32,6 +33,12 @@ namespace FakeMicro.Grains
         // 重试配置
         private const int MaxConflictRetries = 3;
         private const int RetryDelayMilliseconds = 100;
+        
+        /// <summary>
+        /// 状态恢复配置
+        /// </summary>
+        private const int MaxStateLoadRetries = 5;
+        private const int StateLoadRetryDelayMilliseconds = 200;
 
         protected OrleansStatefulGrainBase(
             IPersistentState<TState> state,
@@ -44,7 +51,7 @@ namespace FakeMicro.Grains
 
         /// <summary>
         /// Orleans最佳实践：状态持久化
-        /// 实现冲突解决策略
+        /// 实现冲突解决策略和断路器保护
         /// </summary>
         protected virtual async Task PersistStateAsync()
         {
@@ -250,6 +257,148 @@ namespace FakeMicro.Grains
                 _batchUpdateLock.Release();
             }
         }
+        
+        /// <summary>
+        /// 使用断路器和重试机制执行状态更新操作
+        /// </summary>
+        protected async Task<T> ExecuteStateUpdateWithCircuitBreakerAsync<T>(string operationName, Func<Task<T>> operation, int maxRetries = MaxConflictRetries)
+        {
+            return await ExecuteWithCircuitBreakerAsync(
+                operationName,
+                $"{GetGrainTypeName()}-StateOperations",
+                async () => await ExecuteBatchStateUpdateAsync(operationName, operation),
+                maxRetries);
+        }
+        
+        /// <summary>
+        /// 执行带重试机制的状态读取操作
+        /// </summary>
+        protected async Task<TState> ReadStateWithRetryAsync()
+        {
+            int retryCount = 0;
+            Exception lastException = null;
+            
+            while (retryCount < MaxStateLoadRetries)
+            {
+                try
+                {
+                    await _state.ReadStateAsync();
+                    
+                    // 验证状态完整性
+                    if (ValidateStateIntegrity(_state.State))
+                    {
+                        LogDebug("状态读取成功: {GrainIdentity}, 版本: {StateVersion}", 
+                            GetGrainIdentity(), GetStateVersion());
+                        return _state.State;
+                    }
+                    else
+                    {
+                        LogWarning("状态完整性验证失败: {GrainIdentity}", GetGrainIdentity());
+                        
+                        // 尝试修复状态
+                        var repairedState = RepairStateIntegrity(_state.State);
+                        if (repairedState != null)
+                        {
+                            _state.State = repairedState;
+                            await PersistStateAsync();
+                            LogInformation("状态修复成功: {GrainIdentity}", GetGrainIdentity());
+                            return _state.State;
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    retryCount++;
+                    LogWarning("状态读取失败，正在重试 ({RetryCount}/{MaxRetries}): {GrainIdentity}, 错误: {ErrorMessage}", 
+                        retryCount, MaxStateLoadRetries, GetGrainIdentity(), ex.Message);
+                    
+                    // 指数退避重试
+                    await Task.Delay((int)(StateLoadRetryDelayMilliseconds * Math.Pow(2, retryCount - 1)), CancellationToken.None);
+                }
+            }
+            
+            LogError(lastException, "状态读取最终失败: {GrainIdentity}", GetGrainIdentity());
+            
+            // 作为最后的手段，创建新状态
+            LogWarning("创建新状态: {GrainIdentity}", GetGrainIdentity());
+            _state.State = CreateDefaultState();
+            await PersistStateAsync();
+            
+            return _state.State;
+        }
+        
+        /// <summary>
+        /// 验证状态完整性
+        /// </summary>
+        protected virtual bool ValidateStateIntegrity(TState state)
+        {
+            // 默认实现：检查状态是否为null
+            return state != null;
+        }
+        
+        /// <summary>
+        /// 修复状态完整性
+        /// </summary>
+        protected virtual TState RepairStateIntegrity(TState state)
+        {
+            // 默认实现：返回null表示无法修复
+            return null;
+        }
+        
+        /// <summary>
+        /// 创建默认状态
+        /// </summary>
+        protected virtual TState CreateDefaultState()
+        {
+            return new TState();
+        }
+        
+        /// <summary>
+        /// 重写状态恢复方法
+        /// </summary>
+        protected override async Task RecoverStateAsync(CancellationToken cancellationToken)
+        {
+            LogInformation("开始恢复Grain状态: {GrainIdentity}", GetGrainIdentity());
+            
+            try
+            {
+                // 使用带重试机制的状态读取
+                await ReadStateWithRetryAsync();
+                
+                // 执行自定义的状态恢复逻辑
+                await OnStateRecoveredAsync(cancellationToken);
+                
+                LogInformation("Grain状态恢复成功: {GrainIdentity}", GetGrainIdentity());
+            }
+            catch (Exception ex)
+            {
+                LogError(ex, "Grain状态恢复失败: {GrainIdentity}", GetGrainIdentity());
+                
+                // 尝试创建新状态
+                try
+                {
+                    _state.State = CreateDefaultState();
+                    await PersistStateAsync();
+                    LogInformation("创建新状态成功: {GrainIdentity}", GetGrainIdentity());
+                }
+                catch (Exception createEx)
+                {
+                    LogCritical(createEx, "无法创建新状态: {GrainIdentity}", GetGrainIdentity());
+                    // 继续激活，但状态将不可用
+                }
+            }
+            
+            await base.RecoverStateAsync(cancellationToken);
+        }
+        
+        /// <summary>
+        /// 状态恢复完成后调用（可由子类重写）
+        /// </summary>
+        protected virtual Task OnStateRecoveredAsync(CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
 
         /// <summary>
         /// Orleans最佳实践：重写停用方法，自动持久化状态
@@ -290,5 +439,7 @@ namespace FakeMicro.Grains
                 return result;
             });
         }
+        
+        // 注意：IsConflictException方法已在OrleansGrainBase中定义，不需要重复定义
     }
 }

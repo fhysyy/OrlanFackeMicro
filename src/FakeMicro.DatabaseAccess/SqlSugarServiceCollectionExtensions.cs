@@ -5,6 +5,7 @@ using FakeMicro.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
@@ -28,19 +29,28 @@ namespace FakeMicro.DatabaseAccess
         /// <param name="configuration">配置</param>
         /// <param name="sectionName">配置节点名称</param>
         /// <returns>服务集合</returns>
-        public static IServiceCollection AddSqlSugar(this IServiceCollection services,
+        public static IServiceCollection AddSqlSugar(this IServiceCollection services, 
             IConfiguration configuration, string sectionName = "SqlSugar")
         {
-            // 绑定配置选项
-            var options = new SqlSugarConfig.SqlSugarOptions();
-            configuration.GetSection(sectionName).Bind(options);
-            services.AddSingleton(options);
+            // 配置SqlSugarOptions - 使用强类型配置
+            services.Configure<SqlSugarConfig.SqlSugarOptions>(configuration.GetSection(sectionName));
+            
+            // 配置连接字符串选项
+            services.Configure<ConnectionStringsOptions>(configuration.GetSection("ConnectionStrings"));
 
             // 创建PostgreSQL SqlSugar客户端
             Func<IServiceProvider, object?, ISqlSugarClient> createPostgreSqlClient = (provider, _) =>
             {
-                var sqlSugarOptions = provider.GetRequiredService<SqlSugarConfig.SqlSugarOptions>();
+                var sqlSugarOptions = provider.GetRequiredService<IOptions<SqlSugarConfig.SqlSugarOptions>>().Value;
+                var connectionStrings = provider.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
                 var logger = provider.GetService<ILogger<ISqlSugarClient>>();
+                
+                // 如果连接字符串未配置，尝试从ConnectionStrings获取
+                if (string.IsNullOrEmpty(sqlSugarOptions.ConnectionString))
+                {
+                    sqlSugarOptions.ConnectionString = connectionStrings.DefaultConnection ?? string.Empty;
+                }
+                
                 return CreateSqlSugarClient(sqlSugarOptions, logger);
             };
             
@@ -146,7 +156,7 @@ namespace FakeMicro.DatabaseAccess
                     typeof(DictionaryType),
                     typeof(DictionaryItem),
                     typeof(Notebook),
-                    //typeof(ApiKey)
+                    typeof(AuditLog)
                 };
 
                 // 注册所有实体类型

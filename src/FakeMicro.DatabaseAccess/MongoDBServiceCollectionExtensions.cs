@@ -5,6 +5,7 @@ using FakeMicro.DatabaseAccess.Repositories.Mongo;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace FakeMicro.DatabaseAccess;
@@ -25,14 +26,15 @@ public static class MongoDBServiceCollectionExtensions
     public static IServiceCollection AddMongoDB(this IServiceCollection services, 
         IConfiguration configuration, string sectionName = "MongoDB")
     {
-        // 绑定配置选项（使用更现代的Get方法）
-        var options = configuration.GetSection(sectionName).Get<MongoDBConfig.MongoDBOptions>() ?? throw new InvalidOperationException($"MongoDB配置未找到: {sectionName}");
-        services.AddSingleton(options);
+        // 绑定配置选项 - 使用强类型配置替代字符串键访问
+        services.Configure<MongoDBConfig.MongoDBOptions>(configuration.GetSection(sectionName));
 
         // 直接注册MongoClient
         services.AddSingleton<MongoClient>(provider =>
         {
             var logger = provider.GetService<ILogger<MongoClient>>();
+            var options = provider.GetRequiredService<IOptions<MongoDBConfig.MongoDBOptions>>().Value;
+            
             try
             {
                 logger?.LogInformation("正在创建MongoDB客户端");

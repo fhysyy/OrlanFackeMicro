@@ -19,7 +19,7 @@ public static class MongoDBConfig
         /// <summary>
         /// 连接字符串
         /// </summary>
-        public string ConnectionString { get; set; }
+        public required string ConnectionString { get; set; }
 
         /// <summary>
         /// 数据库名称

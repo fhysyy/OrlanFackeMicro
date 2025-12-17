@@ -35,9 +35,12 @@ namespace FakeMicro.Api
         {
             var builder = WebApplication.CreateBuilder(args);
             
-            // 配置数据库连接
-            string hangfireConnectionString = builder.Configuration.GetConnectionString("HangfireConnection") 
-                ?? "Host=localhost;Database=fakemicro_hangfire;Username=postgres;Password=123456";
+            // 配置连接字符串选项
+            builder.Services.Configure<ConnectionStringsOptions>(builder.Configuration.GetSection("ConnectionStrings"));
+            
+            // 获取HangFire连接字符串
+            var connectionStringsOptions = builder.Configuration.GetSection("ConnectionStrings").Get<ConnectionStringsOptions>() ?? new ConnectionStringsOptions();
+            string hangfireConnectionString = connectionStringsOptions.HangfireConnection ?? connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=fakemicro_hangfire;Username=postgres;Password=123456";
             
             // 添加必要的服务
             builder.Services.AddControllers(); // 注册控制器
@@ -98,6 +101,9 @@ namespace FakeMicro.Api
                 });
             });
 
+            // 配置OrleansConfig强类型配置
+            builder.Services.Configure<FakeMicro.Utilities.Configuration.OrleansConfig>(builder.Configuration.GetSection("Orleans"));
+            
             // 使用推荐的方式配置Orleans客户端
             builder.Services.AddOrleansClient(clientBuilder =>
             {

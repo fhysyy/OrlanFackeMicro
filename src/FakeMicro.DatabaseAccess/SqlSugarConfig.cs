@@ -30,7 +30,7 @@ public static class SqlSugarConfig
         /// <summary>
         /// 连接字符串
         /// </summary>
-        public string ConnectionString { get; set; }
+        public required string ConnectionString { get; set; }
 
         /// <summary>
         /// 是否启用SQL日志
@@ -159,15 +159,19 @@ public static class SqlSugarServiceExtensions
         // 配置SqlSugarOptions
         services.Configure<SqlSugarConfig.SqlSugarOptions>(configuration.GetSection(configSection));
         
+        // 配置连接字符串选项
+        services.Configure<ConnectionStringsOptions>(configuration.GetSection("ConnectionStrings"));
+        
         // 添加SqlSugarClient
         services.AddSingleton<ISqlSugarClient>(serviceProvider =>
         {
             var options = serviceProvider.GetRequiredService<IOptions<SqlSugarConfig.SqlSugarOptions>>().Value;
+            var connectionStrings = serviceProvider.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
             
-            // 如果连接字符串未配置，尝试从ConnectionStrings获取
+            // 如果连接字符串未配置，尝试从强类型ConnectionStrings获取
             if (string.IsNullOrEmpty(options.ConnectionString))
             {
-                options.ConnectionString = configuration.GetConnectionString("DefaultConnection") ?? string.Empty;
+                options.ConnectionString = connectionStrings.DefaultConnection ?? string.Empty;
             }
             
             // 创建SqlSugarClient
@@ -180,7 +184,7 @@ public static class SqlSugarServiceExtensions
                 MoreSettings = new ConnMoreSettings()
                 {
                     PgSqlIsAutoToLower = true, // PostgreSQL表名自动转小写
-                    PgSqlIsAutoToLowerCodeFirst = true, // CodeFirst时也自动转小写
+                    PgSqlIsAutoToLowerCodeFirst = true, // CodeFirst时也自动转大写
                     IsAutoToUpper = false, // 关闭自动转大写
                 }
             });

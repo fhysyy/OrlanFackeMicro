@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Runtime;
+using System;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
@@ -37,7 +38,18 @@ namespace FakeMicro.Grains
         public override Task OnActivateAsync(CancellationToken cancellationToken)
         {
             _logger.LogInformation("Grain {GrainIdentity} 已激活", GetGrainIdentity());
-            return base.OnActivateAsync(cancellationToken);
+            
+            try
+            {
+                // 尝试恢复Grain状态
+                return RecoverStateAsync(cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Grain {GrainIdentity} 状态恢复失败", GetGrainIdentity());
+                // 即使状态恢复失败，也要继续激活Grain
+                return base.OnActivateAsync(cancellationToken);
+            }
         }
 
         /// <summary>
@@ -47,7 +59,18 @@ namespace FakeMicro.Grains
         {
             _logger.LogInformation("Grain {GrainIdentity} 正在停用，原因: {Reason}",
                 GetGrainIdentity(), reason.Description);
-            return base.OnDeactivateAsync(reason, cancellationToken);
+            
+            try
+            {
+                // 执行清理操作
+                return CleanupResourcesAsync(reason, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Grain {GrainIdentity} 资源清理失败", GetGrainIdentity());
+                // 即使清理失败，也要继续停用Grain
+                return base.OnDeactivateAsync(reason, cancellationToken);
+            }
         }
 
         /// <summary>
@@ -78,6 +101,40 @@ namespace FakeMicro.Grains
                 throw;
             }
         }
+        
+        /// <summary>
+        /// 执行带重试机制的操作
+        /// </summary>
+        protected async Task<T> ExecuteWithRetryAsync<T>(string operationName, Func<Task<T>> operation, int maxRetries = 3, TimeSpan? delay = null)
+        {
+            return await TransactionHelper.ExecuteWithRetryAsync(this, operation, operationName, maxRetries, delay);
+        }
+        
+        /// <summary>
+        /// 执行带断路器和重试机制的操作
+        /// </summary>
+        protected async Task<T> ExecuteWithCircuitBreakerAsync<T>(string operationName, string circuitName, Func<Task<T>> operation, int maxRetries = 3, TimeSpan? delay = null)
+        {
+            return await TransactionHelper.ExecuteWithCircuitBreakerAsync(this, operation, operationName, circuitName, maxRetries, delay);
+        }
+        
+        /// <summary>
+        /// 尝试恢复Grain状态（可由子类重写）
+        /// </summary>
+        protected virtual Task RecoverStateAsync(CancellationToken cancellationToken)
+        {
+            // 默认实现：不执行任何恢复操作
+            return base.OnActivateAsync(cancellationToken);
+        }
+        
+        /// <summary>
+        /// 清理Grain资源（可由子类重写）
+        /// </summary>
+        protected virtual Task CleanupResourcesAsync(DeactivationReason reason, CancellationToken cancellationToken)
+        {
+            // 默认实现：不执行任何清理操作
+            return base.OnDeactivateAsync(reason, cancellationToken);
+        }
 
         /// <summary>
         /// 简化的日志方法
@@ -105,6 +162,24 @@ namespace FakeMicro.Grains
         protected void LogDebug(string message, params object[] args)
         {
             _logger.LogDebug(message, args);
+        }
+        
+        protected void LogCritical(string message, params object[] args)
+        {
+            _logger.LogCritical(message, args);
+        }
+        
+        protected void LogCritical(Exception ex, string message, params object[] args)
+        {
+            _logger.LogCritical(ex, message, args);
+        }
+        
+        /// <summary>
+        /// 获取当前Grain的类型名称
+        /// </summary>
+        protected string GetGrainTypeName()
+        {
+            return GetType().Name;
         }
     }
 }

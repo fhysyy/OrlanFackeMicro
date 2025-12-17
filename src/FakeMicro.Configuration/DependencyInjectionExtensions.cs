@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
@@ -116,6 +117,14 @@ namespace FakeMicro.Configuration
 
             // 添加Grain注册服务
             services.AddTransient(typeof(IGrainRegistrationService<>), typeof(GrainRegistrationService<>));
+            
+            // 初始化断路器管理器
+            services.AddSingleton(provider =>
+            {
+                var loggerFactory = provider.GetRequiredService<ILoggerFactory>();
+                FakeMicro.Grains.CircuitBreakerManager.Initialize(loggerFactory);
+                return null;
+            });
 
             // Grain生命周期管理
             services.AddSingleton<IGrainLifecycleManager, GrainLifecycleManager>();
@@ -295,9 +304,12 @@ namespace FakeMicro.Configuration
     public class DataCacheOptions
     {
         public bool EnableCaching { get; set; } = true;
-        public TimeSpan DefaultExpiration { get; set; } = TimeSpan.FromMinutes(30);
+        public TimeSpan DefaultMemoryExpiration { get; set; } = TimeSpan.FromMinutes(5);
+        public TimeSpan DefaultDistributedExpiration { get; set; } = TimeSpan.FromHours(1);
         public List<string> CacheProviders { get; set; } = new List<string> { "Memory" };
         public Action<RedisCacheOptions>? RedisOptions { get; set; }
+        public bool EnableMultiLevelCache { get; set; } = true;
+        public int CacheWarmupBatchSize { get; set; } = 100;
     }
 
     #endregion
@@ -396,9 +408,10 @@ namespace FakeMicro.Configuration
     public interface ICacheManager
     {
         Task<T?> GetAsync<T>(string key) where T : class;
-        Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class;
+        Task SetAsync<T>(string key, T value, TimeSpan? memoryExpiration = null, TimeSpan? distributedExpiration = null) where T : class;
         Task RemoveAsync(string key);
         Task ClearByPatternAsync(string pattern);
+        Task WarmupCacheAsync<T>(IEnumerable<KeyValuePair<string, T>> items) where T : class;
     }
 
     #endregion
@@ -746,17 +759,24 @@ namespace FakeMicro.Configuration
     }
 
     /// <summary>
-    /// 缓存管理器实现
+    /// 缓存管理器实现 - 支持多级缓存策略
     /// </summary>
     public class CacheManager : ICacheManager
     {
-        private readonly IEnumerable<ICacheProvider> _providers;
+        private readonly IMemoryCacheProvider? _memoryCacheProvider;
+        private readonly IDistributedCacheProvider? _distributedCacheProvider;
         private readonly ILogger<CacheManager> _logger;
+        private readonly DataCacheOptions _options;
 
-        public CacheManager(IEnumerable<ICacheProvider> providers, ILogger<CacheManager> logger)
+        public CacheManager(
+            IEnumerable<ICacheProvider> providers,
+            ILogger<CacheManager> logger,
+            IOptions<DataCacheOptions> options)
         {
-            _providers = providers ?? throw new ArgumentNullException(nameof(providers));
+            _memoryCacheProvider = providers.OfType<IMemoryCacheProvider>().FirstOrDefault();
+            _distributedCacheProvider = providers.OfType<IDistributedCacheProvider>().FirstOrDefault();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
         }
 
         public async Task ClearByPatternAsync(string pattern)
@@ -767,33 +787,133 @@ namespace FakeMicro.Configuration
 
         public async Task<T?> GetAsync<T>(string key) where T : class
         {
-            foreach (var provider in _providers)
+            if (!_options.EnableCaching)
             {
-                var result = await provider.GetAsync<T>(key);
+                return null;
+            }
+
+            T? result = null;
+
+            // 1. 先检查内存缓存
+            if (_memoryCacheProvider != null)
+            {
+                result = await _memoryCacheProvider.GetAsync<T>(key);
                 if (result != null)
                 {
+                    _logger.LogDebug("从内存缓存获取数据命中: {Key}", key);
                     return result;
                 }
             }
+
+            // 2. 再检查分布式缓存
+            if (_distributedCacheProvider != null)
+            {
+                result = await _distributedCacheProvider.GetAsync<T>(key);
+                if (result != null)
+                {
+                    _logger.LogDebug("从分布式缓存获取数据命中: {Key}", key);
+                    
+                    // 3. 如果分布式缓存有数据，同步到内存缓存
+                    if (_memoryCacheProvider != null && _options.EnableMultiLevelCache)
+                    {
+                        await _memoryCacheProvider.SetAsync(key, result, _options.DefaultMemoryExpiration);
+                        _logger.LogDebug("将分布式缓存数据同步到内存缓存: {Key}", key);
+                    }
+                }
+            }
             
-            return null;
+            if (result == null)
+            {
+                _logger.LogDebug("所有缓存都未命中: {Key}", key);
+            }
+
+            return result;
         }
 
         public async Task RemoveAsync(string key)
         {
-            foreach (var provider in _providers)
+            if (!_options.EnableCaching)
             {
-                await provider.RemoveAsync(key);
+                return;
+            }
+
+            // 从所有缓存中移除
+            if (_memoryCacheProvider != null)
+            {
+                await _memoryCacheProvider.RemoveAsync(key);
+            }
+            
+            if (_distributedCacheProvider != null)
+            {
+                await _distributedCacheProvider.RemoveAsync(key);
             }
         }
 
-        public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
+        public async Task SetAsync<T>(string key, T value, TimeSpan? memoryExpiration = null, TimeSpan? distributedExpiration = null) where T : class
         {
-            var exp = expiration ?? TimeSpan.FromMinutes(30);
-            foreach (var provider in _providers)
+            if (!_options.EnableCaching)
             {
-                await provider.SetAsync(key, value, exp);
+                return;
             }
+
+            // 设置内存缓存
+            if (_memoryCacheProvider != null)
+            {
+                var memExp = memoryExpiration ?? _options.DefaultMemoryExpiration;
+                await _memoryCacheProvider.SetAsync(key, value, memExp);
+                _logger.LogDebug("设置内存缓存数据: {Key}, 过期时间: {Expiration}", key, memExp);
+            }
+
+            // 设置分布式缓存
+            if (_distributedCacheProvider != null)
+            {
+                var distExp = distributedExpiration ?? _options.DefaultDistributedExpiration;
+                await _distributedCacheProvider.SetAsync(key, value, distExp);
+                _logger.LogDebug("设置分布式缓存数据: {Key}, 过期时间: {Expiration}", key, distExp);
+            }
+        }
+
+        public async Task WarmupCacheAsync<T>(IEnumerable<KeyValuePair<string, T>> items) where T : class
+        {
+            if (!_options.EnableCaching || items == null)
+            {
+                return;
+            }
+
+            var itemList = items.ToList();
+            _logger.LogInformation("开始缓存预热，共 {Count} 个项目", itemList.Count);
+
+            // 批量预热内存缓存
+            if (_memoryCacheProvider != null)
+            {
+                var memoryTasks = itemList.Select(item => 
+                    _memoryCacheProvider.SetAsync(item.Key, item.Value, _options.DefaultMemoryExpiration));
+                
+                await Task.WhenAll(memoryTasks);
+                _logger.LogInformation("内存缓存预热完成");
+            }
+
+            // 批量预热分布式缓存（分批处理）
+            if (_distributedCacheProvider != null)
+            {
+                var batches = itemList
+                    .Select((item, index) => new { item, index })
+                    .GroupBy(x => x.index / _options.CacheWarmupBatchSize)
+                    .Select(g => g.Select(x => x.item).ToList());
+
+                foreach (var batch in batches)
+                {
+                    var distributedTasks = batch.Select(item => 
+                        _distributedCacheProvider.SetAsync(item.Key, item.Value, _options.DefaultDistributedExpiration));
+                    
+                    await Task.WhenAll(distributedTasks);
+                    _logger.LogInformation("分布式缓存预热批次完成，处理了 {Count} 个项目", batch.Count);
+                }
+                
+                _logger.LogInformation("分布式缓存预热完成");
+            }
+
+            _logger.LogInformation("缓存预热全部完成");
         }
     }
 
