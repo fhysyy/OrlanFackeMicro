@@ -6,6 +6,7 @@ namespace FakeMicro.Utilities.Configuration;
 /// <summary>
 /// 应用程序配置类
 /// </summary>
+/// appsettings.json中的 配置名称要一致 Database   Orleans Jwt RabbitMQ  Elasticsearch FileStorage Cors AnomalyDetection Hangfire    
 public class AppSettings
 {
     public DatabaseConfig Database { get; set; } = new();
