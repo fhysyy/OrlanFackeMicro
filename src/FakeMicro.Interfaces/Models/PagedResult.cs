@@ -16,19 +16,19 @@ namespace FakeMicro.Interfaces.Models
         /// 当前页码
         /// </summary>
         [Id(5)]
-        public int PageIndex { get; set; } = 1;
+        public long PageIndex { get; set; } = 1;
         
         /// <summary>
         /// 每页大小
         /// </summary>
         [Id(6)]
-        public int PageSize { get; set; } = 100;
+        public long PageSize { get; set; } = 100;
         
         /// <summary>
         /// 总记录数
         /// </summary>
         [Id(7)]
-        public int TotalCount { get; set; } = 0;
+        public long TotalCount { get; set; } = 0;
         
         /// <summary>
         /// 总页数
@@ -49,7 +49,7 @@ namespace FakeMicro.Interfaces.Models
         /// <summary>
         /// 创建成功的分页结果
         /// </summary>
-        public static new PagedResult<T> SuccessResult(List<T> data, int totalCount, int pageIndex, int pageSize, string message = "")
+        public static PagedResult<T> SuccessResult(List<T> data, int totalCount, int pageIndex, int pageSize, string message = "")
         {
             return new PagedResult<T>
             {

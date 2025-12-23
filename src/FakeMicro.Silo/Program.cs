@@ -14,6 +14,7 @@ using SqlSugar;
 
 using FakeMicro.DatabaseAccess;
 using FakeMicro.DatabaseAccess.Extensions;
+using FakeMicro.Grains.Extensions;
 using System;
 using System.IO;
 using System.Linq;
@@ -232,6 +233,9 @@ namespace FakeMicro.Silo
                     
                     // 注册文件存储服务
                     services.AddFileStorage(context.Configuration);
+
+                    // 添加Grain服务依赖注入
+                    services.AddGrainServices();
 
                     Console.WriteLine("服务注册中...");
                     

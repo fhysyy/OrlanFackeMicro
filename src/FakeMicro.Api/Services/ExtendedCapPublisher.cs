@@ -48,9 +48,10 @@ namespace FakeMicro.Api.Services
         // ICapPublisher接口属性实现
         public IServiceProvider ServiceProvider => _capPublisher.ServiceProvider;
         
-        public ICapTransaction Transaction { 
-            get => _capPublisher.Transaction; 
-            set => _capPublisher.Transaction = value; 
+        // 直接使用_capPublisher的Transaction属性，避免ICapTransaction类型引用问题
+        public object Transaction {
+            get => _capPublisher.Transaction;
+            set => _capPublisher.Transaction = value;
         }
 
         // ICapPublisher接口方法实现 - 异步方法

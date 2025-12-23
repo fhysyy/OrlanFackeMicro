@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
@@ -21,7 +21,7 @@ namespace FakeMicro.DatabaseAccess;
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
-public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> where TEntity : class
+public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> where TEntity : class
 {
     private readonly MongoClient _mongoClient;
     private readonly ILogger<MongoRepository<TEntity, TKey>> _logger;
@@ -54,6 +54,23 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
         // 优先级：方法参数 > 实体类名
         var collName = collectionName ?? typeof(TEntity).Name;
         return database.GetCollection<TEntity>(collName);
+    }
+
+    /// <summary>
+    /// 获取MongoDB集合（泛型版本，支持指定不同的实体类型）
+    /// </summary>
+    /// <typeparam name="TOtherEntity">集合中的实体类型</typeparam>
+    /// <param name="databaseName">数据库名称，未提供时使用默认数据库名称</param>
+    /// <param name="collectionName">集合名称，未提供时使用实体类名</param>
+    /// <returns>MongoDB集合</returns>
+    public IMongoCollection<TOtherEntity> GetCollection<TOtherEntity>(string? databaseName = null, string? collectionName = null) where TOtherEntity : class
+    {
+        // 优先级：方法参数 > 类构造函数参数
+        var dbName = databaseName ?? _defaultDatabaseName;
+        var database = _mongoClient.GetDatabase(dbName);
+        // 优先级：方法参数 > 实体类名
+        var collName = collectionName ?? typeof(TOtherEntity).Name;
+        return database.GetCollection<TOtherEntity>(collName);
     }
 
     #region 查询方法（支持collectionName）
@@ -1074,8 +1091,7 @@ public class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> wh
 
 
     /// <summary>
-   // Task<PageBaseResultModel> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,  int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null,
-    /// 获取分页实体（指定数据库） 
+    /// 获取分页实体（指定数据库）
     /// </summary>
     public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
         Expression<Func<TEntity, object>>? orderBy = null,

@@ -6,7 +6,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using Orleans;
-using FakeMicro.Interfaces.Models.Results;
 
 namespace FakeMicro.Interfaces.Models
 {
@@ -14,7 +13,7 @@ namespace FakeMicro.Interfaces.Models
     /// 验证结果类
     /// </summary>
     [GenerateSerializer]
-    public class ValidationResult : BaseResult
+    public class ValidationResult : BaseResultModel
     {
         /// <summary>
         /// 验证错误列表

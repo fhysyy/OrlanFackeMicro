@@ -1,4 +1,6 @@
 using Microsoft.Extensions.Logging;
+using MongoDB.Driver;
+using MongoDB.Driver.Core;
 using Npgsql;
 using SqlSugar;
 using System;
@@ -97,6 +99,25 @@ public class RetryPolicy
         if (ex.InnerException != null && IsRetryableException(ex.InnerException))
         {
             return true;
+        }
+        
+        // MongoDB异常处理
+        if (ex is MongoException mongoEx)
+        {
+            // 网络异常、超时异常、连接异常等可重试
+            if (mongoEx is MongoConnectionException || 
+                mongoEx is TimeoutException || 
+                mongoEx is OperationCanceledException ||
+                mongoEx is MongoWriteConcernException)
+            {
+                return true;
+            }
+
+            // 检查MongoDB异常消息
+            if (ContainsRetryableKeywords(mongoEx.Message))
+            {
+                return true;
+            }
         }
         
         // 连接异常可重试

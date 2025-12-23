@@ -12,12 +12,12 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 当前页码
         /// </summary>
-        int Page { get; }
+        long Page { get; }
 
         /// <summary>
         /// 每页大小
         /// </summary>
-        int PageSize { get; }
+        long PageSize { get; }
 
         /// <summary>
         /// 总记录数
@@ -27,7 +27,7 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 总页数
         /// </summary>
-        int TotalPages { get; }
+        long TotalPages { get; }
 
         /// <summary>
         /// 数据项集合
@@ -56,13 +56,13 @@ namespace FakeMicro.Interfaces
         /// 当前页码
         /// </summary>
         [Id(0)]
-        public int Page { get; private set; }
+        public long Page { get; private set; }
 
         /// <summary>
         /// 每页大小
         /// </summary>
         [Id(1)]
-        public int PageSize { get; private set; }
+        public long PageSize { get; private set; }
 
         /// <summary>
         /// 总记录数
@@ -74,7 +74,7 @@ namespace FakeMicro.Interfaces
         /// 总页数
         /// </summary>
         [Id(3)]
-        public int TotalPages { get; private set; }
+        public long TotalPages { get; private set; }
 
         /// <summary>
         /// 数据项集合
@@ -99,13 +99,13 @@ namespace FakeMicro.Interfaces
         /// <param name="page">当前页码</param>
         /// <param name="pageSize">每页大小</param>
         /// <param name="totalCount">总记录数</param>
-        public PaginatedResult(IReadOnlyCollection<T> items, int page, int pageSize, long totalCount)
+        public PaginatedResult(IReadOnlyCollection<T> items, long page, long pageSize, long totalCount)
         {
             Items = items;
             Page = page;
             PageSize = pageSize;
             TotalCount = totalCount;
-            TotalPages = (int)System.Math.Ceiling(totalCount / (double)pageSize);
+            TotalPages = (long)System.Math.Ceiling(totalCount / (double)pageSize);
         }
     }
 }
