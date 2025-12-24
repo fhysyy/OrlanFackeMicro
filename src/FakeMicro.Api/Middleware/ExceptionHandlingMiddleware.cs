@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using FakeMicro.Shared.Exceptions;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -92,6 +93,11 @@ namespace FakeMicro.Api.Middleware
         /// <returns>HTTP状态码</returns>
         private HttpStatusCode DetermineStatusCode(Exception exception)
         {
+            // 优先处理自定义异常
+            if (exception is CustomException customException)
+            {
+                return (HttpStatusCode)customException.HttpStatusCode;
+            }
             return exception switch
             {
                 ArgumentException or ArgumentNullException or ArgumentOutOfRangeException or FormatException => 
@@ -203,17 +209,33 @@ namespace FakeMicro.Api.Middleware
                 Path = context.Request.Path
             };
 
+            // 添加自定义异常特定的信息
+            if (exception is CustomException customException)
+            {
+                errorResponse.ErrorCode = customException.ErrorCode;
+                if (customException.Details != null && customException.Details.Any())
+                {
+                    errorResponse.Details ??= new ErrorDetails();
+                    errorResponse.Details.CustomDetails = JsonSerializer.Serialize(customException.Details);
+                }
+                // 处理验证异常的特殊情况
+                if (exception is ValidationException validationException)
+                {
+                    errorResponse.ValidationErrors = validationException.ValidationErrors.Select(err => new ValidationError
+                    {
+                        Field = err.FieldName,
+                        Message = err.ErrorMessage
+                    }).ToList();
+                }
+            }
             // 开发环境下包含详细错误信息
             if (context.RequestServices.GetRequiredService<IHostEnvironment>().IsDevelopment())
             {
-                errorResponse.Details = new ErrorDetails
-                {
-                    ExceptionMessage = exception.Message,
-                    InnerExceptionMessage = exception.InnerException?.Message,
-                    StackTrace = exception.StackTrace
-                };
+                errorResponse.Details ??= new ErrorDetails();
+                errorResponse.Details.ExceptionMessage = exception.Message;
+                errorResponse.Details.InnerExceptionMessage = exception.InnerException?.Message;
+                errorResponse.Details.StackTrace = exception.StackTrace;
             }
-
             // 序列化响应并返回
             var jsonOptions = new JsonSerializerOptions
             {
@@ -290,10 +312,12 @@ namespace FakeMicro.Api.Middleware
         public int StatusCode { get; set; }
         public string Message { get; set; }
         public string ErrorType { get; set; }
+        public string ErrorCode { get; set; }
         public DateTime Timestamp { get; set; }
         public string TraceId { get; set; }
         public string Path { get; set; }
         public ErrorDetails Details { get; set; }
+        public ICollection<ValidationError> ValidationErrors { get; set; }
     }
 
     /// <summary>
@@ -304,6 +328,16 @@ namespace FakeMicro.Api.Middleware
         public string ExceptionMessage { get; set; }
         public string InnerExceptionMessage { get; set; }
         public string StackTrace { get; set; }
+        public string CustomDetails { get; set; }
+    }
+
+    /// <summary>
+    /// 验证错误信息类
+    /// </summary>
+    internal class ValidationError
+    {
+        public string Field { get; set; }
+        public string Message { get; set; }
     }
 
     #endregion

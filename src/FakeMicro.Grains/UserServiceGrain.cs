@@ -112,17 +112,6 @@ namespace FakeMicro.Grains
                     await _userRepository.AddAsync(user);
                     _logger.LogInformation("创建用户成功: {Username}", user.username);
                     
-                    // 异步预热用户Grain，不阻塞主流程
-                    _ = Task.Run(async () => {
-                        try {
-                            var userGrain = _grainFactory.GetGrain<IUserGrain>(user.id.ToString());
-                            await userGrain.InitializeAsync(cancellationToken);
-                            _logger.LogDebug("用户Grain预热完成: {UserId}", user.id);
-                        } catch (Exception ex) {
-                            _logger.LogError(ex, "预热用户Grain失败: {UserId}", user.id);
-                        }
-                    });
-
                     // 生成令牌
                     var accessToken = GenerateToken(user);
                     var refreshToken = GenerateRefreshToken();

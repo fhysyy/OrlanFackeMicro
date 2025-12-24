@@ -34,6 +34,7 @@
     <ProjectReference Include="..\FakeMicro.DatabaseAccess\FakeMicro.DatabaseAccess.csproj" />
     <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
     <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
+    <ProjectReference Include="..\FakeMicro.Shared\FakeMicro.Shared.csproj" />
     
     <!-- 事件总线 -->
     <PackageReference Include="DotNetCore.CAP" Version="8.4.1" />

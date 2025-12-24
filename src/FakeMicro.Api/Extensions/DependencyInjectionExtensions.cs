@@ -14,6 +14,7 @@ using FakeMicro.Api.Security;
 using System;
 using Orleans.Hosting;
 
+
 namespace FakeMicro.Api.Extensions;
 
 /// <summary>
@@ -48,28 +49,8 @@ public static class DependencyInjectionExtensions
         // 注册配置服务
         builder.Services.AddConfigurationServices(configuration);
 
-        // 配置Orleans客户端
-        builder.Services.AddOrleansClient(clientBuilder =>
-        {
-            clientBuilder.Configure<Orleans.Configuration.ClusterOptions>(options =>
-            {
-                options.ClusterId = appSettings.Orleans.ClusterId;
-                options.ServiceId = appSettings.Orleans.ServiceId;
-            });
-
-            clientBuilder.UseLocalhostClustering(
-                gatewayPort: appSettings.Orleans.GatewayPort,
-                serviceId: appSettings.Orleans.ServiceId,
-                clusterId: appSettings.Orleans.ClusterId
-            );
-        });
-
-        // 配置Orleans客户端消息选项
-        builder.Services.Configure<Orleans.Configuration.ClientMessagingOptions>(options =>
-        {
-            options.ResponseTimeout = TimeSpan.FromSeconds(45);
-            options.MaxMessageBodySize = 50 * 1024 * 1024; // 50MB
-        });
+        // 配置Orleans客户端 - 使用统一配置方式
+        builder.AddOrleansClientWithConfiguration();
 
         // 注册系统健康服务
         builder.Services.AddTransient<SystemHealthService>();

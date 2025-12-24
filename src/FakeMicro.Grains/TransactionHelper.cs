@@ -1,217 +1,15 @@
 using FakeMicro.DatabaseAccess.Transaction;
 using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.Shared.Exceptions;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using System;
+using System.Collections.Concurrent;
+using System.Data;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Collections.Concurrent;
 
 namespace FakeMicro.Grains;
-
-/// <summary>
-/// 断路器状态
-/// </summary>
-public enum CircuitState
-{
-    /// <summary>
-    /// 正常状态，允许请求
-    /// </summary>
-    Closed,
-    /// <summary>
-    /// 熔断状态，拒绝请求
-    /// </summary>
-    Open,
-    /// <summary>
-    /// 半开状态，允许部分请求以测试服务是否恢复
-    /// </summary>
-    HalfOpen
-}
-
-/// <summary>
-/// 断路器模式实现
-/// </summary>
-public class CircuitBreaker
-{
-    private readonly string _name;
-    private readonly int _failureThreshold;
-    private readonly TimeSpan _resetTimeout;
-    private readonly ILogger _logger;
-    private readonly object _stateLock = new object();
-    private readonly ConcurrentQueue<DateTime> _failureTimes = new ConcurrentQueue<DateTime>();
-    private System.Threading.Timer _resetTimer;
-    private CircuitState _state = CircuitState.Closed;
-    private int _halfOpenFailures = 0;
-    private const int HalfOpenMaxAttempts = 3;
-
-    /// <summary>
-    /// 断路器状态
-    /// </summary>
-    public CircuitState State => _state;
-
-    /// <summary>
-    /// 构造函数
-    /// </summary>
-    /// <param name="name">断路器名称</param>
-    /// <param name="failureThreshold">失败阈值</param>
-    /// <param name="resetTimeout">重置超时时间</param>
-    /// <param name="logger">日志记录器</param>
-    public CircuitBreaker(string name, int failureThreshold, TimeSpan resetTimeout, ILogger logger)
-    {
-        _name = name;
-        _failureThreshold = failureThreshold;
-        _resetTimeout = resetTimeout;
-        _logger = logger;
-    }
-
-    /// <summary>
-    /// 尝试执行操作
-    /// </summary>
-    /// <typeparam name="TResult">操作结果类型</typeparam>
-    /// <param name="operation">要执行的操作</param>
-    /// <returns>操作结果</returns>
-    public async Task<TResult> ExecuteAsync<TResult>(Func<Task<TResult>> operation)
-    {
-        if (!ShouldAllowRequest())
-        {
-            throw new CircuitBreakerOpenException($"断路器 {_name} 处于打开状态，拒绝请求");
-        }
-
-        try
-        {
-            var result = await operation();
-            OnSuccess();
-            return result;
-        }
-        catch (Exception ex)
-        {
-            OnFailure();
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// 判断是否允许请求
-    /// </summary>
-    private bool ShouldAllowRequest()
-    {
-        lock (_stateLock)
-        {
-            switch (_state)
-            {
-                case CircuitState.Closed:
-                    return true;
-                case CircuitState.Open:
-                    return false;
-                case CircuitState.HalfOpen:
-                    return true;
-                default:
-                    return true;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 操作成功处理
-    /// </summary>
-    private void OnSuccess()
-    {
-        lock (_stateLock)
-        {
-            if (_state == CircuitState.HalfOpen)
-            {
-                _logger.LogInformation("断路器 {CircuitName} 从半开状态切换到关闭状态", _name);
-                _state = CircuitState.Closed;
-                _failureTimes.Clear();
-                _halfOpenFailures = 0;
-                StopResetTimer();
-            }
-        }
-    }
-
-    /// <summary>
-    /// 操作失败处理
-    /// </summary>
-    private void OnFailure()
-    {
-        lock (_stateLock)
-        {
-            if (_state == CircuitState.Closed)
-            {
-                // 记录失败时间
-                _failureTimes.Enqueue(DateTime.UtcNow);
-                
-                // 移除超过时间窗口的失败记录
-                var cutoffTime = DateTime.UtcNow - _resetTimeout;
-                while (_failureTimes.TryPeek(out var time) && time < cutoffTime)
-                {
-                    _failureTimes.TryDequeue(out _);
-                }
-
-                // 检查是否超过失败阈值
-                if (_failureTimes.Count >= _failureThreshold)
-                {
-                    _logger.LogWarning("断路器 {CircuitName} 从关闭状态切换到打开状态，失败次数: {FailureCount}", 
-                        _name, _failureTimes.Count);
-                    _state = CircuitState.Open;
-                    StartResetTimer();
-                }
-            }
-            else if (_state == CircuitState.HalfOpen)
-            {
-                _halfOpenFailures++;
-                
-                if (_halfOpenFailures >= HalfOpenMaxAttempts)
-                {
-                    _logger.LogWarning("断路器 {CircuitName} 从半开状态切换到打开状态，半开失败次数: {HalfOpenFailures}", 
-                        _name, _halfOpenFailures);
-                    _state = CircuitState.Open;
-                    _halfOpenFailures = 0;
-                    StartResetTimer();
-                }
-            }
-        }
-    }
-
-    /// <summary>
-    /// 启动重置定时器
-    /// </summary>
-    private void StartResetTimer()
-    {
-        StopResetTimer();
-        
-        _resetTimer = new System.Threading.Timer(_ =>
-        {
-            lock (_stateLock)
-            {
-                _logger.LogInformation("断路器 {CircuitName} 从打开状态切换到半开状态", _name);
-                _state = CircuitState.HalfOpen;
-                _halfOpenFailures = 0;
-            }
-        }, null, _resetTimeout, Timeout.InfiniteTimeSpan);
-    }
-
-    /// <summary>
-    /// 停止重置定时器
-    /// </summary>
-    private void StopResetTimer()
-    {
-        if (_resetTimer != null)
-        {
-            _resetTimer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
-            _resetTimer.Dispose();
-            _resetTimer = null;
-        }
-    }
-}
-
-/// <summary>
-/// 断路器打开异常
-/// </summary>
-public class CircuitBreakerOpenException : Exception
-{
-    public CircuitBreakerOpenException(string message) : base(message) { }
-}
 
 /// <summary>
 /// 断路器管理器
@@ -273,7 +71,7 @@ public static class TransactionHelper
         ITransactionService transactionService,
         Func<Task<TResult>> operation,
         string operationType,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         return await ExecuteInGrainTransactionAsync(grain, transactionService, operation, operationType, false, cancellationToken);
     }
@@ -295,7 +93,7 @@ public static class TransactionHelper
         Func<Task<TResult>> operation,
         string operationType,
         bool useCircuitBreaker,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var grainKey = grain.GetPrimaryKeyString();
         var grainType = grain.GetType().Name;
@@ -305,7 +103,7 @@ public static class TransactionHelper
         {
             try
             {
-                // Orleans 9.0 适配：通过构造函数注入获取Logger
+                // 获取日志记录器
                 var logger = GetLoggerFromGrain(grain);
                 
                 logger?.LogInformation("开始Grain事务: GrainType={GrainType}, GrainKey={GrainKey}, OperationType={OperationType}", 
@@ -314,7 +112,7 @@ public static class TransactionHelper
                 if (transactionService is SqlSugarTransactionManager manager)
                 {
                     return await manager.ExecuteInGrainTransactionAsync(
-                        operation, grainKey, operationType, System.Data.IsolationLevel.ReadCommitted, cancellationToken);
+                        operation, grainKey, operationType, IsolationLevel.ReadCommitted, cancellationToken);
                 }
                 else
                 {
@@ -323,12 +121,14 @@ public static class TransactionHelper
                     return await operation();
                 }
             }
-            catch (TransactionException ex)
+            catch (Exception ex) when (ex is not TransactionException)
             {
+                // 转换为统一的事务异常
+                var transactionEx = new TransactionException($"Grain事务执行失败: {operationType}", ex);
                 var logger = GetLoggerFromGrain(grain);
-                logger?.LogError(ex, "Grain事务执行失败: GrainType={GrainType}, GrainKey={GrainKey}, OperationType={OperationType}", 
+                logger?.LogError(transactionEx, "Grain事务执行失败: GrainType={GrainType}, GrainKey={GrainKey}, OperationType={OperationType}", 
                     grainType, grainKey, operationType);
-                throw;
+                throw transactionEx;
             }
         };
         
@@ -350,12 +150,12 @@ public static class TransactionHelper
         ITransactionService transactionService,
         Func<Task> operation,
         string operationType,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         await ExecuteInGrainTransactionAsync<object?>(grain, transactionService, async () =>
         {
             await operation();
-            return (object?)null;
+            return null;
         }, operationType, cancellationToken);
     }
 
@@ -368,11 +168,11 @@ public static class TransactionHelper
         string operationType,
         int maxRetries = 3,
         TimeSpan? delay = null,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var grainKey = grain.GetPrimaryKeyString();
         var grainType = grain.GetType().Name;
-        // Orleans 9.0 适配：通过构造函数注入获取Logger
+        // 获取日志记录器
         var logger = GetLoggerFromGrain(grain);
         
         delay ??= TimeSpan.FromMilliseconds(100);
@@ -416,18 +216,38 @@ public static class TransactionHelper
         // 5. 断路器半开状态下的失败
         
         return ex is TimeoutException ||
-               ex is Microsoft.Data.SqlClient.SqlException sqlEx && IsRetryableSqlError(sqlEx) ||
                ex is System.Net.Sockets.SocketException ||
                ex is System.IO.IOException ||
                ex is Orleans.Runtime.OrleansException ||
                ex is Orleans.Runtime.SiloUnavailableException ||
+               IsRetryableDatabaseException(ex) ||
                ex is CircuitBreakerOpenException == false; // 断路器打开异常不可重试
     }
 
     /// <summary>
-    /// 判断SQL错误是否可重试
+    /// 判断数据库异常是否可重试
     /// </summary>
-    private static bool IsRetryableSqlError(Microsoft.Data.SqlClient.SqlException sqlEx)
+    private static bool IsRetryableDatabaseException(Exception ex)
+    {
+        // 处理SQL Server异常
+        if (ex is Microsoft.Data.SqlClient.SqlException sqlEx)
+        {
+            return IsRetryableSqlServerError(sqlEx);
+        }
+        
+        // 处理PostgreSQL异常
+        if (ex is Npgsql.NpgsqlException npgsqlEx)
+        {
+            return IsRetryablePostgresError(npgsqlEx);
+        }
+        
+        return false;
+    }
+
+    /// <summary>
+    /// 判断SQL Server错误是否可重试
+    /// </summary>
+    private static bool IsRetryableSqlServerError(Microsoft.Data.SqlClient.SqlException sqlEx)
     {
         // SQL Server可重试错误代码：
         // 1205: 死锁
@@ -448,6 +268,27 @@ public static class TransactionHelper
     }
 
     /// <summary>
+    /// 判断PostgreSQL错误是否可重试
+    /// </summary>
+    private static bool IsRetryablePostgresError(Npgsql.NpgsqlException npgsqlEx)
+    {
+        // PostgreSQL可重试错误代码：
+        // 40001: 序列化失败
+        // 40P01: 死锁检测
+        // 53000: 内存不足
+        // 53200: 超出连接限制
+        // 53300: 过多连接
+        // 57P01: 管理员关闭连接
+        // 57P02: 数据库关闭
+        // 57P03: 无法连接到服务器
+        // 58000: 系统错误
+        // 58030: I/O错误
+        
+        var retryableErrors = new[] { "40001", "40P01", "53000", "53200", "53300", "57P01", "57P02", "57P03", "58000", "58030" };
+        return retryableErrors.Contains(npgsqlEx.SqlState);
+    }
+
+    /// <summary>
     /// 批量执行Grain操作
     /// </summary>
     public static async Task ExecuteBatchAsync<T>(
@@ -457,11 +298,11 @@ public static class TransactionHelper
         Func<T, Task> operation,
         string operationType,
         int batchSize = 100,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var grainKey = grain.GetPrimaryKeyString();
         var grainType = grain.GetType().Name;
-        // Orleans 9.0 适配：通过构造函数注入获取Logger
+        // 获取日志记录器
         var logger = GetLoggerFromGrain(grain);
         
         logger?.LogInformation("开始批量Grain操作: GrainType={GrainType}, GrainKey={GrainKey}, OperationType={OperationType}, TotalItems={TotalItems}, BatchSize={BatchSize}", 
@@ -508,26 +349,29 @@ public static class TransactionHelper
     }
 
     /// <summary>
-    /// 从Grain获取Logger（Orleans 9.0适配）
+    /// 从Grain获取Logger（优化版）
     /// </summary>
     private static ILogger? GetLoggerFromGrain(Grain grain)
     {
-        // 检查Grain是否继承自OrleansGrainBase
+        // 优先检查是否继承自OrleansGrainBase（类型安全）
         if (grain is OrleansGrainBase baseGrain)
         {
-            // 使用反射获取Logger字段
-            var loggerField = baseGrain.GetType().GetField("_logger", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            if (loggerField != null)
-            {
-                return loggerField.GetValue(baseGrain) as ILogger;
-            }
+            // 使用公共方法获取日志记录器
+            return baseGrain.GetLogger();
         }
         
-        // 尝试通过反射获取其他可能的Logger字段
-        var loggerFieldInfo = grain.GetType().GetField("_logger", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        if (loggerFieldInfo != null)
+        // 尝试通过反射获取Logger字段（仅作为后备方案）
+        try
         {
-            return loggerFieldInfo.GetValue(grain) as ILogger;
+            var loggerField = grain.GetType().GetField("_logger", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            if (loggerField != null)
+            {
+                return loggerField.GetValue(grain) as ILogger;
+            }
+        }
+        catch (Exception ex)
+        {
+            // 反射失败时不抛出异常，仅返回null
         }
         
         return null;
@@ -543,7 +387,7 @@ public static class TransactionHelper
         string circuitName,
         int maxRetries = 3,
         TimeSpan? delay = null,
-        System.Threading.CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default)
     {
         var logger = GetLoggerFromGrain(grain);
         var circuitBreaker = CircuitBreakerManager.GetOrCreateCircuitBreaker(circuitName);
@@ -569,16 +413,16 @@ public static class TransactionHelper
 /// </summary>
 internal static class EnumerableBatchExtensions
 {
-    public static IEnumerable<IEnumerable<T>> Batch<T>(this IEnumerable<T> source, int batchSize)
+    public static System.Collections.Generic.IEnumerable<System.Collections.Generic.IEnumerable<T>> Batch<T>(this System.Collections.Generic.IEnumerable<T> source, int batchSize)
     {
-        var batch = new List<T>(batchSize);
+        var batch = new System.Collections.Generic.List<T>(batchSize);
         foreach (var item in source)
         {
             batch.Add(item);
             if (batch.Count >= batchSize)
             {
                 yield return batch;
-                batch = new List<T>(batchSize);
+                batch = new System.Collections.Generic.List<T>(batchSize);
             }
         }
         
