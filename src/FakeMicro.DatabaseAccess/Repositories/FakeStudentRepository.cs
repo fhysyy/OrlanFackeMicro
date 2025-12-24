@@ -19,6 +19,7 @@ using FakeMicro.DatabaseAccess;
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
+using FakeMicro.Shared.Exceptions;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {

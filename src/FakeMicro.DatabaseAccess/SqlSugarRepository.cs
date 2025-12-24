@@ -11,9 +11,9 @@ using System;
 using Npgsql;
 using Orleans;
 using FakeMicro.Interfaces.Models;
+using FakeMicro.Shared.Exceptions;
 
 namespace FakeMicro.DatabaseAccess;
-
 
 
 /// <summary>
@@ -110,15 +110,6 @@ namespace FakeMicro.DatabaseAccess;
                     _logger.LogError(ex, "SQL执行异常");
                 }
             };
-        }
-        
-        /// <summary>
-        /// 自定义DataAccessException异常类
-        /// </summary>
-        public class DataAccessException : Exception
-        {
-            public DataAccessException(string message) : base(message) { }
-            public DataAccessException(string message, Exception innerException) : base(message, innerException) { }
         }
 
         /// <summary>

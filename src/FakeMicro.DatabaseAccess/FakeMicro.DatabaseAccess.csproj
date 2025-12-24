@@ -29,6 +29,7 @@
   <ItemGroup>
     <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
     <ProjectReference Include="..\FakeMicro.Interfaces\FakeMicro.Interfaces.csproj" />
+    <ProjectReference Include="..\FakeMicro.Shared\FakeMicro.Shared.csproj" />
     <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
   </ItemGroup>
 
@@ -37,3 +38,4 @@
   </PropertyGroup>
 
 </Project>
+

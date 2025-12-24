@@ -7,19 +7,13 @@ using FakeMicro.DatabaseAccess.Interfaces;
 using System.Text;
 using System.Threading;
 using System.Security.Cryptography;
+using FakeMicro.Shared.Exceptions;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
     /// <summary>
     /// 用户仓储实现（SqlSugar版本）
     /// </summary>
-    // 使用自定义的DataAccessException异常类
-    public class DataAccessException : Exception
-    {
-        public DataAccessException(string message) : base(message) { }
-        public DataAccessException(string message, Exception innerException) : base(message, innerException) { }
-    }
-    
     public class UserRepository : SqlSugarRepository<User, long>, IUserRepository
     {
         private readonly ILogger<UserRepository> _logger;
