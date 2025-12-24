@@ -18,10 +18,10 @@ namespace FakeMicro.Grains.Extensions
         public static IServiceCollection AddGrainServices(this IServiceCollection services)
         {
             // 注册知识库服务
-            services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
+            //services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
             
-            // 注册AI知识库服务
-            services.AddScoped<IAiKnowledgeService, AiKnowledgeService>();
+            //// 注册AI知识库服务
+            //services.AddScoped<IAiKnowledgeService, AiKnowledgeService>();
             
             return services;
         }

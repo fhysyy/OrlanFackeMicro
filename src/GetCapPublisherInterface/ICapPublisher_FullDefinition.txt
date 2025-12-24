@@ -1,0 +1,18 @@
+// ICapPublisher接口完整定义
+public interface ICapPublisher
+{
+    System.IServiceProvider ServiceProvider { get; };
+    DotNetCore.CAP.ICapTransaction Transaction { get; set; };
+
+    System.IServiceProvider get_ServiceProvider();
+    DotNetCore.CAP.ICapTransaction get_Transaction();
+    System.Void set_Transaction(DotNetCore.CAP.ICapTransaction value);
+    System.Threading.Tasks.Task PublishAsync<T>(System.String name,  contentObj, System.String callbackName, System.Threading.CancellationToken cancellationToken);
+    System.Threading.Tasks.Task PublishAsync<T>(System.String name,  contentObj, System.Collections.Generic.IDictionary`2<System.String, System.String> headers, System.Threading.CancellationToken cancellationToken);
+    System.Void Publish<T>(System.String name,  contentObj, System.String callbackName);
+    System.Void Publish<T>(System.String name,  contentObj, System.Collections.Generic.IDictionary`2<System.String, System.String> headers);
+    System.Threading.Tasks.Task PublishDelayAsync<T>(System.TimeSpan delayTime, System.String name,  contentObj, System.Collections.Generic.IDictionary`2<System.String, System.String> headers, System.Threading.CancellationToken cancellationToken);
+    System.Threading.Tasks.Task PublishDelayAsync<T>(System.TimeSpan delayTime, System.String name,  contentObj, System.String callbackName, System.Threading.CancellationToken cancellationToken);
+    System.Void PublishDelay<T>(System.TimeSpan delayTime, System.String name,  contentObj, System.Collections.Generic.IDictionary`2<System.String, System.String> headers);
+    System.Void PublishDelay<T>(System.TimeSpan delayTime, System.String name,  contentObj, System.String callbackName);
+}

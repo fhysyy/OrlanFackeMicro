@@ -140,8 +140,7 @@ public static class DatabaseServiceExtensions
                 services.AddScoped<IDictionaryItemRepository, DictionaryItemRepository>();
                 services.AddScoped<ISysOpenRepository, SysOpenRepository>();
                 services.AddScoped<IManagerVersionRepository, ManagerVersionRepository>();
-                // 添加知识库仓储 - 已迁移到MongoDB
-                // services.AddScoped<IKnowledgeBaseRepository, KnowledgeBaseRepository>();
+
             }
 
             // MongoDB仓储
@@ -151,8 +150,7 @@ public static class DatabaseServiceExtensions
                 services.AddScoped<INoteRepository, NoteRepository>();
                 services.AddScoped<INotebookRepository, NotebookRepository>();
                 services.AddScoped<INoteTagRepository, NoteTagRepository>();
-                // 添加知识库仓储（已从PostgreSQL迁移到MongoDB）
-                services.AddScoped<IKnowledgeBaseRepository, MongoKnowledgeBaseRepository>();
+
             }
         }
 
