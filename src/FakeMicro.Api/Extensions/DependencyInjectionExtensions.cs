@@ -119,6 +119,9 @@ public static class DependencyInjectionExtensions
         // 注册全局异常处理中间件
         app.UseMiddleware<FakeMicro.Api.Middleware.ExceptionHandlingMiddleware>();
         app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
+        
+        // 注册幂等性中间件
+        app.UseIdempotency();
 
         // 添加认证和授权中间件
         app.UseAuthentication();

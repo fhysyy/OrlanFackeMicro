@@ -95,6 +95,9 @@ namespace FakeMicro.Api
 
             // 使用集中式依赖注入注册所有服务
             builder.AddAllServices();
+            
+            // 添加幂等性服务
+            builder.Services.AddIdempotency();
 
             // 构建应用，添加异常处理以获取详细错误信息
             var app = builder.Build();
