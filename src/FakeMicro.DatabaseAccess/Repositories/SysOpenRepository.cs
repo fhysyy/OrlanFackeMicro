@@ -11,8 +11,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
 {
     public class SysOpenRepository : SqlSugarRepository<dynamic,int>, ISysOpenRepository
     {
-        public SysOpenRepository(ISqlSugarClient db, ILogger<SysOpenRepository> logger)
-            : base(db, logger)
+        public SysOpenRepository(ISqlSugarClient db, ILogger<SysOpenRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
         }
     }

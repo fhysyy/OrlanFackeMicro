@@ -8,8 +8,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
 {
     public class RoleRepository : SqlSugarRepository<Role, long>, IRoleRepository
     {
-        public RoleRepository(ISqlSugarClient db, ILogger<RoleRepository> logger)
-            : base(db, logger)
+        public RoleRepository(ISqlSugarClient db, ILogger<RoleRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
         }
 

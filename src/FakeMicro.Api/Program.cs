@@ -4,6 +4,7 @@ using FakeMicro.Api.Services;
 using FakeMicro.DatabaseAccess;
 using FakeMicro.Utilities.Storage;
 using FakeMicro.Utilities.Configuration;
+using FakeMicro.Interfaces;
 // 添加代码生成器相关的using语句
 using FakeMicro.Utilities.CodeGenerator;
 using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
@@ -153,47 +154,33 @@ namespace FakeMicro.Api
             //    "*/10 * * * *");
         }
         
-        // Orleans客户端连接服务，负责在应用启动时验证Orleans连接
-        public class OrleansClientConnectionService : IHostedService
-        {
-            private readonly IClusterClient _client;
-            private readonly ILogger _logger;
-            
-            public OrleansClientConnectionService(IClusterClient client, ILogger<OrleansClientConnectionService> logger)
-            {
-                _client = client;
-                _logger = logger;
-            }
-            
-            public Task StartAsync(CancellationToken cancellationToken)
-            {
-                _logger.LogInformation("Orleans客户端已初始化并配置");
-                // 在Orleans 7.x中，连接是自动处理的，不需要显式调用Connect
-                // 我们可以添加一些验证逻辑或健康检查
-                return Task.CompletedTask;
-            }
-            
-            public Task StopAsync(CancellationToken cancellationToken)
-            {
-                return Task.CompletedTask;
-            }
-        }
-        
-        // Orleans客户端生命周期服务，负责在应用关闭时断开连接
-        public class OrleansClientLifetimeService : IHostedService
+        // Orleans客户端生命周期服务，负责Orleans客户端的初始化和关闭
+        public class OrleansClientLifecycleService : IHostedService
         {
             private readonly IClusterClient _client;
             private readonly ILogger _logger;
 
-            public OrleansClientLifetimeService(IClusterClient client, ILogger logger)
+            public OrleansClientLifecycleService(IClusterClient client, ILogger<OrleansClientLifecycleService> logger)
             {
                 _client = client;
                 _logger = logger;
             }
 
-            public Task StartAsync(CancellationToken cancellationToken)
+            public async Task StartAsync(CancellationToken cancellationToken)
             {
-                return Task.CompletedTask;
+                _logger.LogInformation("正在初始化Orleans客户端连接...");
+                try
+                {
+                    // 在Orleans 7.x中，连接是自动处理的，但我们可以添加验证逻辑
+                    // 尝试调用一个简单的grain来验证连接
+                    var helloGrain = _client.GetGrain<IHelloGrain>("system");
+                     await helloGrain.SayHelloAsync("Connection Test");
+                    _logger.LogInformation("Orleans客户端连接验证成功");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Orleans客户端连接验证失败，但应用将继续运行");
+                }
             }
 
             public async Task StopAsync(CancellationToken cancellationToken)
@@ -204,12 +191,10 @@ namespace FakeMicro.Api
                     // 尝试安全地处理客户端连接
                     try
                     {
-                        // 对于较新版本的Orleans，可能需要不同的方法来关闭连接
-                        // 这里使用try-catch来兼容不同版本
-                        dynamic dynamicClient = _client;
-                        if (dynamicClient != null)
+                        // 对于较新版本的Orleans，使用DisposeAsync方法关闭连接
+                        if (_client is IAsyncDisposable asyncDisposable)
                         {
-                            await Task.CompletedTask;
+                            await asyncDisposable.DisposeAsync();
                         }
                     }
                     catch

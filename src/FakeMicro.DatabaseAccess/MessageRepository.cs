@@ -16,8 +16,8 @@ namespace FakeMicro.DatabaseAccess
     /// </summary>
     public class MessageRepository : SqlSugarRepository<Message, long>, IMessageRepository
     {
-        public MessageRepository(ISqlSugarClient db, ILogger<MessageRepository> logger)
-            : base(db, logger)
+        public MessageRepository(ISqlSugarClient db, ILogger<MessageRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {}
 
 
@@ -157,8 +157,8 @@ namespace FakeMicro.DatabaseAccess
     /// </summary>
     public class MessageTemplateRepository : SqlSugarRepository<MessageTemplate, Guid>, IMessageTemplateRepository
     {
-        public MessageTemplateRepository(ISqlSugarClient db, ILogger<MessageTemplateRepository> logger)
-            : base(db, logger)
+        public MessageTemplateRepository(ISqlSugarClient db, ILogger<MessageTemplateRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {}
 
         public async Task<MessageTemplate?> GetByIdAsync(Guid id)

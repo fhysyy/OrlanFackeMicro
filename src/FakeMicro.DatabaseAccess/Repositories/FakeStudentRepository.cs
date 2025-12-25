@@ -36,8 +36,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
         /// </summary>
         /// <param name="db">SqlSugar数据库客户端</param>
         /// <param name="logger">日志记录器</param>
-        public FakeStudentRepository(ISqlSugarClient db, ILogger<FakeStudentRepository> logger)
-            : base(db, logger)
+        public FakeStudentRepository(ISqlSugarClient db, ILogger<FakeStudentRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }

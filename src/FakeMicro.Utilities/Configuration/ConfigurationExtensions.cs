@@ -53,6 +53,16 @@ public static class ConfigurationExtensions
         services.AddSingleton(settings.FileStorage);
         services.AddSingleton(settings.Elasticsearch);
         
+        // 配置JwtConfig，使其能从appsettings.json的Jwt节点读取值
+        services.Configure<JwtConfig>(options =>
+        {
+            options.Secret = settings.Jwt.SecretKey;
+            options.Issuer = settings.Jwt.Issuer;
+            options.Audience = settings.Jwt.Audience;
+            options.ExpirationMinutes = settings.Jwt.ExpireMinutes;
+            options.RefreshExpirationDays = settings.Jwt.RefreshExpireDays;
+        });
+        
         // 添加配置验证启动过滤器
         services.AddTransient<IStartupFilter, ConfigurationValidationStartupFilter>();
         

@@ -32,6 +32,9 @@ public static class DependencyInjectionExtensions
         var appSettings = configuration.GetAppSettings();
         var environment = builder.Environment;
 
+        // 添加内存缓存服务
+        builder.Services.AddMemoryCache();
+
         // 配置MVC控制器
         builder.Services.AddControllers()
             .AddNewtonsoftJson(op =>

@@ -13,8 +13,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
     /// </summary>
     public class SubjectRepository : SqlSugarRepository<Subject, long>, ISubjectRepository
     {
-        public SubjectRepository(ISqlSugarClient db, ILogger<SubjectRepository> logger)
-            : base(db, logger)
+        public SubjectRepository(ISqlSugarClient db, ILogger<SubjectRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
         }
          

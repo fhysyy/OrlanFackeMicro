@@ -56,7 +56,7 @@ namespace FakeMicro.Api.Security
                 Expires = DateTime.UtcNow.AddMinutes(_jwtConfig.ExpirationMinutes),
                 Issuer = _jwtConfig.Issuer,
                 Audience = _jwtConfig.Audience,
-                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(_signingKey), SecurityAlgorithms.HmacSha256)
+                SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(_signingKey), SecurityAlgorithms.HmacSha512)
             };
 
             var tokenHandler = new JwtSecurityTokenHandler();

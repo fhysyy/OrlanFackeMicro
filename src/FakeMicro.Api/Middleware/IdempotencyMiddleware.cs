@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
+using System;
 using System.IO;
+using System.Net;
 using System.Threading.Tasks;
 using FakeMicro.Api.Services;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Net;
 
 namespace FakeMicro.Api.Middleware;
 
@@ -16,19 +17,16 @@ namespace FakeMicro.Api.Middleware;
 public class IdempotencyMiddleware
 {
     private readonly RequestDelegate _next;
-    private readonly IdempotencyService _idempotencyService;
     private readonly ILogger<IdempotencyMiddleware> _logger;
 
     /// <summary>
     /// 构造函数
     /// </summary>
     /// <param name="next">下一个中间件</param>
-    /// <param name="idempotencyService">幂等性服务</param>
     /// <param name="logger">日志记录器</param>
-    public IdempotencyMiddleware(RequestDelegate next, IdempotencyService idempotencyService, ILogger<IdempotencyMiddleware> logger)
+    public IdempotencyMiddleware(RequestDelegate next, ILogger<IdempotencyMiddleware> logger)
     {
         _next = next ?? throw new ArgumentNullException(nameof(next));
-        _idempotencyService = idempotencyService ?? throw new ArgumentNullException(nameof(idempotencyService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -39,6 +37,9 @@ public class IdempotencyMiddleware
     /// <returns>任务</returns>
     public async Task InvokeAsync(HttpContext context)
     {
+        // 从当前HTTP上下文的作用域服务提供者中解析IdempotencyService
+        var idempotencyService = context.RequestServices.GetRequiredService<IdempotencyService>();
+        
         // 只处理需要幂等性保证的HTTP方法
         if (!IsIdempotentMethod(context.Request.Method))
         {
@@ -74,7 +75,7 @@ public class IdempotencyMiddleware
             }
 
             // 检查是否已存在相同的幂等性请求
-            var existingRequest = await _idempotencyService.GetIdempotentRequestAsync(
+            var existingRequest = await idempotencyService.GetIdempotentRequestAsync(
                 idempotencyKey, 
                 userId, 
                 context.Request.Method, 
@@ -105,7 +106,7 @@ public class IdempotencyMiddleware
                 var responseBody = await new StreamReader(memoryStream).ReadToEndAsync();
                 
                 // 保存响应到幂等性服务
-                await _idempotencyService.SaveIdempotentResponseAsync(
+                await idempotencyService.SaveIdempotentResponseAsync(
                     idempotencyKey, 
                     userId, 
                     context.Request.Method, 

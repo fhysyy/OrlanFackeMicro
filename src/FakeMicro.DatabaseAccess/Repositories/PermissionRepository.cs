@@ -8,8 +8,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
 {
     public class PermissionRepository : SqlSugarRepository<Permission, long>, IPermissionRepository
     {
-        public PermissionRepository(ISqlSugarClient db, ILogger<PermissionRepository> logger)
-            : base(db, logger)
+        public PermissionRepository(ISqlSugarClient db, ILogger<PermissionRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
         }
 

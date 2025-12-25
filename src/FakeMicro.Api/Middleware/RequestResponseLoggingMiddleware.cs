@@ -1,13 +1,14 @@
 using FakeMicro.DatabaseAccess;
 using FakeMicro.Entities;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using Newtonsoft.Json;
 namespace FakeMicro.Api.Middleware
 {
     /// <summary>
@@ -18,22 +19,18 @@ namespace FakeMicro.Api.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<RequestResponseLoggingMiddleware> _logger;
-        private readonly IAuditLogRepository _auditLogRepository;
 
         /// <summary>
         /// 构造函数
         /// </summary>
         /// <param name="next">下一个中间件</param>
         /// <param name="logger">日志记录器</param>
-        /// <param name="auditLogRepository">审计日志数据访问接口</param>
         public RequestResponseLoggingMiddleware(
             RequestDelegate next,
-            ILogger<RequestResponseLoggingMiddleware> logger,
-            IAuditLogRepository auditLogRepository)
+            ILogger<RequestResponseLoggingMiddleware> logger)
         {
             _next = next;
             _logger = logger;
-            _auditLogRepository = auditLogRepository;
         }
 
         /// <summary>
@@ -42,6 +39,9 @@ namespace FakeMicro.Api.Middleware
         /// <param name="context">HTTP上下文</param>
         public async Task InvokeAsync(HttpContext context)
         {
+            // 从当前HTTP上下文的作用域服务提供者中解析IAuditLogRepository
+            var auditLogRepository = context.RequestServices.GetRequiredService<IAuditLogRepository>();
+            
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var auditLog = new AuditLog
             {
@@ -95,8 +95,8 @@ namespace FakeMicro.Api.Middleware
                 try
                 {
                     // 保存审计日志
-                    await _auditLogRepository.AddAsync(auditLog);
-                    await _auditLogRepository.SaveChangesAsync();
+                await auditLogRepository.AddAsync(auditLog);
+                await auditLogRepository.SaveChangesAsync();
                 }
                 catch (Exception ex)
                 {

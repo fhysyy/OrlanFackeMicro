@@ -17,11 +17,13 @@ namespace FakeMicro.DatabaseAccess
     {
         private readonly ISqlSugarClient _sqlSugarClient;
         private readonly ILoggerFactory _loggerFactory;
+        private readonly IQueryCacheManager _cacheManager;
 
-        public SqlSugarRepositoryFactory(ISqlSugarClient sqlSugarClient, ILoggerFactory loggerFactory)
+        public SqlSugarRepositoryFactory(ISqlSugarClient sqlSugarClient, ILoggerFactory loggerFactory, IQueryCacheManager cacheManager)
         {
             _sqlSugarClient = sqlSugarClient;
             _loggerFactory = loggerFactory;
+            _cacheManager = cacheManager;
         }
 
         /// <summary>
@@ -33,7 +35,7 @@ namespace FakeMicro.DatabaseAccess
         public IRepository<TEntity, TKey> CreateSqlSugarRepository<TEntity, TKey>() where TEntity : class, new()
         {
             var logger = _loggerFactory.CreateLogger<SqlSugarRepository<TEntity, TKey>>();
-            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger);
+            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger, _cacheManager);
         }
 
         /// <summary>
@@ -105,7 +107,7 @@ namespace FakeMicro.DatabaseAccess
         public ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>() where TEntity : class, new()
         {
             var logger = _loggerFactory.CreateLogger<SqlSugarRepository<TEntity, TKey>>();
-            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger);
+            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger, _cacheManager);
         }
 
         /// <summary>
@@ -122,7 +124,7 @@ namespace FakeMicro.DatabaseAccess
         public ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>(TKey key) where TEntity : class, new()
         {
             var logger = _loggerFactory.CreateLogger<SqlSugarRepository<TEntity, TKey>>();
-            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger);
+            return new SqlSugarRepository<TEntity, TKey>(_sqlSugarClient, logger, _cacheManager);
         }
 
         /// <summary>

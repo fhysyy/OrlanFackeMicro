@@ -11,8 +11,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
 {
     public class AuditLogRepository : SqlSugarRepository<AuditLog, long>, IAuditLogRepository
     {
-        public AuditLogRepository(ISqlSugarClient db, ILogger<AuditLogRepository> logger)
-            : base(db, logger)
+        public AuditLogRepository(ISqlSugarClient db, ILogger<AuditLogRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {}
 
         public async Task<List<AuditLog>> GetAuditLogsAsync(DateTime? startDate = null, DateTime? endDate = null, long? userId = null, CancellationToken cancellationToken = default)

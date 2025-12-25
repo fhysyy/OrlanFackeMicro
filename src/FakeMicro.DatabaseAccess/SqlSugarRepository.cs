@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using SqlSugar;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -21,6 +22,7 @@ namespace FakeMicro.DatabaseAccess
     {
         private readonly ISqlSugarClient _db;
         private readonly ILogger<SqlSugarRepository<TEntity, TKey>> _logger;
+        private readonly IQueryCacheManager _cacheManager;
 
         /// <summary>
         /// 获取实体类型
@@ -32,10 +34,12 @@ namespace FakeMicro.DatabaseAccess
         /// </summary>
         /// <param name="db">SqlSugar客户端</param>
         /// <param name="logger">日志记录器</param>
-        public SqlSugarRepository(ISqlSugarClient db, ILogger<SqlSugarRepository<TEntity, TKey>> logger)
+        /// <param name="cacheManager">查询缓存管理器</param>
+        public SqlSugarRepository(ISqlSugarClient db, ILogger<SqlSugarRepository<TEntity, TKey>> logger, IQueryCacheManager cacheManager)
         {
             _db = db ?? throw new ArgumentNullException(nameof(db));
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _cacheManager = cacheManager ?? throw new ArgumentNullException(nameof(cacheManager));
         }
 
         /// <summary>
@@ -53,7 +57,14 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>().ToListAsync(cancellationToken);
+                // 生成缓存键
+                var cacheKey = _cacheManager.GenerateCacheKey<TEntity>("All");
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>().ToListAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -110,9 +121,16 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>()
-                    .Where($"id = @id", new { id })
-                    .FirstAsync(cancellationToken);
+                // 生成缓存键
+                var cacheKey = _cacheManager.GenerateCacheKey<TEntity>("ById", id);
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>()
+                        .Where($"id = @id", new { id })
+                        .FirstAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -129,9 +147,16 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>()
-                    .Where(predicate)
-                    .ToListAsync(cancellationToken);
+                // 生成条件缓存键
+                var cacheKey = _cacheManager.GenerateConditionCacheKey(predicate, "ByCondition");
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>()
+                        .Where(predicate)
+                        .ToListAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -191,12 +216,27 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                var query = _db.Queryable<TEntity>();
+                // 生成缓存键
+                string cacheKey;
                 if (predicate != null)
                 {
-                    query = query.Where(predicate);
+                    cacheKey = _cacheManager.GenerateConditionCacheKey(predicate, "Count");
                 }
-                return await query.CountAsync(cancellationToken);
+                else
+                {
+                    cacheKey = _cacheManager.GenerateCacheKey<TEntity>("CountAll");
+                }
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    var query = _db.Queryable<TEntity>();
+                    if (predicate != null)
+                    {
+                        query = query.Where(predicate);
+                    }
+                    return await query.CountAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -213,8 +253,15 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>()
-                    .AnyAsync(predicate, cancellationToken);
+                // 生成缓存键
+                var cacheKey = _cacheManager.GenerateConditionCacheKey(predicate, "Exists");
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>()
+                        .AnyAsync(predicate, cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -231,9 +278,16 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>()
-                    .Where(predicate)
-                    .FirstAsync(cancellationToken);
+                // 生成条件缓存键
+                var cacheKey = _cacheManager.GenerateConditionCacheKey(predicate, "FirstOrDefault");
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>()
+                        .Where(predicate)
+                        .FirstAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -250,9 +304,16 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Queryable<TEntity>()
-                    .Where(predicate)
-                    .SingleAsync();
+                // 生成条件缓存键
+                var cacheKey = _cacheManager.GenerateConditionCacheKey(predicate, "SingleOrDefault");
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Queryable<TEntity>()
+                        .Where(predicate)
+                        .SingleAsync();
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -273,6 +334,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Insertable(entity).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -289,6 +352,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Insertable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -305,6 +370,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 _db.Updateable(entity).ExecuteCommand();
+                // 清除该实体类型的所有缓存
+                _cacheManager.RemoveEntityCacheAsync(typeof(TEntity)).Wait();
             }
             catch (SqlSugarException ex)
             {
@@ -321,6 +388,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 _db.Updateable(entities.ToList()).ExecuteCommand();
+                // 清除该实体类型的所有缓存
+                _cacheManager.RemoveEntityCacheAsync(typeof(TEntity)).Wait();
             }
             catch (SqlSugarException ex)
             {
@@ -337,6 +406,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 _db.Deleteable(entity).ExecuteCommand();
+                // 清除该实体类型的所有缓存
+                _cacheManager.RemoveEntityCacheAsync(typeof(TEntity)).Wait();
             }
             catch (SqlSugarException ex)
             {
@@ -355,6 +426,8 @@ namespace FakeMicro.DatabaseAccess
                 await _db.Deleteable<TEntity>()
                     .Where($"id = @id", new { id })
                     .ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -371,6 +444,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 _db.Deleteable(entities.ToList()).ExecuteCommand();
+                // 清除该实体类型的所有缓存
+                _cacheManager.RemoveEntityCacheAsync(typeof(TEntity)).Wait();
             }
             catch (SqlSugarException ex)
             {
@@ -387,6 +462,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Updateable(entity).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -403,6 +480,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Updateable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -419,6 +498,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Deleteable(entity).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -435,6 +516,8 @@ namespace FakeMicro.DatabaseAccess
             try
             {
                 await _db.Deleteable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -453,6 +536,8 @@ namespace FakeMicro.DatabaseAccess
                 // 对于部分更新，我们需要使用不同的方法
                 // 这里我们直接更新整个实体，因为SqlSugar的SetColumns方法使用方式不同
                 await _db.Updateable(entity).ExecuteCommandAsync();
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -471,6 +556,8 @@ namespace FakeMicro.DatabaseAccess
                 // 对于部分更新，我们需要使用不同的方法
                 // 这里我们直接更新整个实体，因为SqlSugar的SetColumns方法使用方式不同
                 await _db.Updateable(entity).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -491,6 +578,8 @@ namespace FakeMicro.DatabaseAccess
                         new { isDeleted = true, deletedAt = DateTime.UtcNow, deletedBy })
                     .Where($"id = @id", new { id })
                     .ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -511,6 +600,8 @@ namespace FakeMicro.DatabaseAccess
                         new { isDeleted = true, deletedAt = DateTime.UtcNow, deletedBy })
                     .Where($"id IN ({string.Join(",", ids)})")
                     .ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -536,7 +627,10 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Insertable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                var result = await _db.Insertable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+                return result;
             }
             catch (SqlSugarException ex)
             {
@@ -552,7 +646,10 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Updateable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                var result = await _db.Updateable(entities.ToList()).ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+                return result;
             }
             catch (SqlSugarException ex)
             {
@@ -579,6 +676,8 @@ namespace FakeMicro.DatabaseAccess
                     var batch = entityList.Skip(i).Take(batchSize).ToList();
                     await _db.Insertable(batch).ExecuteCommandAsync(cancellationToken);
                 }
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -601,6 +700,8 @@ namespace FakeMicro.DatabaseAccess
                     var batch = entityList.Skip(i).Take(batchSize).ToList();
                     await _db.Deleteable(batch).ExecuteCommandAsync(cancellationToken);
                 }
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
             }
             catch (SqlSugarException ex)
             {
@@ -617,9 +718,12 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Deleteable<TEntity>()
+                var result = await _db.Deleteable<TEntity>()
                     .Where(predicate)
                     .ExecuteCommandAsync(cancellationToken);
+                // 清除该实体类型的所有缓存
+                await _cacheManager.RemoveEntityCacheAsync(typeof(TEntity));
+                return result;
             }
             catch (SqlSugarException ex)
             {
@@ -665,19 +769,26 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                var query = _db.Queryable<TEntity>();
+                // 生成缓存键，包含导航属性信息
+                var cacheKey = _cacheManager.GenerateCacheKey<TEntity>("AllWithIncludes", includes?.Length.ToString());
                 
-                // 添加导航属性
-                if (includes != null && includes.Length > 0)
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
                 {
-                    // 逐个添加includes，避免类型推断问题
-                    foreach (var include in includes)
+                    var query = _db.Queryable<TEntity>();
+                    
+                    // 添加导航属性
+                    if (includes != null && includes.Length > 0)
                     {
-                        query = query.Includes(include);
+                        // 逐个添加includes，避免类型推断问题
+                        foreach (var include in includes)
+                        {
+                            query = query.Includes(include);
+                        }
                     }
-                }
-                
-                return await query.ToListAsync(cancellationToken);
+                    
+                    return await query.ToListAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -695,20 +806,27 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                var query = _db.Queryable<TEntity>()
-                    .Where($"id = @id", new { id });
+                // 生成缓存键，包含导航属性信息
+                var cacheKey = _cacheManager.GenerateCacheKey<TEntity>("ByIdWithIncludes", id, includes?.Length.ToString());
                 
-                // 添加导航属性
-                if (includes != null && includes.Length > 0)
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
                 {
-                    // 逐个添加includes，避免类型推断问题
-                    foreach (var include in includes)
+                    var query = _db.Queryable<TEntity>()
+                        .Where($"id = @id", new { id });
+                    
+                    // 添加导航属性
+                    if (includes != null && includes.Length > 0)
                     {
-                        query = query.Includes(include);
+                        // 逐个添加includes，避免类型推断问题
+                        foreach (var include in includes)
+                        {
+                            query = query.Includes(include);
+                        }
                     }
-                }
-                
-                return await query.FirstAsync(cancellationToken);
+                    
+                    return await query.FirstAsync(cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {
@@ -793,7 +911,14 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
-                return await _db.Ado.SqlQueryAsync<TEntity>(sql, parameters, cancellationToken);
+                // 生成缓存键，包含SQL语句和参数信息
+                var cacheKey = _cacheManager.GenerateCacheKey<TEntity>("SqlQuery", sql.GetHashCode().ToString());
+                
+                // 使用缓存管理器获取或创建缓存
+                return await _cacheManager.GetOrCreateAsync(cacheKey, async () =>
+                {
+                    return await _db.Ado.SqlQueryAsync<TEntity>(sql, parameters, cancellationToken);
+                });
             }
             catch (SqlSugarException ex)
             {

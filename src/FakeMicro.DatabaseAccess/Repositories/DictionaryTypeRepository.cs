@@ -15,8 +15,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
     public class DictionaryTypeRepository : SqlSugarRepository<DictionaryType, long>, IDictionaryTypeRepository
     {
         public DictionaryTypeRepository(ISqlSugarClient db, 
-            ILogger<DictionaryTypeRepository> logger) 
-            : base(db, logger)
+            ILogger<DictionaryTypeRepository> logger, IQueryCacheManager cacheManager) 
+            : base(db, logger, cacheManager)
         {
         }
 

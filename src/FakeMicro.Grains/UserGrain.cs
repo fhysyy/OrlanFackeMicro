@@ -1,12 +1,17 @@
 using Orleans;
 using Orleans.Storage;
+using Orleans.Serialization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
+using System.Security.Cryptography;
+using System.Text;
 using FakeMicro.Shared.Exceptions;
+using FakeMicro.Interfaces;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.Grains
 {
@@ -18,13 +23,13 @@ namespace FakeMicro.Grains
         Task<string> GetAvatarAsync();
         Task<Dictionary<string, object>> GetProfileAsync();
         Task UpdateProfileAsync(Dictionary<string, object> profile);
-        Task<List<UserSession>> GetSessionsAsync();
+        Task<List<UserSession>> GetSessionsAsync(CancellationToken cancellationToken = default);
         Task CreateSessionAsync(UserSession session);
         Task TerminateSessionAsync(string sessionId);
-        Task<List<Permission>> GetPermissionsAsync();
+        Task<List<Permission>> GetPermissionsAsync(CancellationToken cancellationToken = default);
         Task AddPermissionAsync(Permission permission);
-        Task RemovePermissionAsync(string permissionId);
-        Task<bool> HasPermissionAsync(string permissionId);
+        Task RemovePermissionAsync(string resource, string permissionType);
+        Task<bool> HasPermissionAsync(string resource, string permissionType, CancellationToken cancellationToken = default);
         Task DeleteAsync();
         Task SetStatusAsync(UserStatus status);
         Task<UserStatus> GetStatusAsync();
@@ -259,7 +264,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 获取所有会话
         /// </summary>
-        public async Task<List<UserSession>> GetSessionsAsync()
+        public async Task<List<UserSession>> GetSessionsAsync(CancellationToken cancellationToken = default)
         {
             return await SafeExecuteAsync("GetSessionsAsync", async () =>
             {
@@ -284,8 +289,8 @@ namespace FakeMicro.Grains
                     session.SessionId = Guid.NewGuid().ToString();
                 }
 
-                session.CreatedAt = DateTime.UtcNow;
-                session.LastActive = DateTime.UtcNow;
+                session.LoginTime = DateTime.UtcNow;
+                session.LastActivity = DateTime.UtcNow;
                 State.Sessions.Add(session);
                 await SaveUserStateAsync();
             }, session.SessionId);
@@ -319,7 +324,7 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 获取所有权限
         /// </summary>
-        public async Task<List<Permission>> GetPermissionsAsync()
+        public async Task<List<Permission>> GetPermissionsAsync(CancellationToken cancellationToken = default)
         {
             return await SafeExecuteAsync("GetPermissionsAsync", async () =>
             {
@@ -339,54 +344,48 @@ namespace FakeMicro.Grains
                     throw new ArgumentNullException(nameof(permission));
                 }
 
-                if (string.IsNullOrWhiteSpace(permission.PermissionId))
+                if (!State.Permissions.Any(p => p.Resource == permission.Resource && p.Type == permission.Type))
                 {
-                    permission.PermissionId = Guid.NewGuid().ToString();
-                }
-
-                if (!State.Permissions.Any(p => p.PermissionId == permission.PermissionId))
-                {
-                    permission.CreatedAt = DateTime.UtcNow;
                     State.Permissions.Add(permission);
                     await SaveUserStateAsync();
                 }
-            }, permission.PermissionId);
+            }, permission.Resource, permission.Type.ToString());
         }
 
         /// <summary>
         /// 移除权限
         /// </summary>
-        public async Task RemovePermissionAsync(string permissionId)
+        public async Task RemovePermissionAsync(string resource, string permissionType)
         {
             await SafeExecuteAsync("RemovePermissionAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(permissionId))
+                if (string.IsNullOrWhiteSpace(resource) || string.IsNullOrWhiteSpace(permissionType))
                 {
-                    throw new ArgumentException("权限ID不能为空", nameof(permissionId));
+                    throw new ArgumentException("资源或权限类型不能为空", nameof(resource));
                 }
 
-                var permission = State.Permissions.FirstOrDefault(p => p.PermissionId == permissionId);
+                var permission = State.Permissions.FirstOrDefault(p => p.Resource == resource && p.Type.ToString() == permissionType);
                 if (permission != null)
                 {
                     State.Permissions.Remove(permission);
                     await SaveUserStateAsync();
                 }
-            }, permissionId);
+            }, resource, permissionType);
         }
 
         /// <summary>
         /// 检查是否有权限
         /// </summary>
-        public async Task<bool> HasPermissionAsync(string permissionId)
+        public async Task<bool> HasPermissionAsync(string resource, string permissionType, CancellationToken cancellationToken = default)
         {
             return await SafeExecuteAsync("HasPermissionAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(permissionId))
+                if (string.IsNullOrWhiteSpace(resource) || string.IsNullOrWhiteSpace(permissionType))
                 {
                     return false;
                 }
-                return State.Permissions.Any(p => p.PermissionId == permissionId);
-            }, permissionId);
+                return State.Permissions.Any(p => p.Resource == resource && p.Type.ToString() == permissionType);
+            }, resource, permissionType);
         }
 
         #endregion
@@ -471,6 +470,9 @@ namespace FakeMicro.Grains
         /// <summary>
         /// 设置用户密码
         /// </summary>
+        /// <summary>
+        /// 设置用户密码（内部使用，不推荐直接调用）
+        /// </summary>
         public async Task SetPasswordAsync(string passwordHash)
         {
             await SafeExecuteAsync("SetPasswordAsync", async () =>
@@ -486,7 +488,30 @@ namespace FakeMicro.Grains
         }
 
         /// <summary>
-        /// 获取用户密码
+        /// 设置用户密码哈希和盐值
+        /// </summary>
+        public async Task SetPasswordHashAndSaltAsync(string passwordHash, string passwordSalt)
+        {
+            await SafeExecuteAsync("SetPasswordHashAndSaltAsync", async () =>
+            {
+                if (string.IsNullOrWhiteSpace(passwordHash))
+                {
+                    throw new ArgumentException("密码哈希不能为空", nameof(passwordHash));
+                }
+
+                if (string.IsNullOrWhiteSpace(passwordSalt))
+                {
+                    throw new ArgumentException("密码盐值不能为空", nameof(passwordSalt));
+                }
+
+                State.PasswordHash = passwordHash;
+                State.PasswordSalt = passwordSalt;
+                await SaveUserStateAsync();
+            }, "[密码哈希和盐值]");
+        }
+
+        /// <summary>
+        /// 获取用户密码哈希
         /// </summary>
         public async Task<string> GetPasswordAsync()
         {
@@ -494,6 +519,100 @@ namespace FakeMicro.Grains
             {
                 return State.PasswordHash;
             });
+        }
+
+        /// <summary>
+        /// 验证密码
+        /// </summary>
+        public async Task<bool> ValidatePasswordAsync(string password, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("ValidatePasswordAsync", async () =>
+            {
+                if (string.IsNullOrWhiteSpace(password))
+                {
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(State.PasswordHash) || string.IsNullOrWhiteSpace(State.PasswordSalt))
+                {
+                    return false;
+                }
+
+                try
+                {
+                    using var hmac = new HMACSHA512(Convert.FromBase64String(State.PasswordSalt));
+                    var computedHash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password)));
+                    return SecureCompareHash(computedHash, State.PasswordHash);
+                }
+                catch
+                {
+                    return false;
+                }
+            }, "[密码验证]");
+        }
+
+        /// <summary>
+        /// 修改密码
+        /// </summary>
+        public async Task<ChangePasswordResult> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("ChangePasswordAsync", async () =>
+            {
+                if (string.IsNullOrWhiteSpace(currentPassword))
+                {
+                    return ChangePasswordResult.CreateFailed("当前密码不能为空");
+                }
+
+                if (string.IsNullOrWhiteSpace(newPassword))
+                {
+                    return ChangePasswordResult.CreateFailed("新密码不能为空");
+                }
+
+                // 验证当前密码
+                if (!await ValidatePasswordAsync(currentPassword))
+                {
+                    return ChangePasswordResult.CreateFailed("当前密码不正确");
+                }
+
+                // 生成新密码哈希和盐值
+                GeneratePasswordHash(newPassword, out string newPasswordHash, out string newPasswordSalt);
+
+                // 更新密码
+                State.PasswordHash = newPasswordHash;
+                State.PasswordSalt = newPasswordSalt;
+                await SaveUserStateAsync();
+
+                return ChangePasswordResult.CreateSuccess();
+            }, "[修改密码]");
+        }
+
+        /// <summary>
+        /// 生成密码哈希
+        /// </summary>
+        private void GeneratePasswordHash(string password, out string hash, out string salt)
+        {
+            using var hmac = new HMACSHA512();
+            salt = Convert.ToBase64String(hmac.Key);
+            hash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password)));
+        }
+
+        /// <summary>
+        /// 安全比较哈希值，防止计时攻击
+        /// </summary>
+        private bool SecureCompareHash(string hash1, string hash2)
+        {
+            if (hash1.Length != hash2.Length)
+            {
+                return false;
+            }
+
+            bool result = true;
+            for (int i = 0; i < hash1.Length; i++)
+            {
+                result &= (hash1[i] == hash2[i]);
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -779,49 +898,39 @@ namespace FakeMicro.Grains
         Invisible
     }
 
-    /// <summary>
-    /// 用户会话
-    /// </summary>
-    [Serializable]
-    public class UserSession
-    {
-        public string SessionId { get; set; }
-        public string DeviceId { get; set; }
-        public string DeviceName { get; set; }
-        public string IpAddress { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public DateTime LastActive { get; set; }
-    }
-
-    /// <summary>
-    /// 用户权限
-    /// </summary>
-    [Serializable]
-    public class Permission
-    {
-        public string PermissionId { get; set; }
-        public string Name { get; set; }
-        public string Description { get; set; }
-        public DateTime CreatedAt { get; set; }
-    }
+    
 
     /// <summary>
     /// 用户状态数据
     /// </summary>
-    [Serializable]
+    [GenerateSerializer]
     public class UserState
     {
+        [Id(0)]
         public string UserId { get; set; }
+        [Id(1)]
         public DateTime CreatedAt { get; set; }
+        [Id(2)]
         public DateTime UpdatedAt { get; set; }
+        [Id(3)]
         public UserStatus Status { get; set; }
+        [Id(4)]
         public DateTime LastLogin { get; set; }
+        [Id(5)]
         public string PasswordHash { get; set; }
+        [Id(6)]
+        public string PasswordSalt { get; set; }
+        [Id(7)]
         public Dictionary<string, object> Profile { get; set; }
+        [Id(8)]
         public List<UserSession> Sessions { get; set; }
+        [Id(9)]
         public List<Permission> Permissions { get; set; }
+        [Id(10)]
         public Dictionary<string, string> Settings { get; set; }
+        [Id(11)]
         public List<string> Friends { get; set; }
+        [Id(12)]
         public List<string> BlockedUsers { get; set; }
     }
 

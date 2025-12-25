@@ -21,8 +21,8 @@ public class IdempotentRequestRepository : SqlSugarRepository<IdempotentRequest,
     /// </summary>
     /// <param name="db">SqlSugar客户端</param>
     /// <param name="logger">日志记录器</param>
-    public IdempotentRequestRepository(ISqlSugarClient db, ILogger<IdempotentRequestRepository> logger)
-        : base(db, logger)
+    public IdempotentRequestRepository(ISqlSugarClient db, ILogger<IdempotentRequestRepository> logger, IQueryCacheManager cacheManager)
+        : base(db, logger, cacheManager)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }

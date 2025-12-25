@@ -60,14 +60,17 @@ namespace FakeMicro.DatabaseAccess
             // 注册默认SqlSugar客户端（指向PostgreSQL）
             services.AddSingleton<ISqlSugarClient>(provider => createPostgreSqlClient(provider, null));
 
+            // 注册事务服务以解决UserServiceGrain依赖注入问题
+            services.AddScoped<ITransactionService, SqlSugarTransactionService>();
+
+            // 注册查询缓存管理器以解决SqlSugarRepository依赖注入问题
+            services.AddScoped<IQueryCacheManager, QueryCacheManager>();
+
             // 注册SqlSugar仓储工厂
             services.AddScoped<ISqlSugarRepositoryFactory, SqlSugarRepositoryFactory>();
 
             // 自动注册所有仓储
             RegisterRepositories(services);
-
-            // 注册事务服务以解决UserServiceGrain依赖注入问题
-            services.AddScoped<ITransactionService, SqlSugarTransactionService>();
 
             return services;
         }

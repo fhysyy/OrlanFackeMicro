@@ -19,8 +19,8 @@ namespace FakeMicro.DatabaseAccess.Repositories
     {
         private readonly ILogger<UserRepository> _logger;
 
-        public UserRepository(ISqlSugarClient db, ILogger<UserRepository> logger)
-            : base(db, logger)
+        public UserRepository(ISqlSugarClient db, ILogger<UserRepository> logger, IQueryCacheManager cacheManager)
+            : base(db, logger, cacheManager)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
