@@ -8,7 +8,7 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
 /// 幂等性请求仓储接口
 /// 定义幂等性请求的数据库操作方法
 /// </summary>
-public interface IIdempotentRequestRepository : IBaseRepository<IdempotentRequest, long>
+public interface IIdempotentRequestRepository : IRepository<IdempotentRequest, long>
 {
     /// <summary>
     /// 根据幂等性键获取请求记录

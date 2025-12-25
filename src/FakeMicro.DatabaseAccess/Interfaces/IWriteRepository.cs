@@ -1,4 +1,8 @@
-namespace FakeMicro.DatabaseAccess
+using System.Linq.Expressions;
+using System.Threading;
+using System.Threading.Tasks;
+
+namespace FakeMicro.DatabaseAccess.Interfaces
 {
     /// <summary>
     /// 写操作仓储接口
@@ -24,14 +28,29 @@ namespace FakeMicro.DatabaseAccess
         void Update(TEntity entity);
         
         /// <summary>
+        /// 更新实体（异步）
+        /// </summary>
+        Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// 批量更新实体
         /// </summary>
         void UpdateRange(IEnumerable<TEntity> entities);
         
         /// <summary>
+        /// 批量更新实体（异步）
+        /// </summary>
+        Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+        
+        /// <summary>
         /// 删除实体
         /// </summary>
         void Delete(TEntity entity);
+        
+        /// <summary>
+        /// 删除实体（异步）
+        /// </summary>
+        Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// 根据主键删除实体
@@ -42,6 +61,11 @@ namespace FakeMicro.DatabaseAccess
         /// 批量删除实体
         /// </summary>
         void DeleteRange(IEnumerable<TEntity> entities);
+        
+        /// <summary>
+        /// 批量删除实体（异步）
+        /// </summary>
+        Task DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// 软删除实体
@@ -67,5 +91,15 @@ namespace FakeMicro.DatabaseAccess
         /// 执行批量更新（高性能）
         /// </summary>
         Task<int> BulkUpdateAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// 部分更新实体（异步）
+        /// </summary>
+        Task UpdatePartialAsync(TEntity entity, params Expression<Func<TEntity, object>>[] properties);
+        
+        /// <summary>
+        /// 部分更新实体（异步，带取消令牌）
+        /// </summary>
+        Task UpdatePartialAsync(TEntity entity, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties);
     }
 }

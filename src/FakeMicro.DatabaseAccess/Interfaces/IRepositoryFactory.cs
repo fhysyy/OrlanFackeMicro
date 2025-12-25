@@ -58,6 +58,42 @@ public interface IRepositoryFactory
     Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>() where TEntity : class, new();
     
     /// <summary>
+    /// 创建仓储实例，使用默认数据库类型，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>仓储实例</returns>
+    IRepository<TEntity, TKey> CreateRepository<TEntity, TKey>(TKey key) where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建仓储实例，使用默认数据库类型，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>仓储实例</returns>
+    Task<IRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(TKey key) where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>SQL仓储实例</returns>
+    ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>(TKey key) where TEntity : class, new();
+    
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>SQL仓储实例</returns>
+    Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>(TKey key) where TEntity : class, new();
+    
+    /// <summary>
     /// 创建MongoDB仓储实例，使用默认MongoDB数据库
     /// </summary>
     /// <typeparam name="TEntity">实体类型</typeparam>

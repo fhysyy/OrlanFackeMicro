@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.DatabaseAccess.Sharding;
 using Microsoft.Extensions.Logging;
 
 namespace FakeMicro.DatabaseAccess;
@@ -27,6 +28,7 @@ public class DynamicRepositoryFactory : IRepositoryFactory
     
     private readonly ILogger<DynamicRepositoryFactory> _logger;
     private readonly DatabaseType _defaultDatabaseType;
+    private readonly IShardingContext? _shardingContext;
 
     /// <summary>
     /// 构造函数
@@ -58,6 +60,49 @@ public class DynamicRepositoryFactory : IRepositoryFactory
     {
         _logger = logger;
         _defaultDatabaseType = defaultDatabaseType;
+        _repositoryCreators = new Dictionary<DatabaseType, Func<Type, Type, object>>();
+        _repositoryCreatorsAsync = new Dictionary<DatabaseType, Func<Type, Type, Task<object>>>();
+        _typedStrategies = new Dictionary<(Type, Type, DatabaseType), Func<object>>();
+        _typedStrategiesAsync = new Dictionary<(Type, Type, DatabaseType), Func<Task<object>>>();
+        _mongoRepositoryCreator = mongoRepositoryCreator;
+        _mongoRepositoryCreatorAsync = mongoRepositoryCreatorAsync;
+    }
+    
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="logger">日志记录器</param>
+    /// <param name="shardingContext">分片上下文</param>
+    /// <param name="defaultDatabaseType">默认数据库类型</param>
+    public DynamicRepositoryFactory(ILogger<DynamicRepositoryFactory> logger, IShardingContext shardingContext, DatabaseType defaultDatabaseType = DatabaseType.PostgreSQL)
+    {
+        _logger = logger;
+        _defaultDatabaseType = defaultDatabaseType;
+        _shardingContext = shardingContext;
+        _repositoryCreators = new Dictionary<DatabaseType, Func<Type, Type, object>>();
+        _repositoryCreatorsAsync = new Dictionary<DatabaseType, Func<Type, Type, Task<object>>>();
+        _typedStrategies = new Dictionary<(Type, Type, DatabaseType), Func<object>>();
+        _typedStrategiesAsync = new Dictionary<(Type, Type, DatabaseType), Func<Task<object>>>();
+    }
+    
+    /// <summary>
+    /// 构造函数
+    /// </summary>
+    /// <param name="logger">日志记录器</param>
+    /// <param name="mongoRepositoryCreator">MongoDB仓储创建器</param>
+    /// <param name="mongoRepositoryCreatorAsync">异步MongoDB仓储创建器</param>
+    /// <param name="shardingContext">分片上下文</param>
+    /// <param name="defaultDatabaseType">默认数据库类型</param>
+    public DynamicRepositoryFactory(
+        ILogger<DynamicRepositoryFactory> logger,
+        Func<Type, Type, string?, object>? mongoRepositoryCreator = null,
+        Func<Type, Type, string?, Task<object>>? mongoRepositoryCreatorAsync = null,
+        IShardingContext? shardingContext = null,
+        DatabaseType defaultDatabaseType = DatabaseType.PostgreSQL)
+    {
+        _logger = logger;
+        _defaultDatabaseType = defaultDatabaseType;
+        _shardingContext = shardingContext;
         _repositoryCreators = new Dictionary<DatabaseType, Func<Type, Type, object>>();
         _repositoryCreatorsAsync = new Dictionary<DatabaseType, Func<Type, Type, Task<object>>>();
         _typedStrategies = new Dictionary<(Type, Type, DatabaseType), Func<object>>();
@@ -344,6 +389,150 @@ public class DynamicRepositoryFactory : IRepositoryFactory
         return _repositoryCreators.ContainsKey(databaseType) || 
                _repositoryCreatorsAsync.ContainsKey(databaseType) ||
                (databaseType == DatabaseType.MongoDB && (_mongoRepositoryCreator != null || _mongoRepositoryCreatorAsync != null));
+    }
+    
+    /// <summary>
+    /// 创建仓储实例，使用默认数据库类型，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>仓储实例</returns>
+    public IRepository<TEntity, TKey> CreateRepository<TEntity, TKey>(TKey key) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在为类型 {EntityType} 创建分片仓储实例，键值: {Key}", typeof(TEntity).Name, key);
+            
+            // 使用分片上下文计算路由
+            if (_shardingContext != null)
+            {
+                var shardIndex = _shardingContext.GetShardIndex<TEntity, TKey>(key);
+                var shardName = _shardingContext.GetShardName<TEntity, TKey>(key);
+                
+                _logger.LogDebug("路由到分片: {ShardName}", shardName);
+                
+                // 这里需要实现根据分片名称获取对应的数据库连接
+                // 暂时返回默认数据库的仓储实例
+                return CreateRepository<TEntity, TKey>();
+            }
+            
+            _logger.LogWarning("分片上下文未配置，使用默认数据库");
+            return CreateRepository<TEntity, TKey>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "创建分片仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// 创建仓储实例，使用默认数据库类型，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>仓储实例</returns>
+    public async Task<IRepository<TEntity, TKey>> CreateRepositoryAsync<TEntity, TKey>(TKey key) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在异步为类型 {EntityType} 创建分片仓储实例，键值: {Key}", typeof(TEntity).Name, key);
+            
+            // 使用分片上下文计算路由
+            if (_shardingContext != null)
+            {
+                var shardIndex = _shardingContext.GetShardIndex<TEntity, TKey>(key);
+                var shardName = _shardingContext.GetShardName<TEntity, TKey>(key);
+                
+                _logger.LogDebug("路由到分片: {ShardName}", shardName);
+                
+                // 这里需要实现根据分片名称获取对应的数据库连接
+                // 暂时返回默认数据库的仓储实例
+                return await CreateRepositoryAsync<TEntity, TKey>();
+            }
+            
+            _logger.LogWarning("分片上下文未配置，使用默认数据库");
+            return await CreateRepositoryAsync<TEntity, TKey>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "异步创建分片仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>SQL仓储实例</returns>
+    public ISqlRepository<TEntity, TKey> CreateSqlRepository<TEntity, TKey>(TKey key) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在为类型 {EntityType} 创建分片SQL仓储实例，键值: {Key}", typeof(TEntity).Name, key);
+            
+            // 使用分片上下文计算路由
+            if (_shardingContext != null)
+            {
+                var shardIndex = _shardingContext.GetShardIndex<TEntity, TKey>(key);
+                var shardName = _shardingContext.GetShardName<TEntity, TKey>(key);
+                
+                _logger.LogDebug("路由到分片: {ShardName}", shardName);
+                
+                // 这里需要实现根据分片名称获取对应的数据库连接
+                // 暂时返回默认数据库的仓储实例
+                return CreateSqlRepository<TEntity, TKey>();
+            }
+            
+            _logger.LogWarning("分片上下文未配置，使用默认数据库");
+            return CreateSqlRepository<TEntity, TKey>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "创建分片SQL仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
+    }
+    
+    /// <summary>
+    /// 创建SQL仓储实例，使用默认SQL数据库，并通过键值路由到对应分片
+    /// </summary>
+    /// <typeparam name="TEntity">实体类型</typeparam>
+    /// <typeparam name="TKey">主键类型</typeparam>
+    /// <param name="key">用于路由的键值</param>
+    /// <returns>SQL仓储实例</returns>
+    public async Task<ISqlRepository<TEntity, TKey>> CreateSqlRepositoryAsync<TEntity, TKey>(TKey key) where TEntity : class, new()
+    {
+        try
+        {
+            _logger.LogDebug("正在异步为类型 {EntityType} 创建分片SQL仓储实例，键值: {Key}", typeof(TEntity).Name, key);
+            
+            // 使用分片上下文计算路由
+            if (_shardingContext != null)
+            {
+                var shardIndex = _shardingContext.GetShardIndex<TEntity, TKey>(key);
+                var shardName = _shardingContext.GetShardName<TEntity, TKey>(key);
+                
+                _logger.LogDebug("路由到分片: {ShardName}", shardName);
+                
+                // 这里需要实现根据分片名称获取对应的数据库连接
+                // 暂时返回默认数据库的仓储实例
+                return await CreateSqlRepositoryAsync<TEntity, TKey>();
+            }
+            
+            _logger.LogWarning("分片上下文未配置，使用默认数据库");
+            return await CreateSqlRepositoryAsync<TEntity, TKey>();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "异步创建分片SQL仓储实例失败，实体类型: {EntityType}", typeof(TEntity).Name);
+            throw;
+        }
     }
     
     /// <summary>

@@ -1,5 +1,5 @@
+using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 
 namespace FakeMicro.DatabaseAccess.Interfaces;
 
@@ -8,65 +8,29 @@ namespace FakeMicro.DatabaseAccess.Interfaces;
 /// </summary>
 public interface ITransactionContext
 {
-    Task BeginAsync();
-    Task CommitAsync();
-    Task RollbackAsync();
+    Task BeginAsync(CancellationToken cancellationToken = default);
+    Task CommitAsync(CancellationToken cancellationToken = default);
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 }
 
 /// <summary>
 /// 事务性仓储接口
 /// </summary>
-public interface ITransactionalRepository<TEntity, TKey> where TEntity : class
+public interface ITransactionalRepository
 {
-    Task<TEntity?> GetByIdAsync(TKey id);
-    Task AddAsync(TEntity entity);
-    Task UpdateAsync(TEntity entity);
-    Task DeleteAsync(TEntity entity);
-    Task SaveChangesAsync();
-}
+    /// <summary>
+    /// 执行事务
+    /// </summary>
+    /// <param name="action">事务内执行的操作</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default);
 
-/// <summary>
-/// 事务性仓储实现
-/// </summary>
-public class TransactionalRepository<TEntity, TKey> : ITransactionalRepository<TEntity, TKey> 
-    where TEntity : class
-{
-    private readonly ITransactionContext _transactionContext;
-    private readonly IRepository<TEntity, TKey> _repository;
-    private readonly ILogger<TransactionalRepository<TEntity, TKey>> _logger;
-
-    public TransactionalRepository(
-        ITransactionContext transactionContext,
-        IRepository<TEntity, TKey> repository,
-        ILogger<TransactionalRepository<TEntity, TKey>> logger)
-    {
-        _transactionContext = transactionContext ?? throw new ArgumentNullException(nameof(transactionContext));
-        _repository = repository ?? throw new ArgumentNullException(nameof(repository));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task AddAsync(TEntity entity)
-    {
-        await _repository.AddAsync(entity);
-    }
-
-    public async Task DeleteAsync(TEntity entity)
-    {
-        await _repository.DeleteAsync(entity);
-    }
-
-    public async Task<TEntity?> GetByIdAsync(TKey id)
-    {
-        return await _repository.GetByIdAsync(id);
-    }
-
-    public async Task SaveChangesAsync()
-    {
-        await _repository.SaveChangesAsync();
-    }
-
-    public async Task UpdateAsync(TEntity entity)
-    {
-        await _repository.UpdateAsync(entity);
-    }
+    /// <summary>
+    /// 执行事务并返回结果
+    /// </summary>
+    /// <typeparam name="TResult">结果类型</typeparam>
+    /// <param name="action">事务内执行的操作</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> action, CancellationToken cancellationToken = default);
 }

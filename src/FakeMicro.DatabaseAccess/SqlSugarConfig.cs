@@ -133,6 +133,7 @@ public static class SqlSugarConfig
             DatabaseType.SQLServer => SqlSugar.DbType.SqlServer,
             DatabaseType.PostgreSQL => SqlSugar.DbType.PostgreSQL,
             DatabaseType.MariaDB => SqlSugar.DbType.MySql,
+            DatabaseType.SQLite => SqlSugar.DbType.Sqlite,
             _ => SqlSugar.DbType.PostgreSQL // 默认PostgreSQL
         };
     }

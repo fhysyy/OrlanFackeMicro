@@ -69,6 +69,7 @@ public class DatabaseConfig
             DatabaseType.MySQL => 3306,
             DatabaseType.PostgreSQL => 5432,
             DatabaseType.MariaDB => 3306,
+            DatabaseType.SQLite => 0, // SQLite不需要端口
             _ => throw new ArgumentException("不支持的数据库类型")
         };
     }
@@ -89,6 +90,9 @@ public class DatabaseConfig
             
             DatabaseType.MariaDB => $"Server={Server};Port={Port};Database={Database};User={Username};Password={Password};Connection Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +
                                  (TrustServerCertificate ? "SslMode=Required;" : ""),
+            
+            DatabaseType.SQLite => $"Data Source={Database};Version=3;Timeout={ConnectionTimeout};Pooling=True;Max Pool Size={MaxPoolSize};" +
+                                (TrustServerCertificate ? "SSL Mode=Require;" : ""),
             
             _ => throw new ArgumentException($"不支持的数据库类型: {Type}")
         };

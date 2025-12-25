@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Security.Cryptography;
 using FakeMicro.Shared.Exceptions;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
@@ -160,7 +161,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
             }
         }
 
-        public async Task<PaginatedResult<User>> GetPagedAsync(int pageNumber, int pageSize, int? tenantId = null,
+        public async Task<PagedResult<User>> GetPagedAsync(int pageNumber, int pageSize, int? tenantId = null,
             Expression<Func<User, object>>? orderBy = null, bool isDescending = false,
             CancellationToken cancellationToken = default)
         {
@@ -188,13 +189,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 var totalCount = await query.CountAsync();
                 var items = await query.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToListAsync();
                 
-                return new PaginatedResult<User>
-                {
-                    Items = items,
-                    TotalCount = totalCount,
-                    PageNumber = pageNumber,
-                    PageSize = pageSize
-                };
+                return PagedResult<User>.SuccessResult(items, totalCount, pageNumber, pageSize);
             }
             catch (SqlSugarException ex)
             {

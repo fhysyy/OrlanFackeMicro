@@ -1,6 +1,7 @@
 using FakeMicro.Entities;
 using System.Linq.Expressions;
 using System.Threading;
+using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Interfaces;
 
@@ -27,7 +28,7 @@ public interface IUserRepository : IRepository<User, long>
     /// <summary>
     /// 获取分页用户列表
     /// </summary>
-    Task<PaginatedResult<User>> GetPagedAsync(int pageNumber, int pageSize, int? tenantId = null, 
+    Task<PagedResult<User>> GetPagedAsync(int pageNumber, int pageSize, int? tenantId = null, 
         Expression<Func<User, object>>? orderBy = null, bool isDescending = false,
         CancellationToken cancellationToken = default);
     

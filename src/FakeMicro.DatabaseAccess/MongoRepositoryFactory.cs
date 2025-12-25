@@ -200,5 +200,28 @@ public class MongoRepositoryFactory : IMongoRepositoryFactory
     {
         return CreateRepositoryAsyncInternal<TEntity, TKey>(null, databaseName, CancellationToken.None);
     }
+
+    // 新增：实现带TKey参数的方法
+    IRepository<TEntity, TKey> IRepositoryFactory.CreateRepository<TEntity, TKey>(TKey key)
+    {
+        // MongoDB可能不需要分片路由，直接返回MongoDB仓储
+        return CreateRepository<TEntity, TKey>();
+    }
+
+    Task<IRepository<TEntity, TKey>> IRepositoryFactory.CreateRepositoryAsync<TEntity, TKey>(TKey key)
+    {
+        // MongoDB可能不需要分片路由，直接返回MongoDB仓储
+        return CreateRepositoryAsync<TEntity, TKey>().ContinueWith(task => (IRepository<TEntity, TKey>)task.Result);
+    }
+
+    ISqlRepository<TEntity, TKey> IRepositoryFactory.CreateSqlRepository<TEntity, TKey>(TKey key)
+    {
+        throw new NotSupportedException("MongoRepositoryFactory does not support creating SQL repositories.");
+    }
+
+    Task<ISqlRepository<TEntity, TKey>> IRepositoryFactory.CreateSqlRepositoryAsync<TEntity, TKey>(TKey key)
+    {
+        throw new NotSupportedException("MongoRepositoryFactory does not support creating SQL repositories.");
+    }
     #endregion
 }

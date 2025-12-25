@@ -1,9 +1,10 @@
-﻿#nullable enable
+#nullable enable
 using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
+using MongoDB.Bson.Serialization;
 using MongoDB.Driver;
 using System;
 using System.Collections.Generic;
@@ -21,7 +22,7 @@ namespace FakeMicro.DatabaseAccess;
 /// </summary>
 /// <typeparam name="TEntity">实体类型</typeparam>
 /// <typeparam name="TKey">主键类型</typeparam>
-public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, TKey> where TEntity : class
+public partial class MongoRepository<TEntity, TKey>:IMongoRepository<TEntity, TKey> where TEntity : class
 {
     private readonly MongoClient _mongoClient;
     private readonly ILogger<MongoRepository<TEntity, TKey>> _logger;
@@ -39,6 +40,11 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
         _mongoClient = mongoClient ?? throw new ArgumentNullException(nameof(mongoClient));
         _defaultDatabaseName = defaultDatabaseName ?? "FakeMicroDB";
     }
+
+    /// <summary>
+    /// 获取实体类型
+    /// </summary>
+    public Type EntityType => typeof(TEntity);
 
     /// <summary>
     /// 获取MongoDB集合
@@ -88,177 +94,25 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
         return await collection.Find(_ => true).ToListAsync(cancellationToken);
     }
 
-
-
     /// <summary>
-    /// 获取分页实体（指定数据库和集合）
+    /// 获取所有实体（指定数据库）
     /// </summary>
-    /// <param name="pageIndex">页码</param>
-    /// <param name="pageSize">每页大小</param>
-    /// <param name="orderBy">排序表达式</param>
-    /// <param name="isDescending">是否降序</param>
     /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>分页结果</returns>
-    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        string? databaseName = null,
-        string? collectionName = null,
-        CancellationToken cancellationToken = default)
+    /// <returns>实体集合</returns>
+    public async Task<IEnumerable<TEntity>> GetAllAsync(string? databaseName, CancellationToken cancellationToken = default)
     {
-        var collection = GetCollection(databaseName, collectionName);
-        var totalCount = await collection.CountDocumentsAsync(FilterDefinition<TEntity>.Empty, cancellationToken: cancellationToken);
-        var query = collection.Find(_ => true);
-
-        // 应用排序
-        if (orderBy != null)
-        {
-            query = isDescending
-                ? query.SortByDescending(orderBy)
-                : query.SortBy(orderBy);
-        }
-
-        var items = await query
-            .Skip((pageIndex - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return PagedResult<TEntity>.SuccessResult(
-            items,
-            (int)totalCount,
-            pageIndex,
-            pageSize
-        );
-    }
-
-
-
-    /// <summary>
-    /// 根据条件获取分页实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="predicate">查询条件</param>
-    /// <param name="pageIndex">页码</param>
-    /// <param name="pageSize">每页大小</param>
-    /// <param name="orderBy">排序表达式</param>
-    /// <param name="isDescending">是否降序</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>分页结果</returns>
-    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageIndex, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        string? databaseName = null,
-        string? collectionName = null,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var totalCount = await collection.CountDocumentsAsync(predicate, cancellationToken: cancellationToken);
-        var query = collection.Find(predicate);
-
-        // 应用排序
-        if (orderBy != null)
-        {
-            query = isDescending
-                ? query.SortByDescending(orderBy)
-                : query.SortBy(orderBy);
-        }
-
-        var items = await query
-            .Skip((pageIndex - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<TEntity>
-        {
-            Data = items,
-            TotalCount = (int)totalCount,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-           
-        };
+        return await GetAllAsync(databaseName, null, cancellationToken);
     }
 
     /// <summary>
-    /// 根据条件获取分页实体（使用BsonDocument过滤条件，指定数据库和集合）
+    /// 获取所有实体
     /// </summary>
-    /// <param name="filter">MongoDB过滤条件</param>
-    /// <param name="pageIndex">页码</param>
-    /// <param name="pageSize">每页大小</param>
-    /// <param name="orderBy">排序表达式</param>
-    /// <param name="isDescending">是否降序</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>分页结果</returns>
-    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter,
-        int pageIndex, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        string? databaseName = null,
-        string? collectionName = null,
-        CancellationToken cancellationToken = default)
+    /// <returns>实体集合</returns>
+    public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        try
-        {
-            // 确定数据库名称
-            var dbName = databaseName ?? _defaultDatabaseName;
-            var database = _mongoClient.GetDatabase(dbName);
-
-            // 确定集合名称
-            var collName = collectionName ?? typeof(TEntity).Name;
-            var bsonCollection = database.GetCollection<BsonDocument>(collName);
-            
-            var totalCount = await bsonCollection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-            var query = bsonCollection.Find(filter);
-
-            // 应用排序
-            if (orderBy != null)
-            {
-                // 注意：使用BsonDocument时，排序可能需要手动构建
-                // 这里简单实现，如果需要更复杂的排序功能，可以扩展
-            }
-
-            var bsonItems = await query
-                .Skip((pageIndex - 1) * pageSize)
-                .Limit(pageSize)
-                .ToListAsync(cancellationToken);
-            
-            // 将BsonDocument转换为TEntity
-            var items = bsonItems.Select(bson => {
-                if (typeof(TEntity) == typeof(object))
-                {
-                    // 如果TEntity是object类型，直接返回BsonDocument的Dictionary表示
-                    return bson.ToDictionary() as TEntity;
-                }
-                else
-                {
-                    // 否则使用JSON序列化转换
-                    var json = bson.ToJson();
-                    return Newtonsoft.Json.JsonConvert.DeserializeObject<TEntity>(json);
-                }
-            })
-            .Where(entity => entity != null)
-            .ToList();
-
-            var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-            return new PagedResult<TEntity>
-            {
-                Data = items,
-                PageIndex = pageIndex,
-                PageSize = pageSize,
-                TotalCount = (int)totalCount,
-               
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "按条件分页查询MongoDB数据失败");
-            throw;
-        }
+        return await GetAllAsync(null, null, cancellationToken);
     }
 
     /// <summary>
@@ -272,18 +126,32 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     public async Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
-        return await collection.Find(Builders<TEntity>.Filter.Eq("_id", id)).FirstOrDefaultAsync(cancellationToken);
+        var filter = Builders<TEntity>.Filter.Eq("_id", id);
+        return await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
     }
 
     /// <summary>
-    /// 根据主键获取实体（指定数据库和集合）
+    /// 根据主键获取实体（指定数据库）
     /// </summary>
     /// <param name="id">主键值</param>
-    /// <param name="includes">包含的导航属性</param>
     /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>实体对象，如果不存在则返回null</returns>
+    public async Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        return await GetByIdAsync(id, databaseName, null, cancellationToken);
+    }
 
+    /// <summary>
+    /// 根据主键获取实体
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>实体对象，如果不存在则返回null</returns>
+    public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
+    {
+        return await GetByIdAsync(id, null, null, cancellationToken);
+    }
 
     /// <summary>
     /// 根据条件获取实体（指定数据库和集合）
@@ -292,7 +160,7 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     /// <param name="databaseName">数据库名称</param>
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>实体集合</returns>
+    /// <returns>符合条件的实体集合</returns>
     public async Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
@@ -300,33 +168,153 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     }
 
     /// <summary>
-    /// 根据条件分页获取实体（指定数据库和集合）
+    /// 根据条件获取实体（指定数据库）
     /// </summary>
     /// <param name="predicate">查询条件</param>
-    /// <param name="pageIndex">页码（从1开始）</param>
-    /// <param name="pageSize">每页大小</param>
     /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的实体集合</returns>
+    public async Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        return await GetByConditionAsync(predicate, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据条件获取实体
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的实体集合</returns>
+    public async Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        return await GetByConditionAsync(predicate, null, null, cancellationToken);
+    }
+
+    /// <summary>
+        /// 获取分页实体（指定数据库和集合）
+        /// </summary>
+        /// <param name="pageIndex">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序表达式</param>
+        /// <param name="isDescending">是否降序</param>
+        /// <param name="databaseName">数据库名称</param>
+        /// <param name="collectionName">集合名称</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>分页结果</returns>
+        public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, string? databaseName = null, string? collectionName = null, CancellationToken cancellationToken = default)
+        {
+            var collection = GetCollection(databaseName, collectionName);
+            var totalCount = await collection.CountDocumentsAsync(_ => true, cancellationToken: cancellationToken);
+
+            var query = collection.Find(_ => true);
+
+            // 应用排序
+            if (orderBy != null)
+            {
+                query = isDescending ? query.SortByDescending(orderBy) : query.SortBy(orderBy);
+            }
+
+            // 应用分页
+            var items = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return PagedResult<TEntity>.SuccessResult(items, (int)totalCount, pageIndex, pageSize);
+        }
+
+    /// <summary>
+    /// 获取分页实体（指定数据库）
+    /// </summary>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="databaseName">数据库名称</param>
     /// <param name="cancellationToken">取消令牌</param>
     /// <returns>分页结果</returns>
-    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, string? databaseName = null, CancellationToken cancellationToken = default)
     {
-        var collection = GetCollection(databaseName, collectionName);
-        var totalCount = await collection.CountDocumentsAsync(predicate, cancellationToken: cancellationToken);
-        var items = await collection.Find(predicate)
-            .Skip((pageIndex - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync(cancellationToken);
+        return await GetPagedAsync(pageIndex, pageSize, orderBy, isDescending, databaseName, null, cancellationToken);
+    }
 
-        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-        return new PagedResult<TEntity>
+    /// <summary>
+    /// 获取分页实体
+    /// </summary>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>分页结果</returns>
+    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, CancellationToken cancellationToken = default)
+    {
+        return await GetPagedAsync(pageIndex, pageSize, orderBy, isDescending, null, null, cancellationToken);
+    }
+
+    /// <summary>
+        /// 根据条件获取分页实体（指定数据库和集合）
+        /// </summary>
+        /// <param name="predicate">查询条件</param>
+        /// <param name="pageIndex">页码</param>
+        /// <param name="pageSize">每页大小</param>
+        /// <param name="orderBy">排序表达式</param>
+        /// <param name="isDescending">是否降序</param>
+        /// <param name="databaseName">数据库名称</param>
+        /// <param name="collectionName">集合名称</param>
+        /// <param name="cancellationToken">取消令牌</param>
+        /// <returns>分页结果</returns>
+        public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, string? databaseName = null, string? collectionName = null, CancellationToken cancellationToken = default)
         {
-            Data = items,
-            PageIndex = pageIndex,
-            PageSize = pageSize,
-            TotalCount = (int)totalCount,
-          
-        };
+            var collection = GetCollection(databaseName, collectionName);
+            var totalCount = await collection.CountDocumentsAsync(predicate, cancellationToken: cancellationToken);
+
+            var query = collection.Find(predicate);
+
+            // 应用排序
+            if (orderBy != null)
+            {
+                query = isDescending ? query.SortByDescending(orderBy) : query.SortBy(orderBy);
+            }
+
+            // 应用分页
+            var items = await query
+                .Skip((pageIndex - 1) * pageSize)
+                .Limit(pageSize)
+                .ToListAsync(cancellationToken);
+
+            return PagedResult<TEntity>.SuccessResult(items, (int)totalCount, pageIndex, pageSize);
+        }
+
+    /// <summary>
+    /// 根据条件获取分页实体（指定数据库）
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>分页结果</returns>
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, string? databaseName = null, CancellationToken cancellationToken = default)
+    {
+        return await GetPagedByConditionAsync(predicate, pageIndex, pageSize, orderBy, isDescending, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据条件获取分页实体
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>分页结果</returns>
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, CancellationToken cancellationToken = default)
+    {
+        return await GetPagedByConditionAsync(predicate, pageIndex, pageSize, orderBy, isDescending, null, null, cancellationToken);
     }
 
     /// <summary>
@@ -344,6 +332,29 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     }
 
     /// <summary>
+    /// 检查实体是否存在（指定数据库）
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>是否存在</returns>
+    public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        return await ExistsAsync(predicate, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 检查实体是否存在
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>是否存在</returns>
+    public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        return await ExistsAsync(predicate, null, null, cancellationToken);
+    }
+
+    /// <summary>
     /// 获取实体数量（指定数据库和集合）
     /// </summary>
     /// <param name="predicate">查询条件</param>
@@ -357,9 +368,33 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
         var filter = predicate != null ? Builders<TEntity>.Filter.Where(predicate) : Builders<TEntity>.Filter.Empty;
         return (int)await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
     }
+
+    /// <summary>
+    /// 获取实体数量（指定数据库）
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>实体数量</returns>
+    public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        return await CountAsync(predicate, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 获取实体数量
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>实体数量</returns>
+    public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate, CancellationToken cancellationToken = default)
+    {
+        return await CountAsync(predicate, null, null, cancellationToken);
+    }
+
     #endregion
 
-    #region 增删改方法（支持collectionName）
+    #region 写操作方法
 
     /// <summary>
     /// 添加实体（指定数据库和集合）
@@ -368,11 +403,31 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     /// <param name="databaseName">数据库名称</param>
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>添加的实体</returns>
     public async Task AddAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
         await collection.InsertOneAsync(entity, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 添加实体（指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task AddAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await AddAsync(entity, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 添加实体
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        await AddAsync(entity, null, null, cancellationToken);
     }
 
     /// <summary>
@@ -389,6 +444,39 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     }
 
     /// <summary>
+    /// 批量添加实体（指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task AddRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await AddRangeAsync(entities, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量添加实体
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        await AddRangeAsync(entities, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 分批添加实体（适用于大量数据，指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="batchSize">每批大小</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, int batchSize = 1000, CancellationToken cancellationToken = default)
+    {
+        await AddBatchedAsync(entities, databaseName, null, batchSize, cancellationToken);
+    }
+
+    /// <summary>
     /// 分批添加实体（适用于大量数据，指定数据库和集合）
     /// </summary>
     /// <param name="entities">实体集合</param>
@@ -399,1024 +487,68 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     public async Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, int batchSize = 1000, CancellationToken cancellationToken = default)
     {
         var collection = GetCollection(databaseName, collectionName);
-        var batchList = entities.ToList();
-        for (int i = 0; i < batchList.Count; i += batchSize)
+        var entityList = entities.ToList();
+        
+        for (int i = 0; i < entityList.Count; i += batchSize)
         {
-            var batch = batchList.Skip(i).Take(batchSize);
+            var batch = entityList.Skip(i).Take(batchSize);
             await collection.InsertManyAsync(batch, cancellationToken: cancellationToken);
         }
-    }
-
-    /// <summary>
-    /// 更新实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="entity">实体对象</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>更新的实体</returns>
-    public async Task UpdateAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id");
-        if (idProperty == null)
-        {
-            throw new InvalidOperationException("实体必须包含Id/id属性");
-        }
-
-        var idValue = (TKey)idProperty.GetValue(entity);
-        var filter = Builders<TEntity>.Filter.Eq("_id", ObjectId.Parse(idValue.ToString()));
-
-        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 更新实体（直接指定主键值，不指定数据库和集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="entity">要更新的实体</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdateAsync(TKey id, TEntity entity, CancellationToken cancellationToken = default)
-    {
-        await UpdateAsync(id, entity, null, null, cancellationToken);
-    }
-
-    /// <summary>
-    /// 更新实体（直接指定主键值和数据库，不指定集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="entity">要更新的实体</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdateAsync(TKey id, TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        await UpdateAsync(id, entity, databaseName, null, cancellationToken);
-    }
-
-    /// <summary>
-    /// 更新实体（直接指定主键值、数据库和集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="entity">要更新的实体</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdateAsync(TKey id, TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var filter = Builders<TEntity>.Filter.Eq("_id", ObjectId.Parse(id.ToString()));
-        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 部分更新实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="updateDefinition">更新定义</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdatePartialAsync(TKey id, UpdateDefinition<TEntity> updateDefinition, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var filter = Builders<TEntity>.Filter.Eq("_id", id);
-        await collection.UpdateOneAsync(filter, updateDefinition, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 部分更新实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="predicate">更新条件</param>
-    /// <param name="updateDefinition">更新定义</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdatePartialAsync(Expression<Func<TEntity, bool>> predicate, UpdateDefinition<TEntity> updateDefinition, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        await collection.UpdateManyAsync(predicate, updateDefinition, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量更新实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="entities">实体集合</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var idProperty = typeof(TEntity).GetProperty("Id");
-        if (idProperty == null)
-        {
-            throw new InvalidOperationException("实体必须包含Id属性");
-        }
-
-        foreach (var entity in entities)
-        {
-            var idValue = (TKey)idProperty.GetValue(entity);
-            var filter = Builders<TEntity>.Filter.Eq("_id", ObjectId.Parse(idValue.ToString()));
-            await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 删除实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="entity">实体对象</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task DeleteAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var idProperty = typeof(TEntity).GetProperty("Id");
-        if (idProperty == null)
-        {
-            throw new InvalidOperationException("实体必须包含Id属性");
-        }
-
-        var idValue = (TKey)idProperty.GetValue(entity);
-        var filter = Builders<TEntity>.Filter.Eq("_id", ObjectId.Parse(idValue.ToString()));
-        await collection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据主键删除实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="id">主键值</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task DeleteByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var filter = Builders<TEntity>.Filter.Eq("_id", id);
-        await collection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量删除实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="entities">实体集合</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var idProperty = typeof(TEntity).GetProperty("Id");
-        if (idProperty == null)
-        {
-            throw new InvalidOperationException("实体必须包含Id属性");
-        }
-
-        foreach (var entity in entities)
-        {
-            var idValue = (TKey)idProperty.GetValue(entity);
-            var filter = Builders<TEntity>.Filter.Eq("_id", idValue);
-            await collection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 分批删除实体（适用于大量数据，指定数据库和集合）
-    /// </summary>
-    /// <param name="entities">实体集合</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="batchSize">每批大小</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, int batchSize = 1000, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var idProperty = typeof(TEntity).GetProperty("Id");
-        if (idProperty == null)
-        {
-            throw new InvalidOperationException("实体必须包含Id属性");
-        }
-
-        var batchList = entities.ToList();
-        for (int i = 0; i < batchList.Count; i += batchSize)
-        {
-            var batch = batchList.Skip(i).Take(batchSize);
-            foreach (var entity in batch)
-            {
-                var idValue = (TKey)idProperty.GetValue(entity);
-                var filter = Builders<TEntity>.Filter.Eq("_id", idValue);
-                await collection.DeleteOneAsync(filter, cancellationToken: cancellationToken);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 根据条件删除实体（指定数据库和集合）
-    /// </summary>
-    /// <param name="predicate">删除条件</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>删除的实体数量</returns>
-    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var result = await collection.DeleteManyAsync(predicate, cancellationToken: cancellationToken);
-        return (int)result.DeletedCount;
-    }
-
-    /// <summary>
-    /// 批量更新符合条件的文档（指定数据库和集合）
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="update">更新定义</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>更新的文档数量</returns>
-    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var result = await collection.UpdateManyAsync(filter, update, cancellationToken: cancellationToken);
-        return result.ModifiedCount;
-    }
-
-    /// <summary>
-    /// 批量删除符合条件的文档（指定数据库和集合）
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>删除的文档数量</returns>
-    public async Task<long> DeleteManyAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var result = await collection.DeleteManyAsync(filter, cancellationToken: cancellationToken);
-        return result.DeletedCount;
-    }
-
-    /// <summary>
-    /// 使用FilterDefinition查询文档（指定数据库和集合）
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>符合条件的文档集合</returns>
-    public async Task<List<TEntity>> FindAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        return await collection.Find(filter).ToListAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// 使用FilterDefinition查询单个文档（指定数据库和集合）
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="collectionName">集合名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>符合条件的单个文档</returns>
-    public async Task<TEntity> FindOneAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName, collectionName);
-        var result = await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
-        return result ?? throw new InvalidOperationException("未找到符合条件的文档");
-    }
-    #endregion
-
-    #region IRepository实现
-
-    /// <summary>
-    /// 获取所有实体
-    /// </summary>
-    public async Task<IEnumerable<TEntity>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        return await collection.Find(Builders<TEntity>.Filter.Empty).ToListAsync(cancellationToken);
-    }
-
-
-
-    /// <summary>
-    /// 获取分页实体
-    /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        CancellationToken cancellationToken = default)
-    {
-        return await GetPagedByConditionAsync(it => true, pageNumber, pageSize, orderBy, isDescending, cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据主键获取实体
-    /// </summary>
-    public async Task<TEntity?> GetByIdAsync(TKey id, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Eq("Id", id);
-        return await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
-    }
-
-
-
-    /// <summary>
-    /// 根据条件获取实体
-    /// </summary>
-    public async Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        return await collection.Find(filter).ToListAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据条件获取分页实体
-    /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageNumber, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        CancellationToken cancellationToken = default)
-    {
-        if (pageNumber < 1) pageNumber = 1;
-        if (pageSize < 1) pageSize = 10;
-        if (pageSize > 1000) pageSize = 1000;
-
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        var totalCount = await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-        IFindFluent<TEntity, TEntity> findFluent = collection.Find(filter);
-
-        // 排序
-        if (orderBy != null)
-        {
-            findFluent = isDescending
-                ? findFluent.SortByDescending(orderBy)
-                : findFluent.SortBy(orderBy);
-        }
-        else
-        {
-            // 默认按Id排序
-            findFluent = findFluent.SortBy(x => x.GetType().GetProperty("Id").GetValue(x));
-        }
-
-        // 分页
-        var items = await findFluent
-            .Skip((pageNumber - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<TEntity>
-        {
-            Data = items,
-            TotalCount = (int)totalCount,
-            PageIndex = pageNumber,
-            PageSize = pageSize,
-           
-        };
-    }
-
-    /// <summary>
-    /// 检查实体是否存在
-    /// </summary>
-    public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        return await collection.Find(filter).AnyAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// 获取实体数量
-    /// </summary>
-    public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate = null,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = predicate != null ? Builders<TEntity>.Filter.Where(predicate) : Builders<TEntity>.Filter.Empty;
-        return (int)await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 添加实体
-    /// </summary>
-    public async Task AddAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        await collection.InsertOneAsync(entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量添加实体
-    /// </summary>
-    public async Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        await collection.InsertManyAsync(entities, cancellationToken: cancellationToken);
     }
 
     /// <summary>
     /// 分批添加实体（适用于大量数据）
     /// </summary>
-    public async Task AddBatchedAsync(IEnumerable<TEntity> entities, int batchSize = 1000,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var batches = entities.Chunk(batchSize);
-        foreach (var batch in batches)
-        {
-            await collection.InsertManyAsync(batch, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 更新实体
-    /// </summary>
-    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 部分更新实体（仅更新指定属性）
-    /// </summary>
-    public async Task UpdatePartialAsync(TEntity entity, params Expression<Func<TEntity, object>>[] properties)
-    {
-        await UpdatePartialAsync(entity, CancellationToken.None, properties);
-    }
-
-    /// <summary>
-    /// 部分更新实体（仅更新指定属性，带取消令牌）
-    /// </summary>
-    public async Task UpdatePartialAsync(TEntity entity, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties)
-    {
-        // 使用MongoDB.Driver直接更新，因为SqlSugar.MongoDbCore的SetColumns方法不支持这种用法
-        var collection = GetCollection();
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        var update = Builders<TEntity>.Update.Combine();
-
-        // 构建更新定义
-        foreach (var property in properties)
-        {
-            var memberExpression = property.Body as MemberExpression;
-            if (memberExpression != null)
-            {
-                var propertyName = memberExpression.Member.Name;
-                var propertyInfo = memberExpression.Member as System.Reflection.PropertyInfo;
-                if (propertyInfo != null)
-                {
-                    var value = propertyInfo.GetValue(entity);
-                    update = update.Set(propertyName, value);
-                }
-            }
-        }
-
-        await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量更新实体
-    /// </summary>
-    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        foreach (var entity in entities)
-        {
-            var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-            var idValue = idProperty.GetValue(entity);
-
-            var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-            await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 删除实体
-    /// </summary>
-    public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        await collection.DeleteOneAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据主键删除实体
-    /// </summary>
-    public async Task DeleteByIdAsync(TKey id, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Eq("Id", id);
-        await collection.DeleteOneAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量删除实体
-    /// </summary>
-    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var ids = entities.Select(e => idProperty.GetValue(e)).ToList();
-
-        var filter = Builders<TEntity>.Filter.In(idProperty.Name, ids);
-        await collection.DeleteManyAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 分批删除实体（适用于大量数据）
-    /// </summary>
-    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, int batchSize = 1000,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-
-        var batches = entities.Chunk(batchSize);
-        foreach (var batch in batches)
-        {
-            var ids = batch.Select(e => idProperty.GetValue(e)).ToList();
-            var filter = Builders<TEntity>.Filter.In(idProperty.Name, ids);
-            await collection.DeleteManyAsync(filter, cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 根据条件删除实体
-    /// </summary>
-    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection();
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        var result = await collection.DeleteManyAsync(filter, cancellationToken);
-        return (int)result.DeletedCount;
-    }
-
-    /// <summary>
-    /// 保存更改
-    /// MongoDB是立即持久化的，此方法仅返回1
-    /// </summary>
-    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-    {
-        return Task.FromResult(1);
-    }
-
-    /// <summary>
-    /// 执行事务
-    /// MongoDB 4.0+支持事务，但需要在复制集环境中
-    /// </summary>
-    public async Task ExecuteInTransactionAsync(Func<Task> action,
-        CancellationToken cancellationToken = default)
-    {
-        // 使用MongoDB.Driver直接执行事务
-        var collection = GetCollection();
-        var mongoClient = collection.Database.Client;
-
-        // 使用MongoDB事务API
-        using (var session = await mongoClient.StartSessionAsync(cancellationToken: cancellationToken))
-        {
-            session.StartTransaction();
-
-            try
-            {
-                // 执行事务操作
-                await action();
-
-                // 提交事务
-                await session.CommitTransactionAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                // 回滚事务
-                await session.AbortTransactionAsync(cancellationToken);
-                throw;
-            }
-        }
-    }
-
-    /// <summary>
-    /// 执行事务并返回结果
-    /// </summary>
-    public async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> action,
-        CancellationToken cancellationToken = default)
-    {
-        // 使用MongoDB.Driver直接执行事务
-        var collection = GetCollection();
-        var mongoClient = collection.Database.Client;
-
-        // 使用MongoDB事务API
-        using (var session = await mongoClient.StartSessionAsync(cancellationToken: cancellationToken))
-        {
-            session.StartTransaction();
-            TResult result;
-
-            try
-            {
-                // 执行事务操作并获取结果
-                result = await action();
-
-                // 提交事务
-                await session.CommitTransactionAsync(cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                // 回滚事务
-                await session.AbortTransactionAsync(cancellationToken);
-                throw;
-            }
-
-            return result;
-        }
-    }
-
-    /// <summary>
-    /// 禁用实体跟踪
-    /// MongoDB.Driver不使用实体跟踪，此方法为空实现
-    /// </summary>
-    public void DisableTracking()
-    {
-        // MongoDB.Driver不使用实体跟踪，无需实现
-    }
-
-    /// <summary>
-    /// 启用实体跟踪
-    /// MongoDB.Driver不使用实体跟踪，此方法为空实现
-    /// </summary>
-    public void EnableTracking()
-    {
-        // MongoDB.Driver不使用实体跟踪，无需实现
-    }
-
-    /// <summary>
-    /// 清除实体跟踪缓存
-    /// MongoDB.Driver不使用实体跟踪，此方法为空实现
-    /// </summary>
-    public void ClearTracker()
-    {
-        // MongoDB.Driver不使用实体跟踪，无需实现
-    }
-
-    #endregion
-
-    #region IMongoRepository实现
-
-    /// <summary>
-    /// 获取所有实体（指定数据库）
-    /// </summary>
-    public async Task<IEnumerable<TEntity>> GetAllAsync(string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        return await collection.Find(Builders<TEntity>.Filter.Empty).ToListAsync(cancellationToken);
-    }
-
-
-
-    /// <summary>
-    /// 获取分页实体（指定数据库）
-    /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedAsync(int pageNumber, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        string? databaseName = null,
-        CancellationToken cancellationToken = default)
-    {
-        return await GetPagedByConditionAsync(it => true, pageNumber, pageSize, orderBy, isDescending, databaseName, cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据主键获取实体（指定数据库）
-    /// </summary>
-    public async Task<TEntity?> GetByIdAsync(TKey id, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        // 使用字符串直接比较，避免使用ObjectId类型
-        var filter = Builders<TEntity>.Filter.Eq("_id", id.ToString());
-        return await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
-    }
-
-
-
-    /// <summary>
-    /// 根据条件获取实体（指定数据库）
-    /// </summary>
-    public async Task<IEnumerable<TEntity>> GetByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        return await collection.Find(filter).ToListAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据条件获取分页实体（指定数据库）
-    /// </summary>
-    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(Expression<Func<TEntity, bool>> predicate,
-        int pageNumber, int pageSize,
-        Expression<Func<TEntity, object>>? orderBy = null,
-        bool isDescending = false,
-        string? databaseName = null,
-        CancellationToken cancellationToken = default)
-    {
-        if (pageNumber < 1) pageNumber = 1;
-        if (pageSize < 1) pageSize = 10;
-        if (pageSize > 1000) pageSize = 1000;
-
-        var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        var totalCount = await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-        var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
-
-        IFindFluent<TEntity, TEntity> findFluent = collection.Find(filter);
-
-        // 排序
-        if (orderBy != null)
-        {
-            findFluent = isDescending
-                ? findFluent.SortByDescending(orderBy)
-                : findFluent.SortBy(orderBy);
-        }
-        else
-        {
-            // 默认按Id排序
-            findFluent = findFluent.SortBy(x => x.GetType().GetProperty("Id").GetValue(x));
-        }
-
-        // 分页
-        var items = await findFluent
-            .Skip((pageNumber - 1) * pageSize)
-            .Limit(pageSize)
-            .ToListAsync(cancellationToken);
-
-        return new PagedResult<TEntity>
-        {
-            Data = items,
-            PageIndex = pageNumber,
-            PageSize = pageSize,
-            TotalCount = (int)totalCount,
-        };
-    }
-
-    /// <summary>
-    /// 检查实体是否存在（指定数据库）
-    /// </summary>
-    public async Task<bool> ExistsAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        return await collection.Find(filter).AnyAsync(cancellationToken);
-    }
-
-    /// <summary>
-    /// 获取实体数量（指定数据库）
-    /// </summary>
-    public async Task<int> CountAsync(Expression<Func<TEntity, bool>>? predicate, string? databaseName,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var filter = predicate != null ? Builders<TEntity>.Filter.Where(predicate) : Builders<TEntity>.Filter.Empty;
-        return (int)await collection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 添加实体（指定数据库）
-    /// </summary>
-    public async Task AddAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        await collection.InsertOneAsync(entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量添加实体（指定数据库）
-    /// </summary>
-    public async Task AddRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        await collection.InsertManyAsync(entities, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 分批添加实体（适用于大量数据，指定数据库）
-    /// </summary>
-    public async Task AddBatchedAsync(IEnumerable<TEntity> entities, string? databaseName,
-        int batchSize = 1000,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var batches = entities.Chunk(batchSize);
-        foreach (var batch in batches)
-        {
-            await collection.InsertManyAsync(batch, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 更新实体（指定数据库）
-    /// </summary>
-    public async Task UpdateAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 部分更新实体（仅更新指定属性，指定数据库）
-    /// </summary>
-    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, params Expression<Func<TEntity, object>>[] properties)
-    {
-        await UpdatePartialAsync(entity, databaseName, CancellationToken.None, properties);
-    }
-
-    /// <summary>
-    /// 部分更新实体（仅更新指定属性，带取消令牌，指定数据库）
-    /// </summary>
-    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties)
-    {
-        // 使用MongoDB.Driver直接更新，因为SqlSugar.MongoDbCore的SetColumns方法不支持这种用法
-        var collection = GetCollection(databaseName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        var update = Builders<TEntity>.Update.Combine();
-
-        // 构建更新定义
-        foreach (var property in properties)
-        {
-            var memberExpression = property.Body as MemberExpression;
-            if (memberExpression != null)
-            {
-                var propertyName = memberExpression.Member.Name;
-                var propertyInfo = memberExpression.Member as System.Reflection.PropertyInfo;
-                if (propertyInfo != null)
-                {
-                    var value = propertyInfo.GetValue(entity);
-                    update = update.Set(propertyName, value);
-                }
-            }
-        }
-
-        await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量更新实体（指定数据库）
-    /// </summary>
-    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        foreach (var entity in entities)
-        {
-            var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-            var idValue = idProperty.GetValue(entity);
-
-            var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-            await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 删除实体（指定数据库）
-    /// </summary>
-    public async Task DeleteAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var idValue = idProperty.GetValue(entity);
-
-        var filter = Builders<TEntity>.Filter.Eq(idProperty.Name, idValue);
-        await collection.DeleteOneAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 根据主键删除实体（指定数据库）
-    /// </summary>
-    public async Task DeleteByIdAsync(TKey id, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Eq("Id", id);
-        await collection.DeleteOneAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 批量删除实体（指定数据库）
-    /// </summary>
-    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-        var ids = entities.Select(e => idProperty.GetValue(e)).ToList();
-
-        var filter = Builders<TEntity>.Filter.In(idProperty.Name, ids);
-        await collection.DeleteManyAsync(filter, cancellationToken);
-    }
-
-    /// <summary>
-    /// 分批删除实体（适用于大量数据，指定数据库）
-    /// </summary>
-    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, string? databaseName,
-        int batchSize = 1000,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
-
-        var batches = entities.Chunk(batchSize);
-        foreach (var batch in batches)
-        {
-            var ids = batch.Select(e => idProperty.GetValue(e)).ToList();
-            var filter = Builders<TEntity>.Filter.In(idProperty.Name, ids);
-            await collection.DeleteManyAsync(filter, cancellationToken);
-        }
-    }
-
-    /// <summary>
-    /// 根据条件删除实体（指定数据库）
-    /// </summary>
-    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName,
-        CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var filter = Builders<TEntity>.Filter.Where(predicate);
-        var result = await collection.DeleteManyAsync(filter, cancellationToken);
-        return (int)result.DeletedCount;
-    }
-
-
-    /// <summary>
-    /// 批量更新符合条件的文档
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="update">更新定义</param>
+    /// <param name="entities">实体集合</param>
+    /// <param name="batchSize">每批大小</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>更新的文档数量</returns>
-    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, CancellationToken cancellationToken = default)
+    public async Task AddBatchedAsync(IEnumerable<TEntity> entities, int batchSize = 1000, CancellationToken cancellationToken = default)
     {
-        return await UpdateManyAsync(filter, update, null, cancellationToken);
+        await AddBatchedAsync(entities, null, null, batchSize, cancellationToken);
     }
 
     /// <summary>
-    /// 批量更新符合条件的文档（指定数据库）
-    /// </summary>
-    /// <param name="filter">筛选条件</param>
-    /// <param name="update">更新定义</param>
-    /// <param name="databaseName">数据库名称</param>
-    /// <param name="cancellationToken">取消令牌</param>
-    /// <returns>更新的文档数量</returns>
-    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, string? databaseName, CancellationToken cancellationToken = default)
-    {
-        var collection = GetCollection(databaseName);
-        var result = await collection.UpdateManyAsync(filter, update, cancellationToken: cancellationToken);
-        return result.ModifiedCount;
-    }
-
-    /// <summary>
-    /// 部分更新实体（指定数据库和集合，通过要更新的属性表达式）
+    /// 部分更新实体（指定数据库和集合）
     /// </summary>
     /// <param name="entity">实体对象</param>
     /// <param name="databaseName">数据库名称</param>
     /// <param name="collectionName">集合名称</param>
-    /// <param name="properties">要更新的属性表达式</param>
-    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, string? collectionName, params Expression<Func<TEntity, object>>[] properties)
+    /// <param name="properties">要更新的属性</param>
+    public void UpdatePartial(TEntity entity, string? databaseName, string? collectionName, params Expression<Func<TEntity, object>>[] properties)
     {
-        await UpdatePartialAsync(entity, databaseName, collectionName, default, properties);
+        UpdatePartialAsync(entity, databaseName, collectionName, CancellationToken.None, properties).Wait();
     }
 
     /// <summary>
-    /// 部分更新实体（指定数据库和集合，通过要更新的属性表达式）
+    /// 部分更新实体（指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="properties">要更新的属性</param>
+    public void UpdatePartial(TEntity entity, string? databaseName, params Expression<Func<TEntity, object>>[] properties)
+    {
+        UpdatePartialAsync(entity, databaseName, null, CancellationToken.None, properties).Wait();
+    }
+
+    /// <summary>
+    /// 部分更新实体
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="properties">要更新的属性</param>
+    public void UpdatePartial(TEntity entity, params Expression<Func<TEntity, object>>[] properties)
+    {
+        UpdatePartialAsync(entity, null, null, CancellationToken.None, properties).Wait();
+    }
+
+    /// <summary>
+    /// 部分更新实体（异步，指定数据库和集合）
     /// </summary>
     /// <param name="entity">实体对象</param>
     /// <param name="databaseName">数据库名称</param>
     /// <param name="collectionName">集合名称</param>
     /// <param name="cancellationToken">取消令牌</param>
-    /// <param name="properties">要更新的属性表达式</param>
-    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, string? collectionName,
-        CancellationToken cancellationToken = default,
-        params Expression<Func<TEntity, object>>[] properties)
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties)
     {
         var collection = GetCollection(databaseName, collectionName);
         var idProperty = typeof(TEntity).GetProperty("Id");
@@ -1440,6 +572,62 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
         }
 
         await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 部分更新实体（异步，指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties)
+    {
+        await UpdatePartialAsync(entity, databaseName, null, cancellationToken, properties);
+    }
+
+    /// <summary>
+    /// 部分更新实体（异步）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, CancellationToken cancellationToken, params Expression<Func<TEntity, object>>[] properties)
+    {
+        await UpdatePartialAsync(entity, null, null, cancellationToken, properties);
+    }
+
+    /// <summary>
+    /// 部分更新实体（异步，仅更新指定属性）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, params Expression<Func<TEntity, object>>[] properties)
+    {
+        await UpdatePartialAsync(entity, null, null, CancellationToken.None, properties);
+    }
+
+    /// <summary>
+    /// 部分更新实体（仅更新指定属性，指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, params Expression<Func<TEntity, object>>[] properties)
+    {
+        await UpdatePartialAsync(entity, databaseName, null, CancellationToken.None, properties);
+    }
+
+    /// <summary>
+    /// 部分更新实体（仅更新指定属性，指定数据库和集合）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="properties">要更新的属性</param>
+    public async Task UpdatePartialAsync(TEntity entity, string? databaseName, string? collectionName, params Expression<Func<TEntity, object>>[] properties)
+    {
+        await UpdatePartialAsync(entity, databaseName, collectionName, CancellationToken.None, properties);
     }
 
     /// <summary>
@@ -1476,6 +664,542 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
         }
 
         return property.GetValue(entity);
+    }
+
+    /// <summary>
+    /// 更新实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    public void Update(TEntity entity, string? databaseName, string? collectionName)
+    {
+        UpdateAsync(entity, databaseName, collectionName, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 更新实体（指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    public void Update(TEntity entity, string? databaseName)
+    {
+        UpdateAsync(entity, databaseName, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 更新实体
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    public void Update(TEntity entity)
+    {
+        UpdateAsync(entity, null, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 更新实体（异步，指定数据库和集合）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
+        var idValue = (TKey)idProperty.GetValue(entity);
+
+        var filter = Builders<TEntity>.Filter.Eq("_id", idValue);
+        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 更新实体（异步，指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await UpdateAsync(entity, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 更新实体（异步）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        await UpdateAsync(entity, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 更新实体（直接指定主键值）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TKey id, TEntity entity, CancellationToken cancellationToken = default)
+    {
+        await UpdateAsync(id, entity, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 更新实体（直接指定主键值，指定数据库）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TKey id, TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await UpdateAsync(id, entity, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 更新实体（直接指定主键值，指定数据库和集合）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateAsync(TKey id, TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var filter = Builders<TEntity>.Filter.Eq("_id", id);
+        await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量更新实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    public void UpdateRange(IEnumerable<TEntity> entities, string? databaseName, string? collectionName)
+    {
+        UpdateRangeAsync(entities, databaseName, collectionName, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量更新实体（指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    public void UpdateRange(IEnumerable<TEntity> entities, string? databaseName)
+    {
+        UpdateRangeAsync(entities, databaseName, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量更新实体
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    public void UpdateRange(IEnumerable<TEntity> entities)
+    {
+        UpdateRangeAsync(entities, null, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量更新实体（异步，指定数据库和集合）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
+
+        foreach (var entity in entities)
+        {
+            var idValue = (TKey)idProperty.GetValue(entity);
+            var filter = Builders<TEntity>.Filter.Eq("_id", idValue);
+            await collection.ReplaceOneAsync(filter, entity, cancellationToken: cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// 批量更新实体（异步，指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await UpdateRangeAsync(entities, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量更新实体（异步）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task UpdateRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        await UpdateRangeAsync(entities, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 删除实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    public void Delete(TEntity entity, string? databaseName, string? collectionName)
+    {
+        DeleteAsync(entity, databaseName, collectionName, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 删除实体（指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    public void Delete(TEntity entity, string? databaseName)
+    {
+        DeleteAsync(entity, databaseName, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 删除实体
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    public void Delete(TEntity entity)
+    {
+        DeleteAsync(entity, null, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 删除实体（异步，指定数据库和集合）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteAsync(TEntity entity, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
+        var idValue = (TKey)idProperty.GetValue(entity);
+
+        var filter = Builders<TEntity>.Filter.Eq("_id", idValue);
+        await collection.DeleteOneAsync(filter, cancellationToken);
+    }
+
+    /// <summary>
+    /// 删除实体（异步，指定数据库）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteAsync(TEntity entity, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await DeleteAsync(entity, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 删除实体（异步）
+    /// </summary>
+    /// <param name="entity">实体对象</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteAsync(TEntity entity, CancellationToken cancellationToken = default)
+    {
+        await DeleteAsync(entity, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据主键删除实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteByIdAsync(TKey id, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var filter = Builders<TEntity>.Filter.Eq("_id", id);
+        await collection.DeleteOneAsync(filter, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据主键删除实体（指定数据库）
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteByIdAsync(TKey id, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await DeleteByIdAsync(id, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据主键删除实体
+    /// </summary>
+    /// <param name="id">主键值</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteByIdAsync(TKey id, CancellationToken cancellationToken = default)
+    {
+        await DeleteByIdAsync(id, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量删除实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    public void DeleteRange(IEnumerable<TEntity> entities, string? databaseName, string? collectionName)
+    {
+        DeleteRangeAsync(entities, databaseName, collectionName, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量删除实体（指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    public void DeleteRange(IEnumerable<TEntity> entities, string? databaseName)
+    {
+        DeleteRangeAsync(entities, databaseName, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量删除实体
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    public void DeleteRange(IEnumerable<TEntity> entities)
+    {
+        DeleteRangeAsync(entities, null, null, CancellationToken.None).Wait();
+    }
+
+    /// <summary>
+    /// 批量删除实体（异步，指定数据库和集合）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
+        var ids = entities.Select(e => idProperty.GetValue(e)).ToList();
+
+        var filter = Builders<TEntity>.Filter.In("_id", ids);
+        await collection.DeleteManyAsync(filter, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量删除实体（异步，指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        await DeleteRangeAsync(entities, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量删除实体（异步）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        await DeleteRangeAsync(entities, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 分批删除实体（适用于大量数据，指定数据库）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="batchSize">每批大小</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, int batchSize = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        await DeleteBatchedAsync(entities, databaseName, null, batchSize, cancellationToken);
+    }
+
+    /// <summary>
+    /// 分批删除实体（适用于大量数据，指定数据库和集合）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="batchSize">每批大小</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, string? databaseName, string? collectionName, int batchSize = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var idProperty = typeof(TEntity).GetProperty("Id") ?? typeof(TEntity).GetProperty("id") ?? throw new InvalidOperationException("实体必须包含Id或id属性");
+        var entityList = entities.ToList();
+        
+        for (int i = 0; i < entityList.Count; i += batchSize)
+        {
+            var batch = entityList.Skip(i).Take(batchSize).ToList();
+            var ids = batch.Select(e => idProperty.GetValue(e)).ToList();
+            var filter = Builders<TEntity>.Filter.In("_id", ids);
+            await collection.DeleteManyAsync(filter, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// 分批删除实体（适用于大量数据）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="batchSize">每批大小</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task DeleteBatchedAsync(IEnumerable<TEntity> entities, int batchSize = 1000,
+        CancellationToken cancellationToken = default)
+    {
+        await DeleteBatchedAsync(entities, null, null, batchSize, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据条件删除实体（指定数据库和集合）
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除的实体数量</returns>
+    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var filter = Builders<TEntity>.Filter.Where(predicate);
+        var result = await collection.DeleteManyAsync(filter, cancellationToken);
+        return (int)result.DeletedCount;
+    }
+
+    /// <summary>
+    /// 根据条件删除实体（指定数据库）
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除的实体数量</returns>
+    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        return await DeleteByConditionAsync(predicate, databaseName, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 根据条件删除实体
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除的实体数量</returns>
+    public async Task<int> DeleteByConditionAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        return await DeleteByConditionAsync(predicate, null, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 软删除实体
+    /// </summary>
+    public async Task SoftDeleteAsync(TKey id, string deletedBy = "system", CancellationToken cancellationToken = default)
+    {
+        // 软删除通常是更新IsDeleted字段为true，并设置DeletedBy和DeletedTime
+        // 假设实体有这些字段，如果没有则需要调整
+        var collection = GetCollection();
+        var filter = Builders<TEntity>.Filter.Eq("_id", id);
+        var update = Builders<TEntity>.Update
+            .Set("IsDeleted", true)
+            .Set("DeletedBy", deletedBy)
+            .Set("DeletedTime", DateTime.UtcNow);
+        
+        await collection.UpdateOneAsync(filter, update, cancellationToken: cancellationToken);
+    }
+    
+    /// <summary>
+    /// 批量软删除实体
+    /// </summary>
+    public async Task SoftDeleteRangeAsync(IEnumerable<TKey> ids, string deletedBy = "system", CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection();
+        var filter = Builders<TEntity>.Filter.In("_id", ids);
+        var update = Builders<TEntity>.Update
+            .Set("IsDeleted", true)
+            .Set("DeletedBy", deletedBy)
+            .Set("DeletedTime", DateTime.UtcNow);
+        
+        await collection.UpdateManyAsync(filter, update, cancellationToken: cancellationToken);
+    }
+
+    /// <summary>
+    /// 保存更改
+    /// </summary>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>影响的行数</returns>
+    public Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        // MongoDB没有SaveChanges的概念，因为它是无会话的
+        return Task.FromResult(0);
+    }
+
+    /// <summary>
+    /// 执行批量插入（高性能）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>插入的行数</returns>
+    public async Task<int> BulkInsertAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        // MongoDB的InsertMany已经是批量操作
+        await AddRangeAsync(entities, cancellationToken);
+        return entities.Count();
+    }
+
+    /// <summary>
+    /// 执行批量更新（高性能）
+    /// </summary>
+    /// <param name="entities">实体集合</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新的行数</returns>
+    public async Task<int> BulkUpdateAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default)
+    {
+        // MongoDB没有内置的批量更新，我们需要循环更新
+        await UpdateRangeAsync(entities, cancellationToken);
+        return entities.Count();
+    }
+
+    #endregion
+
+    #region MongoDB特有的方法
+
+    /// <summary>
+    /// 批量更新符合条件的文档
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="update">更新定义</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新的文档数量</returns>
+    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, CancellationToken cancellationToken = default)
+    {
+        return await UpdateManyAsync(filter, update, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// 批量更新符合条件的文档（指定数据库）
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="update">更新定义</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新的文档数量</returns>
+    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, string? databaseName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName);
+        var result = await collection.UpdateManyAsync(filter, update, cancellationToken: cancellationToken);
+        return result.ModifiedCount;
     }
 
     /// <summary>
@@ -1553,5 +1277,184 @@ public partial class MongoRepository<TEntity, TKey> : IMongoRepository<TEntity, 
     }
 
     /// <summary>
+    /// 根据条件获取分页实体（使用BsonDocument过滤条件，指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">MongoDB过滤条件</param>
+    /// <param name="pageIndex">页码</param>
+    /// <param name="pageSize">每页大小</param>
+    /// <param name="orderBy">排序表达式</param>
+    /// <param name="isDescending">是否降序</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>分页结果</returns>
+    public async Task<PagedResult<TEntity>> GetPagedByConditionAsync(FilterDefinition<BsonDocument> filter, int pageIndex, int pageSize, Expression<Func<TEntity, object>>? orderBy = null, bool isDescending = false, string? databaseName = null, string? collectionName = null, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        
+        // 将BsonDocument过滤器转换为TEntity过滤器
+        var entityFilter = Builders<TEntity>.Filter.Where(_ => true);
+        
+        // 由于MongoDB的Find方法不直接支持BsonDocument过滤器用于泛型集合，我们需要使用BsonDocument集合进行查询
+        var bsonCollection = collection.Database.GetCollection<BsonDocument>(collection.CollectionNamespace.CollectionName);
+        var totalCount = await bsonCollection.CountDocumentsAsync(filter, cancellationToken: cancellationToken);
+        
+        // 使用BsonDocument查询，然后转换为TEntity
+        var bsonQuery = bsonCollection.Find(filter);
+        var bsonItems = await bsonQuery
+            .Skip((pageIndex - 1) * pageSize)
+            .Limit(pageSize)
+            .ToListAsync(cancellationToken);
+        
+        // 将BsonDocument转换为TEntity
+        var items = bsonItems.Select(doc => BsonSerializer.Deserialize<TEntity>(doc)).ToList();
+
+        return PagedResult<TEntity>.SuccessResult(items, (int)totalCount, pageIndex, pageSize);
+    }
+
+    /// <summary>
+    /// 批量更新符合条件的文档（指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="update">更新定义</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>更新的文档数量</returns>
+    public async Task<long> UpdateManyAsync(FilterDefinition<TEntity> filter, UpdateDefinition<TEntity> update, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var result = await collection.UpdateManyAsync(filter, update, cancellationToken: cancellationToken);
+        return result.ModifiedCount;
+    }
+
+    /// <summary>
+    /// 批量删除符合条件的文档（指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>删除的文档数量</returns>
+    public async Task<long> DeleteManyAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var result = await collection.DeleteManyAsync(filter, cancellationToken: cancellationToken);
+        return result.DeletedCount;
+    }
+
+    /// <summary>
+    /// 使用FilterDefinition查询文档（指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的文档集合</returns>
+    public async Task<List<TEntity>> FindAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        return await collection.Find(filter).ToListAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// 使用FilterDefinition查询单个文档（指定数据库和集合）
+    /// </summary>
+    /// <param name="filter">筛选条件</param>
+    /// <param name="databaseName">数据库名称</param>
+    /// <param name="collectionName">集合名称</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的单个文档</returns>
+    public async Task<TEntity> FindOneAsync(FilterDefinition<TEntity> filter, string? databaseName, string? collectionName, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection(databaseName, collectionName);
+        var result = await collection.Find(filter).FirstOrDefaultAsync(cancellationToken);
+        return result ?? throw new InvalidOperationException("未找到符合条件的文档");
+    }
+
+    #endregion
+
+    #region 跟踪相关方法（MongoDB不支持，仅为接口实现）
+
+    /// <summary>
+    /// 禁用实体跟踪（MongoDB不支持，仅为接口实现）
+    /// </summary>
+    public void DisableTracking()
+    {
+        // MongoDB是无会话的，不支持实体跟踪
+    }
+
+    /// <summary>
+    /// 启用实体跟踪（MongoDB不支持，仅为接口实现）
+    /// </summary>
+    public void EnableTracking()
+    {
+        // MongoDB是无会话的，不支持实体跟踪
+    }
+
+    /// <summary>
+    /// 清除实体跟踪缓存（MongoDB不支持，仅为接口实现）
+    /// </summary>
+    public void ClearTracker()
+    {
+        // MongoDB是无会话的，不支持实体跟踪
+    }
+
+    #endregion
+
+    #region 只读查询方法
+
+    /// <summary>
+    /// 获取第一个符合条件的实体
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的第一个实体，如果不存在则返回null</returns>
+    public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection();
+        return await collection.Find(predicate).FirstOrDefaultAsync(cancellationToken);
+    }
+
+    /// <summary>
+    /// 获取单个符合条件的实体
+    /// </summary>
+    /// <param name="predicate">查询条件</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>符合条件的单个实体，如果不存在则返回null，如果存在多个则抛出异常</returns>
+    public async Task<TEntity?> SingleOrDefaultAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken cancellationToken = default)
+    {
+        var collection = GetCollection();
+        return await collection.Find(predicate).SingleOrDefaultAsync(cancellationToken);
+    }
+
+    #endregion
+
+    #region 事务相关方法
+
+    /// <summary>
+    /// 执行事务
+    /// </summary>
+    /// <param name="action">事务内执行的操作</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    public async Task ExecuteInTransactionAsync(Func<Task> action, CancellationToken cancellationToken = default)
+    {
+        // MongoDB的事务需要会话支持，这里简化实现
+        await action();
+    }
+
+    /// <summary>
+    /// 执行事务并返回结果
+    /// </summary>
+    /// <typeparam name="TResult">结果类型</typeparam>
+    /// <param name="action">事务内执行的操作</param>
+    /// <param name="cancellationToken">取消令牌</param>
+    /// <returns>操作结果</returns>
+    public async Task<TResult> ExecuteInTransactionAsync<TResult>(Func<Task<TResult>> action, CancellationToken cancellationToken = default)
+    {
+        // MongoDB的事务需要会话支持，这里简化实现
+        return await action();
+    }
+
     #endregion
 }
