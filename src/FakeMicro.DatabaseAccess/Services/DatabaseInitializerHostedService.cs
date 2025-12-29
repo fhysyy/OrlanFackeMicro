@@ -16,6 +16,7 @@ using FakeMicro.DatabaseAccess.Entities;
 using UserRole = FakeMicro.Entities.UserRole;
 using Message = FakeMicro.Entities.Message;
 using FileInfo = FakeMicro.Entities.FileInfo;
+using System.Security.Cryptography;
 
 namespace FakeMicro.DatabaseAccess.Services
 {
@@ -441,8 +442,10 @@ namespace FakeMicro.DatabaseAccess.Services
 
             if (!adminExists)
             {
-                // 生成密码哈希
-                var passwordHash = CryptoHelper.GeneratePasswordHash("admin123");
+                // 使用与AuthGrain相同的密码哈希生成逻辑
+                using var hmac = new HMACSHA512();
+                var salt = Convert.ToBase64String(hmac.Key);
+                var hash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("admin123")));
                 
                 var snowflakeGenerator = new SnowflakeIdGenerator(1); // 机器ID为1
 
@@ -452,8 +455,8 @@ namespace FakeMicro.DatabaseAccess.Services
                     username = "admin",
                     display_name = "系统管理员",
                     email = "admin@fakemicro.com",
-                    password_hash = passwordHash,
-                    password_salt = "123456789",
+                    password_hash = hash,
+                    password_salt = salt,
                     is_active = true,
                     role = "SUPER_ADMIN",
                     status = "Active",

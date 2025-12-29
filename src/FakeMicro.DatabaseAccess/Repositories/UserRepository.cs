@@ -50,7 +50,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 // 使用参数化查询并添加索引优化提示
                 var query = GetSqlSugarClient().Queryable<User>()
                     .With(SqlWith.NoLock)
-                    .Where(u => u.username == username);
+                    .Where(u => u.username == username && !u.is_deleted);
                 
                 if (tenantId.HasValue)
                 {
@@ -74,7 +74,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 // 使用参数化查询并添加索引优化提示
                 var query = GetSqlSugarClient().Queryable<User>()
                     .With(SqlWith.NoLock)
-                    .Where(u => u.email == email);
+                    .Where(u => u.email == email && !u.is_deleted);
                 
                 if (tenantId.HasValue)
                 {
@@ -230,27 +230,37 @@ namespace FakeMicro.DatabaseAccess.Repositories
         public new async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+
+            if (user == null) throw new ArgumentNullException(nameof(user));
+            if (user.id == 0)
+            {
+                _logger.LogWarning("尝试更新用户但用户ID无效");
+                throw new DataAccessException("用户ID无效");
+            }
+
             try
             {
-                // 获取原始记录用于乐观锁检查
+                // 获取原始记录（包含并发字段）
                 var originalUser = await GetSqlSugarClient().Queryable<User>()
                     .Where(u => u.id == user.id)
-                    .FirstAsync();
-                
+                    .FirstAsync(cancellationToken);
+
                 if (originalUser == null)
                 {
                     _logger.LogWarning("用户不存在: {UserId}", user.id);
                     throw new DataAccessException("用户不存在");
                 }
 
-                // 更新时间戳
-                user.UpdatedAt = DateTime.UtcNow;
-                
-                // 使用SqlSugar更新，添加乐观锁检查
+                // 使用 UpdatedAt 作为并发字段示例：先记录新的更新时间，再在 WHERE 中校验原始 UpdatedAt
+                //var originalUpdatedAt = originalUser.UpdatedAt;
+                //user.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
+
+                // 只更新需要的列并忽略 CreatedAt（根据实际情况调整）
                 var result = await GetSqlSugarClient().Updateable(user)
-                    .WhereColumns(it => new { it.id })
-                    .ExecuteCommandAsync();
-                
+                    .IgnoreColumns(u => new { u.CreatedAt }) // 不覆盖创建时间
+                    .Where(u => u.id == user.id) // 乐观锁检查
+                    .ExecuteCommandAsync(cancellationToken);
+
                 if (result == 0)
                 {
                     _logger.LogWarning("用户更新失败，可能是记录不存在或已被其他进程修改: {UserId}", user.id);

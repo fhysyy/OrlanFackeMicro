@@ -293,7 +293,8 @@ namespace FakeMicro.Grains
         /// </summary>
         private string FormatLogMessage(string message)
         {
-            return $"[{{GrainIdentity}}] {message}";
+            var grainTypeName = GetGrainTypeName();
+            return $"{grainTypeName}: {message}";
         }
         
         /// <summary>

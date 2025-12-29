@@ -125,21 +125,43 @@ namespace FakeMicro.Grains
             try
             {
                 // 查找用户（支持用户名或邮箱登录）
-
-                var user = await _userRepository.GetByUsernameAsync(username) ??
-                          await _userRepository.GetByEmailAsync(username);
-
-                if (user == null || !user.is_active)
+                LogInformation("开始登录流程: {Username}", username);
+                
+                var user = await _userRepository.GetByUsernameAsync(username, null);
+                LogInformation("按用户名查询结果: {Result}", user != null ? "找到用户" : "未找到用户");
+                
+                if (user == null)
                 {
+                    user = await _userRepository.GetByEmailAsync(username, null);
+                    LogInformation("按邮箱查询结果: {Result}", user != null ? "找到用户" : "未找到用户");
+                }
+
+                if (user == null)
+                {
+                    LogWarning("用户不存在: {Username}", username);
+                    return new UserAuthResult { Success = false, Message = "用户名或密码错误" };
+                }
+                
+                LogInformation("找到用户: {Username}, IsActive: {IsActive}, IsDeleted: {IsDeleted}", user.username, user.is_active, user.is_deleted);
+                
+                if (!user.is_active)
+                {
+                    LogWarning("用户未激活: {Username}", username);
                     return new UserAuthResult { Success = false, Message = "用户名或密码错误" };
                 }
 
                 // 验证密码
-                if (!VerifyPasswordHash(password, user.password_hash, user.password_salt))
+                LogInformation("开始验证密码: {Username}", username);
+                bool passwordValid = VerifyPasswordHash(password, user.password_hash, user.password_salt);
+                LogInformation("密码验证结果: {Result}", passwordValid ? "成功" : "失败");
+                
+                if (!passwordValid)
                 {
+                    LogWarning("密码验证失败: {Username}", username);
                     return new UserAuthResult { Success = false, Message = "用户名或密码错误" };
                 }
 
+                LogInformation("密码验证成功: {Username}", username);
                 // 生成JWT令牌（使用内部方法，确保与RequireRole兼容）
                 var token = GenerateJwtToken(user.id, user.username, new string[] { user.role });
                 var refreshToken = GenerateRefreshToken();

@@ -1,12 +1,14 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using SqlSugar;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Timers;
+using FakeMicro.DatabaseAccess;
 
 namespace FakeMicro.Monitoring;
 
@@ -18,23 +20,49 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
 {
     private readonly ILogger<DatabaseConnectionPoolMonitor> _logger;
     private readonly PerformanceMonitor _performanceMonitor;
-    private readonly ISqlSugarClient _sqlSugarClient;
+    private readonly ISqlSugarClient _sharedSqlSugarClient; // 保留用于向后兼容
     private readonly MongoClient _mongoClient;
     private readonly System.Timers.Timer _timer;
     private readonly int _monitoringIntervalMs = 5000; // 默认监控间隔5秒
+    
+    // 监控专用的SqlSugarClient
+    private readonly ISqlSugarClient _monitoringSqlSugarClient;
 
     public DatabaseConnectionPoolMonitor(
         ILogger<DatabaseConnectionPoolMonitor> logger,
         PerformanceMonitor performanceMonitor,
         ISqlSugarClient sqlSugarClient,
-        MongoClient mongoClient)
+        MongoClient mongoClient,
+        IOptions<SqlSugarConfig.SqlSugarOptions> sqlSugarOptions,
+        IOptions<ConnectionStringsOptions> connectionStringsOptions)
     {
         _logger = logger;
         _performanceMonitor = performanceMonitor;
-        _sqlSugarClient = sqlSugarClient;
+        _sharedSqlSugarClient = sqlSugarClient;
         _mongoClient = mongoClient;
         _timer = new System.Timers.Timer(_monitoringIntervalMs);
         _timer.Elapsed += async (sender, e) => await CollectConnectionPoolMetricsAsync();
+        
+        // 创建监控专用的SqlSugarClient实例
+        var options = sqlSugarOptions.Value;
+        if (string.IsNullOrEmpty(options.ConnectionString) && connectionStringsOptions.Value?.DefaultConnection != null)
+        {
+            options.ConnectionString = connectionStringsOptions.Value.DefaultConnection;
+        }
+        
+        _monitoringSqlSugarClient = new SqlSugarClient(new ConnectionConfig
+        {
+            ConnectionString = options.ConnectionString,
+            DbType = SqlSugarConfig.ConvertToSqlSugarDbType(options.DbType),
+            IsAutoCloseConnection = true,
+            InitKeyType = InitKeyType.Attribute,
+            MoreSettings = new ConnMoreSettings
+            {
+                PgSqlIsAutoToLower = true, // PostgreSQL表名自动转小写
+                PgSqlIsAutoToLowerCodeFirst = true, // CodeFirst时也自动转小写
+                IsAutoToUpper = false, // 关闭自动转大写
+            }
+        });
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -79,7 +107,7 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
         try
         {
             // 查询当前连接数
-            var connectionCountResult = await _sqlSugarClient.Ado.SqlQueryAsync<dynamic>(@"
+            var connectionCountResult = await _monitoringSqlSugarClient.Ado.SqlQueryAsync<dynamic>(@"
                 SELECT 
                     COUNT(*) AS total_connections,
                     COUNT(CASE WHEN state = 'active' THEN 1 END) AS active_connections,
@@ -116,7 +144,7 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
     {
         try
         {
-            var result = await _sqlSugarClient.Ado.SqlQueryAsync<dynamic>(
+            var result = await _monitoringSqlSugarClient.Ado.SqlQueryAsync<dynamic>(
                 "SHOW max_connections;");
             return long.Parse(result.First().max_connections.ToString());
         }

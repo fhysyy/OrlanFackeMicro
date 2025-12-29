@@ -31,7 +31,7 @@ namespace FakeMicro.Api.Extensions
             
             // 从配置中获取CAP相关配置，提供默认值以防配置中不存在
             var connectionStringsOptions = configuration.GetSection("ConnectionStrings").Get<ConnectionStringsOptions>() ?? new ConnectionStringsOptions();
-            string connectionString = connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=capdb;Username=postgres;Password=123456";
+            string connectionString = connectionStringsOptions.CAP ?? connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=fakemicro;Username=postgres;Password=123456";
             int failedRetryCount = configuration.GetValue<int>("CAP:FailedRetryCount", 3);
             int failedRetryInterval = configuration.GetValue<int>("CAP:FailedRetryInterval", 30);
             int succeedMessageExpiredAfter = configuration.GetValue<int>("CAP:SucceedMessageExpiredAfter", 3600);

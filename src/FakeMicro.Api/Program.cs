@@ -127,7 +127,7 @@ namespace FakeMicro.Api
             }
 
             // 暂时注释掉默认的定时任务，专注于测试Orleans连接
-          ConfigureDefaultJobs();
+            ConfigureDefaultJobs();
 
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");

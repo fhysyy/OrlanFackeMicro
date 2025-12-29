@@ -94,19 +94,6 @@ public static class SqlSugarConfig
         {
             client.Aop.OnLogExecuting = (sql, pars) =>
             {
-                var stopwatch = new System.Diagnostics.Stopwatch();
-                stopwatch.Start();
-                
-                client.Aop.OnLogExecuted = (sql, pars) =>
-                {
-                    stopwatch.Stop();
-                    if (options.EnableSqlLog || stopwatch.ElapsedMilliseconds > options.SlowQueryThreshold)
-                    {
-                        var parameters = string.Join(", ", pars.Select(p => $"{p.ParameterName}={p.Value}"));
-                        Console.WriteLine($"SQL: {sql}\n参数: {parameters}\n耗时: {stopwatch.ElapsedMilliseconds}ms");
-                    }
-                };
-                
                 // 处理PostgreSQL的枚举参数转换
                 foreach (var p in pars)
                 {
@@ -115,7 +102,42 @@ public static class SqlSugarConfig
                         p.DbType = System.Data.DbType.String;
                         p.Value = p.Value.ToString();
                     }
+                    // 处理PostgreSQL的DateTime参数，确保Kind=Utc
+                    else if (p.Value is DateTime dateTime)
+                    {
+                        if (dateTime.Kind == DateTimeKind.Unspecified)
+                        {
+                            p.Value = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+                        }
+                        else if (dateTime.Kind == DateTimeKind.Local)
+                        {
+                            p.Value = dateTime.ToUniversalTime();
+                        }
+                    }
+                    // 处理可空DateTime参数
+                    else if (p.Value is not null && p.Value.GetType() == typeof(DateTime?))
+                    {
+                        DateTime? nullableDateTime = (DateTime?)p.Value;
+                        if (nullableDateTime.HasValue)
+                        {
+                            DateTime dateTimeValue = nullableDateTime.Value;
+                            if (dateTimeValue.Kind == DateTimeKind.Unspecified)
+                            {
+                                p.Value = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc);
+                            }
+                            else if (dateTimeValue.Kind == DateTimeKind.Local)
+                            {
+                                p.Value = dateTimeValue.ToUniversalTime();
+                            }
+                        }
+                    }
                 }
+            };
+
+            // 配置日志执行后事件
+            client.Aop.OnLogExecuted = (sql, pars) =>
+            {
+                // 可以在这里添加日志记录逻辑
             };
         }
 
@@ -182,13 +204,65 @@ public static class SqlSugarServiceExtensions
                 DbType = SqlSugarConfig.ConvertToSqlSugarDbType(options.DbType),
                 IsAutoCloseConnection = true,
                 InitKeyType = InitKeyType.Attribute,
-                MoreSettings = new ConnMoreSettings()
+                MoreSettings = new ConnMoreSettings
                 {
                     PgSqlIsAutoToLower = true, // PostgreSQL表名自动转小写
-                    PgSqlIsAutoToLowerCodeFirst = true, // CodeFirst时也自动转大写
+                    PgSqlIsAutoToLowerCodeFirst = true, // CodeFirst时也自动转小写
                     IsAutoToUpper = false, // 关闭自动转大写
                 }
             });
+
+            // 配置AOP
+            if (options.EnableAop)
+            {
+                db.Aop.OnLogExecuting = (sql, pars) =>
+                {
+                    // 处理PostgreSQL的枚举参数转换
+                    foreach (var p in pars)
+                    {
+                        if (p.Value?.GetType().IsEnum == true)
+                        {
+                            p.DbType = System.Data.DbType.String;
+                            p.Value = p.Value.ToString();
+                        }
+                        // 处理PostgreSQL的DateTime参数，确保Kind=Utc
+                        else if (p.Value is DateTime dateTime)
+                        {
+                            if (dateTime.Kind == DateTimeKind.Unspecified)
+                            {
+                                p.Value = DateTime.SpecifyKind(dateTime, DateTimeKind.Utc);
+                            }
+                            else if (dateTime.Kind == DateTimeKind.Local)
+                            {
+                                p.Value = dateTime.ToUniversalTime();
+                            }
+                        }
+                        // 处理可空DateTime参数
+                        else if (p.Value is not null && p.Value.GetType() == typeof(DateTime?))
+                        {
+                            DateTime? nullableDateTime = (DateTime?)p.Value;
+                            if (nullableDateTime.HasValue)
+                            {
+                                DateTime dateTimeValue = nullableDateTime.Value;
+                                if (dateTimeValue.Kind == DateTimeKind.Unspecified)
+                                {
+                                    p.Value = DateTime.SpecifyKind(dateTimeValue, DateTimeKind.Utc);
+                                }
+                                else if (dateTimeValue.Kind == DateTimeKind.Local)
+                                {
+                                    p.Value = dateTimeValue.ToUniversalTime();
+                                }
+                            }
+                        }
+                    }
+                };
+
+                // 配置日志执行后事件
+                db.Aop.OnLogExecuted = (sql, pars) =>
+                {
+                    // 可以在这里添加日志记录逻辑
+                };
+            }
             
             return db;
         });

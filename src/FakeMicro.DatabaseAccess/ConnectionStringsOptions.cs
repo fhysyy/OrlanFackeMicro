@@ -24,5 +24,10 @@ namespace FakeMicro.DatabaseAccess
         /// Orleans连接字符串
         /// </summary>
         public string? OrleansConnection { get; set; }
+        
+        /// <summary>
+        /// CAP事件总线连接字符串
+        /// </summary>
+        public string? CAP { get; set; }
     }
 }

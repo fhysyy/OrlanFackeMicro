@@ -1,21 +1,21 @@
-using FakeMicro.Utilities.Configuration;
+using FakeMicro.DatabaseAccess;
+using FakeMicro.DatabaseAccess.Extensions;
+using FakeMicro.Grains.Extensions;
 using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
+using FakeMicro.Utilities.Configuration;
 using FakeMicro.Utilities.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Storage;
+using OrleansDatabaseInitialization;
 using SqlSugar;
-
-using FakeMicro.DatabaseAccess;
-using FakeMicro.DatabaseAccess.Extensions;
-using FakeMicro.Grains.Extensions;
 using System;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -223,8 +223,9 @@ namespace FakeMicro.Silo
                     services.Configure<ConnectionStringsOptions>(context.Configuration.GetSection("ConnectionStrings"));
                     
                     // 添加 Orleans 数据库初始化服务
-                    services.AddTransient<Services.OrleansDatabaseInitializer>();
+                    services.AddTransient<OrleansDatabaseInitialization.OrleansPostgresInitializer>();
 
+              
                     // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
                     services.AddDatabaseInitializer(context.Configuration);
 
@@ -257,7 +258,7 @@ namespace FakeMicro.Silo
                     // 首先初始化 Orleans 数据库表结构
                     using (var scope = host.Services.CreateScope())
                     {
-                        var dbInitializer = scope.ServiceProvider.GetService<Services.OrleansDatabaseInitializer>();
+                        var dbInitializer = scope.ServiceProvider.GetService<OrleansDatabaseInitialization.OrleansPostgresInitializer>();
                         if (dbInitializer != null)
                         {
                             Console.WriteLine("正在初始化 Orleans 数据库表结构...");

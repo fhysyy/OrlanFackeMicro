@@ -22,10 +22,13 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 用户名
         /// </summary>
-        [Id(1)]
+        [Required(ErrorMessage = "用户名不能为空")]
+        [StringLength(50, ErrorMessage = "用户名长度不能超过50个字符")]
+        [RegularExpression(@"^[a-zA-Z0-9_\u4e00-\u9fa5]+$", ErrorMessage = "用户名只能包含字母、数字、下划线和中文")]
         [SugarColumn(IsNullable = true, ColumnName = "username")]
+        [Id(1)]
         public string username { get; set; } = string.Empty;
-        
+
         /// <summary>
         /// 显示名称
         /// </summary>
@@ -36,6 +39,9 @@ namespace FakeMicro.Entities
         /// <summary>
         /// 电子邮箱
         /// </summary>
+        [Required(ErrorMessage = "邮箱不能为空")]
+        [EmailAddress(ErrorMessage = "邮箱格式不正确")]
+        [StringLength(100, ErrorMessage = "邮箱长度不能超过100个字符")]
         [Id(3)]
         [SugarColumn(IsNullable = true, ColumnName = "email")]
         public string email { get; set; } = string.Empty;
@@ -52,14 +58,14 @@ namespace FakeMicro.Entities
         /// </summary>
         [Id(5)]
         [SugarColumn(IsNullable = true, ColumnName = "password_hash")]
-        public string password_hash { get; set; }
+        public string password_hash { get; set; } = string.Empty;
         
         /// <summary>
         /// 密码盐值
         /// </summary>
         [Id(6)]
         [SugarColumn(IsNullable = true, ColumnName = "password_salt")]
-        public string password_salt { get; set; }
+        public string password_salt { get; set; } = string.Empty;
         
         /// <summary>
         /// 是否激活
@@ -171,16 +177,12 @@ namespace FakeMicro.Entities
 
         [Id(22)]
         [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "CreatedBy")]
-        public string CreatedBy { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
 
         [Id(23)]
-
         [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "UpdatedBy")]
-        public string UpdatedBy { get; set; }
- 
-
+        public string UpdatedBy { get; set; } = string.Empty;
     }
-
     
     /// <summary>
     /// 软删除接口

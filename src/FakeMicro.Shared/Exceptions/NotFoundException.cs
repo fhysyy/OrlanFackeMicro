@@ -12,12 +12,12 @@ namespace FakeMicro.Shared.Exceptions
         /// <summary>
         /// 获取或设置资源名称
         /// </summary>
-        public string ResourceName { get; set; }
+        public string? ResourceName { get; set; }
 
         /// <summary>
         /// 获取或设置资源ID
         /// </summary>
-        public string ResourceId { get; set; }
+        public string? ResourceId { get; set; }
 
         /// <summary>
         /// 初始化NotFoundException类的新实例
