@@ -5,7 +5,7 @@ namespace FakeMicro.Utilities.ContentScan
 {
     public interface IFileContentScanner
     {
-        Task<FileScanResult> ScanFileContentAsync(Stream fileStream, string fileName, string contentType = null);
+        Task<FileScanResult> ScanFileContentAsync(Stream fileStream, string fileName, string? contentType = null);
     }
 
     public class FileScanResult
@@ -15,3 +15,4 @@ namespace FakeMicro.Utilities.ContentScan
         public string ScanDetails { get; set; }
     }
 }
+

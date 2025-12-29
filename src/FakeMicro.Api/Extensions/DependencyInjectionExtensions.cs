@@ -13,6 +13,10 @@ using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
 using FakeMicro.Api.Security;
 using System;
 using Orleans.Hosting;
+using Prometheus.Client.AspNetCore;
+using OpenTelemetry.Metrics;
+using FakeMicro.Monitoring.OpenTelemetry;
+using FakeMicro.Monitoring;
 
 
 namespace FakeMicro.Api.Extensions;
@@ -52,8 +56,7 @@ public static class DependencyInjectionExtensions
         // 注册配置服务
         builder.Services.AddConfigurationServices(configuration);
 
-        // 配置Orleans客户端 - 使用统一配置方式
-        builder.AddOrleansClientWithConfiguration();
+        // 注：由于已经配置了Orleans Silo，不需要单独配置客户端，Silo内置了客户端功能
 
         // 注册系统健康服务
         builder.Services.AddTransient<SystemHealthService>();
@@ -94,8 +97,38 @@ public static class DependencyInjectionExtensions
         builder.Services.AddScoped<JwtService>();
         builder.Services.AddScoped<JwtTokenService>();
 
+        // 注册Orleans监控服务
+        builder.Services.AddOrleansMonitoring(options =>
+        {
+            options.SlowQueryThresholdMs = 500;
+            options.SlowGrainCallThresholdMs = 1000;
+            options.EnableAlerting = true;
+        });
+        
+        // 配置OpenTelemetry指标收集
+        builder.Services.AddOpenTelemetry()
+            .WithMetrics(builder =>
+            {
+                // 收集ASP.NET Core指标
+                builder.AddAspNetCoreInstrumentation();
+                
+                // 收集系统运行时指标（CPU、内存、网络等）
+                builder.AddRuntimeInstrumentation();
+                
+                // 添加Orleans监控仪表化
+                builder.AddMeter("FakeMicro.Orleans.Monitoring");
+                
+                // 导出到Prometheus
+                builder.AddPrometheusExporter();
+            });
+            
+        // 添加数据库连接池监控服务
+        builder.Services.AddDatabaseConnectionPoolMonitor();
+
         // 注册用户服务
         builder.Services.AddScoped<IUserService, SimpleUserService>();
+        
+        // 不再需要注册OrleansDatabaseFixService为IHostedService，因为在Program.cs中已经手动调用了修复逻辑
     }
 
     /// <summary>
@@ -129,6 +162,9 @@ public static class DependencyInjectionExtensions
         // 添加认证和授权中间件
         app.UseAuthentication();
         app.UseAuthorization();
+
+        // 配置OpenTelemetry Prometheus指标端点
+        app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
         // 配置路由
         app.MapControllers();

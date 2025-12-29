@@ -101,7 +101,7 @@ namespace FakeMicro.Utilities.CodeGenerator.Test
                 
                 // 确保目录存在
                 var outputDirectory = Path.GetDirectoryName(outputFilePath);
-                if (!Directory.Exists(outputDirectory))
+                if (!string.IsNullOrEmpty(outputDirectory) && !Directory.Exists(outputDirectory))
                 {
                     Directory.CreateDirectory(outputDirectory);
                     Console.WriteLine($"✅ 创建目录: {outputDirectory}");

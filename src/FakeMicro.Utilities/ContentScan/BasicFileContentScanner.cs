@@ -99,7 +99,7 @@ namespace FakeMicro.Utilities.ContentScan
             _config = configOptions.Value;
         }
 
-        public async Task<FileScanResult> ScanFileContentAsync(Stream fileStream, string fileName, string contentType = null)
+        public async Task<FileScanResult> ScanFileContentAsync(Stream fileStream, string fileName, string? contentType = null)
         {
             var scanResult = new FileScanResult { IsSafe = true };
             var scanDetails = new List<string>();
@@ -137,7 +137,7 @@ namespace FakeMicro.Utilities.ContentScan
                 // Check executable signatures
                 fileStream.Position = 0;
                 var signatureBuffer = new byte[4];
-                await fileStream.ReadAsync(signatureBuffer, 0, signatureBuffer.Length);
+                await fileStream.ReadAtLeastAsync(signatureBuffer, signatureBuffer.Length, false);
                 
                 foreach (var signature in _executableSignatures)
                 {

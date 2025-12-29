@@ -182,46 +182,112 @@ namespace FakeMicro.DatabaseAccess.Services
 
             try
             {
-                // Orleans提醒表
-                var remindersTable = @"
-                    CREATE TABLE IF NOT EXISTS OrleansReminders (
-                        ServiceId VARCHAR(150) NOT NULL,
-                        GrainId VARCHAR(150) NOT NULL,
-                        ReminderName VARCHAR(150) NOT NULL,
-                        StartTime TIMESTAMP NOT NULL,
-                        Period VARCHAR(150) NOT NULL,
-                        GrainIdHash INT NOT NULL,
-                        ReminderHash INT NOT NULL,
-                        PRIMARY KEY (ServiceId, GrainId, ReminderName)
-                    );";
+                // 删除现有的Orleans表（如果存在）
+                var tablesToDrop = new[]
+                {
+                    "orleansmembershiptable",
+                    "orleansmembershipversiontable",
+                    "orleansreminderservice",
+                    "orleansstorage",
+                    "orleansquery",
+                    "orleansstate"
+                };
 
-                // Orleans状态表
-                var stateTable = @"
-                    CREATE TABLE IF NOT EXISTS OrleansState (
-                        GrainIdHash INT NOT NULL,
-                        GrainType VARCHAR(512) NOT NULL,
-                        GrainId VARCHAR(512) NOT NULL,
-                        State VARCHAR(512) NOT NULL,
-                        Payload VARCHAR(512) NULL,
-                        Version INT NOT NULL,
-                        DispatchCounter INT NOT NULL,
-                        Status INT NOT NULL,
-                        ModifiedOn TIMESTAMP NOT NULL,
-                        PRIMARY KEY (GrainIdHash)
-                    );";
+                foreach (var tableName in tablesToDrop)
+                {
+                    await db.Ado.ExecuteCommandAsync($"DROP TABLE IF EXISTS {tableName} CASCADE");
+                }
 
-                // Orleans查询表
+                // 创建成员表
+                var membershipTable = @"
+                    CREATE TABLE orleansmembershiptable (
+                        deploymentid character varying(150) NOT NULL,
+                        address character varying(45) NOT NULL,
+                        port integer NOT NULL,
+                        generation integer NOT NULL,
+                        siloname character varying(150) NOT NULL,
+                        hostname character varying(150) NOT NULL,
+                        status integer NOT NULL,
+                        proxyport integer,
+                        suspecttimes character varying(8000),
+                        starttime timestamp without time zone NOT NULL,
+                        iamalivetime timestamp without time zone NOT NULL,
+                        PRIMARY KEY (deploymentid, address, port, generation)
+                    );
+                ";
+
+                // 创建成员版本表
+                var membershipVersionTable = @"CREATE TABLE OrleansMembershipVersionTable
+(
+    DeploymentId varchar(150) NOT NULL,
+    Timestamp timestamptz(3) NOT NULL DEFAULT now(),
+    Version integer NOT NULL DEFAULT 0,
+
+    CONSTRAINT PK_OrleansMembershipVersionTable_DeploymentId PRIMARY KEY(DeploymentId)
+);";
+
+                // 创建提醒服务表
+                var reminderTable = @"
+                    CREATE TABLE orleansreminderservice (
+                        serviceid character varying(150) NOT NULL,
+                        grainid character varying(150) NOT NULL,
+                        remintername character varying(150) NOT NULL,
+                        starttime timestamp without time zone NOT NULL,
+                        period bigint NOT NULL,
+                        PRIMARY KEY (serviceid, grainid, remintername)
+                    );
+                ";
+
+                // 创建存储表
+                var storageTable = @"
+                    CREATE TABLE orleansstorage (
+                        grainidhash integer NOT NULL,
+                        grainidn0 bigint NOT NULL,
+                        grainidn1 bigint NOT NULL,
+                        graintypehash integer NOT NULL,
+                        graintypestring character varying(512) NOT NULL,
+                        grainidextensionstring character varying(512),
+                        serviceid character varying(150),
+                        payloadbinary bytea,
+                        payloadjson text,
+                        payloadxml text,
+                        etag character varying(64),
+                        version integer,
+                        modifiedon timestamp without time zone NOT NULL,
+                        createdon timestamp without time zone NOT NULL,
+                        PRIMARY KEY (grainidhash, grainidn0, grainidn1, graintypehash)
+                    );
+                ";
+
+                // 创建查询表
                 var queryTable = @"
-                    CREATE TABLE IF NOT EXISTS OrleansQuery (
-                        GrainHash INT NOT NULL,
-                        GrainId VARCHAR(512) NOT NULL,
-                        Status INT NOT NULL,
-                        PRIMARY KEY (GrainHash)
-                    );";
+                    CREATE TABLE orleansquery (
+                        querykey character varying(150) NOT NULL,
+                        querytext text NOT NULL,
+                        PRIMARY KEY (querykey)
+                    );
+                ";
 
-                await db.Ado.ExecuteCommandAsync(remindersTable);
-                await db.Ado.ExecuteCommandAsync(stateTable);
+                // 执行创建表语句
+                await db.Ado.ExecuteCommandAsync(membershipTable);
+                await db.Ado.ExecuteCommandAsync(membershipVersionTable);
+                await db.Ado.ExecuteCommandAsync(reminderTable);
+                await db.Ado.ExecuteCommandAsync(storageTable);
                 await db.Ado.ExecuteCommandAsync(queryTable);
+
+                // 插入必要的查询模板
+                var insertQueries = @"
+                    INSERT INTO orleansquery (querykey, querytext) VALUES
+                    ('GatewaysQueryKey', 'SELECT address, proxyport FROM orleansmembershiptable WHERE deploymentid = @deploymentId AND status = 3'),
+                    ('MembershipReadRowKey', 'SELECT deploymentid, address, port, generation, siloname, hostname, status, proxyport, suspecttimes, starttime, iamalivetime FROM orleansmembershiptable WHERE deploymentid = @deploymentId AND address = @address AND port = @port AND generation = @generation'),
+                    ('MembershipReadAllKey', 'SELECT deploymentid, address, port, generation, siloname, hostname, status, proxyport, suspecttimes, starttime, iamalivetime FROM orleansmembershiptable WHERE deploymentid = @deploymentId'),
+                    ('UpdateMembershipKey', 'UPDATE orleansmembershiptable SET siloname = @siloName, hostname = @hostName, status = @status, proxyport = @proxyPort, suspecttimes = @suspectTimes, starttime = @startTime, iamalivetime = @iamAliveTime WHERE deploymentid = @deploymentId AND address = @address AND port = @port AND generation = @generation'),
+                    ('DeleteMembershipTableEntriesKey', 'DELETE FROM orleansmembershiptable WHERE deploymentid = @deploymentId AND address = @address AND port = @port AND generation = @generation'),
+                    ('CleanupDefunctSiloEntriesKey', 'DELETE FROM orleansmembershiptable WHERE deploymentid = @deploymentId AND iamalivetime < @deathTime')
+                    ON CONFLICT (querykey) DO UPDATE SET querytext = EXCLUDED.querytext;
+                ";
+
+                await db.Ado.ExecuteCommandAsync(insertQueries);
 
                 _logger.LogInformation("Orleans框架相关表创建完成");
             }

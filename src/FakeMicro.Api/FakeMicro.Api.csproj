@@ -19,12 +19,18 @@
     <PackageReference Include="Microsoft.AspNetCore.Mvc.NewtonsoftJson" Version="9.0.11" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
     <PackageReference Include="Moq" Version="4.20.70" />
+    <PackageReference Include="OpenTelemetry" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Exporter.Prometheus.AspNetCore" Version="1.14.0-beta.1" />
+    <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.14.0" />
+    <PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.14.0" />
+    <PackageReference Include="Prometheus.Client.AspNetCore" Version="6.0.0" />
     <PackageReference Include="Serilog" Version="4.3.0" />
     <PackageReference Include="Serilog.Sinks.Elasticsearch" Version="10.0.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.6" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.10" />
     <PackageReference Include="Microsoft.Orleans.Client" Version="9.2.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="10.0.0" />
   </ItemGroup>
   <!-- 项目引用 -->
   <ItemGroup>
@@ -33,6 +39,7 @@
     <ProjectReference Include="..\FakeMicro.Entities\FakeMicro.Entities.csproj" />
     <ProjectReference Include="..\FakeMicro.Utilities\FakeMicro.Utilities.csproj" />
     <ProjectReference Include="..\FakeMicro.DatabaseAccess\FakeMicro.DatabaseAccess.csproj" />
+    <ProjectReference Include="..\FakeMicro.Monitoring\FakeMicro.Monitoring.csproj" />
   </ItemGroup>
   <!-- 排除所有原始控制器文件，只保留TestController -->
   <ItemGroup>

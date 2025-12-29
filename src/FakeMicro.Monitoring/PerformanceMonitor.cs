@@ -71,6 +71,14 @@ namespace FakeMicro.Monitoring;
         private long _totalAlerts = 0;
         private long _currentConcurrentCalls = 0;
         private long _peakConcurrentCalls = 0;
+        
+        // 数据库连接池指标
+        private long _postgreSqlActiveConnections = 0;
+        private long _postgreSqlIdleConnections = 0;
+        private long _postgreSqlMaxConnections = 0;
+        private long _mongoDbActiveConnections = 0;
+        private long _mongoDbIdleConnections = 0;
+        private long _mongoDbMaxConnections = 0;
 
     /// <summary>
     /// 性能指标类
@@ -441,7 +449,15 @@ namespace FakeMicro.Monitoring;
                 CurrentConcurrentCalls = Interlocked.Read(ref _currentConcurrentCalls),
                 PeakConcurrentCalls = Interlocked.Read(ref _peakConcurrentCalls),
                 ActiveOperations = new Dictionary<string, long>(_activeOperations),
-                Metrics = new Dictionary<string, PerformanceMetrics>()
+                Metrics = new Dictionary<string, PerformanceMetrics>(),
+                
+                // 数据库连接池指标
+                PostgreSqlActiveConnections = Interlocked.Read(ref _postgreSqlActiveConnections),
+                PostgreSqlIdleConnections = Interlocked.Read(ref _postgreSqlIdleConnections),
+                PostgreSqlMaxConnections = Interlocked.Read(ref _postgreSqlMaxConnections),
+                MongoDbActiveConnections = Interlocked.Read(ref _mongoDbActiveConnections),
+                MongoDbIdleConnections = Interlocked.Read(ref _mongoDbIdleConnections),
+                MongoDbMaxConnections = Interlocked.Read(ref _mongoDbMaxConnections)
             };
             
             foreach (var kvp in _metrics)
@@ -476,10 +492,36 @@ namespace FakeMicro.Monitoring;
             Interlocked.Exchange(ref _totalAlerts, 0);
             Interlocked.Exchange(ref _currentConcurrentCalls, 0);
             Interlocked.Exchange(ref _peakConcurrentCalls, 0);
+            Interlocked.Exchange(ref _postgreSqlActiveConnections, 0);
+            Interlocked.Exchange(ref _postgreSqlIdleConnections, 0);
+            Interlocked.Exchange(ref _postgreSqlMaxConnections, 0);
+            Interlocked.Exchange(ref _mongoDbActiveConnections, 0);
+            Interlocked.Exchange(ref _mongoDbIdleConnections, 0);
+            Interlocked.Exchange(ref _mongoDbMaxConnections, 0);
             _metrics.Clear();
             _activeOperations.Clear();
             _recentFailures.Clear();
             _recentAlerts.Clear();
+        }
+        
+        /// <summary>
+        /// 更新PostgreSQL连接池指标
+        /// </summary>
+        public void UpdatePostgreSqlConnectionPoolMetrics(long activeConnections, long idleConnections, long maxConnections)
+        {
+            Interlocked.Exchange(ref _postgreSqlActiveConnections, activeConnections);
+            Interlocked.Exchange(ref _postgreSqlIdleConnections, idleConnections);
+            Interlocked.Exchange(ref _postgreSqlMaxConnections, maxConnections);
+        }
+        
+        /// <summary>
+        /// 更新MongoDB连接池指标
+        /// </summary>
+        public void UpdateMongoDbConnectionPoolMetrics(long activeConnections, long idleConnections, long maxConnections)
+        {
+            Interlocked.Exchange(ref _mongoDbActiveConnections, activeConnections);
+            Interlocked.Exchange(ref _mongoDbIdleConnections, idleConnections);
+            Interlocked.Exchange(ref _mongoDbMaxConnections, maxConnections);
         }
 
     /// <summary>
@@ -496,6 +538,14 @@ namespace FakeMicro.Monitoring;
         public long PeakConcurrentCalls { get; set; }
         public Dictionary<string, long> ActiveOperations { get; set; } = new Dictionary<string, long>();
         public Dictionary<string, PerformanceMetrics> Metrics { get; set; } = new Dictionary<string, PerformanceMetrics>();
+        
+        // 数据库连接池指标
+        public long PostgreSqlActiveConnections { get; set; }
+        public long PostgreSqlIdleConnections { get; set; }
+        public long PostgreSqlMaxConnections { get; set; }
+        public long MongoDbActiveConnections { get; set; }
+        public long MongoDbIdleConnections { get; set; }
+        public long MongoDbMaxConnections { get; set; }
         
         public double GrainCallSuccessRate => TotalGrainCalls > 0 ? (1.0 - (double)FailedCalls / TotalGrainCalls) * 100 : 100;
         public double SlowQueryRate => TotalSqlQueries > 0 ? (double)SlowQueries / TotalSqlQueries * 100 : 0;

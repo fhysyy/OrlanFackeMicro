@@ -2,10 +2,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Clustering.AdoNet;
 using FakeMicro.Utilities.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Orleans.Storage;
+using System;
 
 namespace FakeMicro.Utilities.Configuration;
 
@@ -50,7 +52,19 @@ public static class OrleansConfigurationExtensions
             
             ConfigureClusterOptions(siloBuilder, appSettings);
             ConfigureClustering(siloBuilder, appSettings);
-            ConfigureStorage(siloBuilder, appSettings);
+            
+            // 只有在不使用本地集群时才配置存储
+            if (!appSettings.Orleans.UseLocalhostClustering)
+            {
+                ConfigureStorage(siloBuilder, appSettings);
+            }
+            else
+            {
+                // 对于本地集群，使用内存存储
+                siloBuilder.AddMemoryGrainStorageAsDefault();
+                siloBuilder.AddMemoryGrainStorage("PubSubStore");
+            }
+            
             ConfigureMessaging(siloBuilder);
             ConfigureClusteringOptions(siloBuilder);
             ConfigureLogging(siloBuilder);
@@ -88,11 +102,26 @@ public static class OrleansConfigurationExtensions
     /// </summary>
     private static void ConfigureClustering(IClientBuilder builder, AppSettings appSettings)
     {
-        builder.UseLocalhostClustering(
-            gatewayPort: appSettings.Orleans.GatewayPort,
-            serviceId: appSettings.Orleans.ServiceId,
-            clusterId: appSettings.Orleans.ClusterId
-        );
+        if (appSettings.Orleans.UseLocalhostClustering)
+        {
+            // 开发环境使用本地集群
+            builder.UseLocalhostClustering(
+                gatewayPort: appSettings.Orleans.GatewayPort,
+                serviceId: appSettings.Orleans.ServiceId,
+                clusterId: appSettings.Orleans.ClusterId
+            );
+        }
+        else
+        {
+            // 生产环境使用PostgreSQL作为集群成员资格存储
+            var connectionString = appSettings.Database.GetConnectionString();
+            builder.UseAdoNetClustering(options =>
+            {
+                options.Invariant = "Npgsql";
+                options.ConnectionString = connectionString;
+                // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+            });
+        }
     }
 
     /// <summary>
@@ -100,10 +129,50 @@ public static class OrleansConfigurationExtensions
     /// </summary>
     private static void ConfigureClustering(ISiloBuilder builder, AppSettings appSettings)
     {
-        builder.UseLocalhostClustering(
-            clusterId: appSettings.Orleans.ClusterId,
-            serviceId: appSettings.Orleans.ServiceId
-        );
+        if (appSettings.Orleans.UseLocalhostClustering)
+        {
+            // 开发环境使用本地集群
+            builder.UseLocalhostClustering(
+                clusterId: appSettings.Orleans.ClusterId,
+                serviceId: appSettings.Orleans.ServiceId
+            );
+        }
+        else
+        {
+            // 生产环境使用PostgreSQL作为集群成员资格存储
+            var connectionString = appSettings.Database.GetConnectionString();
+            builder.UseAdoNetClustering(options =>
+            {
+                options.Invariant = "Npgsql";
+                options.ConnectionString = connectionString;
+                // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+            });
+
+            // 添加AdoNet事务存储
+            // builder.AddAdoNetTransactionLogStorage(options =>
+            // {
+            //     options.Invariant = "Npgsql";
+            //     options.ConnectionString = connectionString;
+            // });
+            
+            // 配置Silo选项
+            builder.Configure<SiloOptions>(options =>
+            {
+                // 设置Silo名称
+                options.SiloName = "FakeMicroSilo";
+                // 在新版本Orleans中，ActivationCountBasedPlacementEnabled已被移除，不需要设置
+            });
+
+            // 配置集群选项
+            builder.Configure<ClusterOptions>(options =>
+            {
+                options.ClusterId = appSettings.Orleans.ClusterId;
+                options.ServiceId = appSettings.Orleans.ServiceId;
+            });
+
+            // 配置数据存储
+            ConfigureGrainStorage(builder, connectionString);
+        }
     }
 
     /// <summary>
@@ -112,37 +181,45 @@ public static class OrleansConfigurationExtensions
     private static void ConfigureStorage(ISiloBuilder builder, AppSettings appSettings)
     {
         var connectionString = appSettings.Database.GetConnectionString();
-        
-        if (!string.IsNullOrEmpty(connectionString))
+        ConfigureGrainStorage(builder, connectionString);
+    }
+
+    /// <summary>
+    /// 配置Grain存储
+    /// </summary>
+    private static void ConfigureGrainStorage(ISiloBuilder builder, string connectionString)
+    {
+        // 使用PostgreSQL作为默认存储
+        builder.AddAdoNetGrainStorageAsDefault(options =>
         {
-            // 使用PostgreSQL作为默认存储
-            builder.AddAdoNetGrainStorageAsDefault(options =>
-            {
-                options.Invariant = "Npgsql";
-                options.ConnectionString = connectionString;
-            });
-            
-            // 使用PostgreSQL作为发布/订阅存储
-            builder.AddAdoNetGrainStorage("PubSubStore", options =>
-            {
-                options.Invariant = "Npgsql";
-                options.ConnectionString = connectionString;
-            });
+            options.Invariant = "Npgsql";
+            options.ConnectionString = connectionString;
+            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+        });
 
-            // 配置用户状态存储
-            builder.AddAdoNetGrainStorage("UserStateStore", options =>
-            {
-                options.Invariant = "Npgsql";
-                options.ConnectionString = connectionString;
-            });
+        // 使用PostgreSQL作为发布/订阅存储
+        builder.AddAdoNetGrainStorage("PubSubStore", options =>
+        {
+            options.Invariant = "Npgsql";
+            options.ConnectionString = connectionString;
+            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+        });
 
-            // 配置Orleans系统存储
-            builder.AddAdoNetGrainStorage("OrleansClusterManifest", options =>
-            {
-                options.Invariant = "Npgsql";
-                options.ConnectionString = connectionString;
-            });
-        }
+        // 配置用户状态存储
+        builder.AddAdoNetGrainStorage("UserStateStore", options =>
+        {
+            options.Invariant = "Npgsql";
+            options.ConnectionString = connectionString;
+            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+        });
+
+        // 配置Orleans系统存储
+        builder.AddAdoNetGrainStorage("OrleansClusterManifest", options =>
+        {
+            options.Invariant = "Npgsql";
+            options.ConnectionString = connectionString;
+            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
+        });
     }
 
     /// <summary>

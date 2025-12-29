@@ -261,7 +261,7 @@ namespace FakeMicro.Silo
                         if (dbInitializer != null)
                         {
                             Console.WriteLine("正在初始化 Orleans 数据库表结构...");
-                            await dbInitializer.InitializeOrleansTablesAsync();
+                            await dbInitializer.InitializeAsync();
                             Console.WriteLine("✅ Orleans 数据库表结构初始化完成");
                         }
                         else

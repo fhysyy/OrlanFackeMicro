@@ -264,6 +264,12 @@ namespace FakeMicro.Utilities.CodeGenerator
             var extension = Path.GetExtension(originalPath);
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
             
+            // 如果目录为null，使用当前目录
+            if (string.IsNullOrEmpty(directory))
+            {
+                directory = Directory.GetCurrentDirectory();
+            }
+            
             return Path.Combine(directory, $"{fileName}_backup_{timestamp}{extension}");
         }
 

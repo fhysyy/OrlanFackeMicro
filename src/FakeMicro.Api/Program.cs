@@ -18,10 +18,12 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.OpenApi.Models;
+using Npgsql;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using System;
+using System.IO;
 using System.Net;
 using System.Runtime.Serialization.Formatters;
 using System.Text.Encodings.Web;
@@ -40,6 +42,18 @@ namespace FakeMicro.Api
             
             // 使用集中式配置管理
             var appSettings = builder.Configuration.GetAppSettings();
+            
+            // 修复Orleans数据库表的大小写敏感性问题
+           // await FixOrleansDatabaseTables(builder.Configuration);
+            
+            // 配置Orleans Silo
+            var configuration = builder.Configuration;
+          
+            var siloPort = int.TryParse(Environment.GetEnvironmentVariable("ORLEANS_SILO_PORT"), out var sp) ? sp : 11111;
+            var gatewayPort = int.TryParse(Environment.GetEnvironmentVariable("ORLEANS_GATEWAY_PORT"), out var gp) ? gp : 30000;
+            
+            // 配置Orleans Silo - 同时启动Silo和Client
+            builder.Host.ConfigureOrleansSilo();
             
             // 添加必要的服务
             builder.Services.AddEndpointsApiExplorer();
@@ -113,7 +127,7 @@ namespace FakeMicro.Api
             }
 
             // 暂时注释掉默认的定时任务，专注于测试Orleans连接
-            ConfigureDefaultJobs();
+          ConfigureDefaultJobs();
 
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");
@@ -121,10 +135,6 @@ namespace FakeMicro.Api
             
             await app.RunAsync();
         }
-        
-        /// <summary>
-        /// 配置默认的定时任务
-        /// </summary>
         private static void ConfigureDefaultJobs()
         {
             // 添加系统健康检查任务 - 每小时执行一次
@@ -138,20 +148,6 @@ namespace FakeMicro.Api
                 "sample-log-task",
                 () => Console.WriteLine($"[{DateTime.Now}] 定时任务执行示例"),
                 "* * * * *");
-
-            //// 添加Orleans HelloGrain定时任务 - 每5分钟执行一次
-            //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
-            //    "orleans-hello-task",
-            //    executor => executor.ExecuteGrainOperationAsync("hello", "sayhello", 
-            //        new System.Collections.Generic.Dictionary<string, object> { { "greeting", "Hello from Hangfire scheduled task" } }),
-            //    "*/5 * * * *");
-
-            //// 添加Orleans CounterGrain定时任务 - 每10分钟执行一次
-            //RecurringJob.AddOrUpdate<OrleansTaskExecutor>(
-            //    "orleans-counter-task",
-            //    executor => executor.ExecuteGrainOperationAsync("counter", "increment", 
-            //        new System.Collections.Generic.Dictionary<string, object> { { "grainId", "hangfire-counter" } }),
-            //    "*/10 * * * *");
         }
         
         // Orleans客户端生命周期服务，负责Orleans客户端的初始化和关闭
@@ -208,5 +204,5 @@ namespace FakeMicro.Api
                 }
             }
         }
-    } 
+    }
 }

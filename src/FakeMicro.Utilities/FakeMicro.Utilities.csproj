@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <GenerateTargetFrameworkAttribute>false</GenerateTargetFrameworkAttribute>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <WarningsAsErrors>none</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup>
@@ -19,9 +21,11 @@
     <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="10.0.0" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Core" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Runtime" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="9.2.1" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.207" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.0" />

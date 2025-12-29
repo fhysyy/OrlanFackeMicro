@@ -20,7 +20,7 @@ namespace FakeMicro.Utilities.Storage
             Directory.CreateDirectory(_config.LocalStoragePath);
         }
 
-        public async Task SaveFileAsync(string filePath, Stream fileStream, string contentType = null)
+        public async Task SaveFileAsync(string filePath, Stream fileStream, string? contentType = null)
         {
             var fullPath = Path.Combine(_config.LocalStoragePath, filePath);
             var directory = Path.GetDirectoryName(fullPath);

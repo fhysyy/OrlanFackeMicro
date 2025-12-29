@@ -48,7 +48,8 @@ public class DatabaseConfig
     public int ConnectionTimeout { get; set; } = 30;
     public int MinPoolSize { get; set; } = 5;
     public int MaxPoolSize { get; set; } = 100;
-    
+    public bool IncludeErrorDetail { get; set; } = true;
+
     public string GetConnectionString()
     {
         // 检查是否直接设置了完整的连接字符串（优先级最高）
@@ -65,7 +66,8 @@ public class DatabaseConfig
         var database = Environment.GetEnvironmentVariable("DB_NAME") ?? Database;
         var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username; // 兼容两种命名
         
-        return $"Host={server};Port={port};Database={database};Username={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};";
+        // 添加PostgreSQL特定选项，解决大小写敏感和表名引用问题
+        return $"Host={server};Port={port};Database={database};Username={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};Include Error Detail={IncludeErrorDetail};SearchPath=public;";
     }
 }
 
@@ -89,6 +91,8 @@ public class OrleansConfig
     public string DashboardHost { get; set; } = "localhost";
     public int DashboardUpdateIntervalMs { get; set; } = 2000;
 }
+
+
 
 
 

@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json.Linq;
+using Newtonsoft.Json.Linq;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -23,8 +23,13 @@ namespace FakeMicro.Utilities
             }
             return obj;
         }
-        public static ExpandoObject ToExpando(this IDictionary<string, object> dictionary)
+        public static ExpandoObject ToExpando(this IDictionary<string, object>? dictionary)
         {
+            if (dictionary == null)
+            {
+                return new ExpandoObject();
+            }
+            
             var expando = new ExpandoObject();
             var expandoDic = (IDictionary<string, object>)expando;
             foreach (var kvp in dictionary)
