@@ -136,18 +136,22 @@ public static class DependencyInjectionExtensions
     /// </summary>
     public static void ConfigureAllMiddleware(this WebApplication app)
     {
-        // 配置Swagger
-        app.UseSwagger();
-        app.UseSwaggerUI(c =>
+        // 只在开发环境中启用Swagger，生产环境中禁用
+        if (app.Environment.IsDevelopment())
         {
-            c.SwaggerEndpoint("/swagger/v1/swagger.json", "FakeMicro API V1");
-            c.RoutePrefix = "swagger";
-            c.DocumentTitle = "FakeMicro API Documentation";
-            c.DefaultModelsExpandDepth(-1); // 隐藏模型
-            c.DisplayRequestDuration(); // 显示请求耗时
-            c.EnableDeepLinking();
-            c.ShowExtensions();
-        });
+            // 配置Swagger
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "FakeMicro API V1");
+                c.RoutePrefix = "swagger";
+                c.DocumentTitle = "FakeMicro API Documentation";
+                c.DefaultModelsExpandDepth(-1); // 隐藏模型
+                c.DisplayRequestDuration(); // 显示请求耗时
+                c.EnableDeepLinking();
+                c.ShowExtensions();
+            });
+        }
 
         // 配置HTTPS重定向
         app.UseHttpsRedirection();

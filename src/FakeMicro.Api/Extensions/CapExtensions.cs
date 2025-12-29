@@ -1,12 +1,12 @@
+using System;
 using DotNetCore.CAP;
 using FakeMicro.Api.Middleware;
 using FakeMicro.Api.Services;
-using FakeMicro.DatabaseAccess;
+using FakeMicro.Utilities.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 
 namespace FakeMicro.Api.Extensions
 {
@@ -26,15 +26,24 @@ namespace FakeMicro.Api.Extensions
         public static IServiceCollection AddCapEventBus(this IServiceCollection services, 
             IConfiguration configuration, IHostEnvironment hostEnvironment)
         {
-            // 配置连接字符串选项
-            services.Configure<ConnectionStringsOptions>(configuration.GetSection("ConnectionStrings"));
+            // 获取应用配置
+            var appSettings = configuration.Get<AppSettings>() ?? new AppSettings();
             
-            // 从配置中获取CAP相关配置，提供默认值以防配置中不存在
-            var connectionStringsOptions = configuration.GetSection("ConnectionStrings").Get<ConnectionStringsOptions>() ?? new ConnectionStringsOptions();
-            string connectionString = connectionStringsOptions.CAP ?? connectionStringsOptions.DefaultConnection ?? "Host=localhost;Database=fakemicro;Username=postgres;Password=123456";
-            int failedRetryCount = configuration.GetValue<int>("CAP:FailedRetryCount", 3);
-            int failedRetryInterval = configuration.GetValue<int>("CAP:FailedRetryInterval", 30);
-            int succeedMessageExpiredAfter = configuration.GetValue<int>("CAP:SucceedMessageExpiredAfter", 3600);
+            // 如果CAP未启用，则跳过注册
+            if (!appSettings.CAP.Enabled)
+            {
+                // 注册一个空的扩展发布器，避免依赖项注入错误
+                services.AddScoped<IExtendedCapPublisher>(sp => 
+                    throw new InvalidOperationException("CAP is not enabled. Enable CAP in configuration to use it."));
+                return services;
+            }
+
+            // 从配置中获取数据库连接字符串
+            string connectionString = appSettings.Database.GetConnectionString();
+            
+            // 获取RabbitMQ配置
+            var rabbitMQConfig = appSettings.RabbitMQ;
+            var capConfig = appSettings.CAP;
 
             // 注册CAP服务
             services.AddCap(options =>
@@ -45,26 +54,30 @@ namespace FakeMicro.Api.Extensions
                 // 配置RabbitMQ
                 options.UseRabbitMQ(opt =>
                 {
-                    opt.HostName = "47.100.93.119";
-                    opt.UserName = "admin";
-                    opt.Password = "public";
+                    opt.HostName = rabbitMQConfig.GetHostName();
+                    opt.Port = rabbitMQConfig.Port;
+                    opt.UserName = rabbitMQConfig.UserName;
+                    opt.Password = rabbitMQConfig.GetPassword();
+                    opt.VirtualHost = rabbitMQConfig.VirtualHost;
                 });
                 
-                // 启用Dashboard并配置路径
-                options.UseDashboard(d =>
+                // 配置Dashboard
+                if (capConfig.UseDashboard)
                 {
-                    d.AllowAnonymousExplicit = true;
-                    d.PathMatch = "/cap";
-                   
-                });
+                    options.UseDashboard(d =>
+                    {
+                        d.AllowAnonymousExplicit = capConfig.DashboardAllowAnonymous;
+                        d.PathMatch = capConfig.DashboardPath;
+                    });
+                }
                 
                 // 配置重试策略
-                options.FailedRetryCount = failedRetryCount;
-                options.FailedRetryInterval = failedRetryInterval;
-                options.SucceedMessageExpiredAfter = succeedMessageExpiredAfter;
+                options.FailedRetryCount = capConfig.FailedRetryCount;
+                options.FailedRetryInterval = capConfig.FailedRetryInterval;
+                options.SucceedMessageExpiredAfter = capConfig.SucceedMessageExpiredAfter;
                 
                 // 配置消费者线程数
-                options.ConsumerThreadCount = 1;
+                options.ConsumerThreadCount = capConfig.ConsumerThreadCount;
             });
             
             // 添加外部订阅管理服务

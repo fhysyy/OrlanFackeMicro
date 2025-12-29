@@ -33,7 +33,6 @@ public static class ConfigurationExtensions
     {
         // 注册AppSettings
         var settings = configuration.GetAppSettings();
-        Console.WriteLine(settings);
         // 验证配置
         settings.ValidateConfiguration();
         
@@ -52,6 +51,8 @@ public static class ConfigurationExtensions
         services.AddSingleton(settings.Cors);
         services.AddSingleton(settings.FileStorage);
         services.AddSingleton(settings.Elasticsearch);
+        services.AddSingleton(settings.AnomalyDetection);
+        services.AddSingleton(settings.Hangfire);
         
         // 配置JwtConfig，使其能从appsettings.json的Jwt节点读取值
         services.Configure<JwtConfig>(options =>
@@ -94,6 +95,9 @@ public static class ConfigurationExtensions
     {
         return builder
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true);
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true, reloadOnChange: true)
+            .AddEnvironmentVariables(prefix: envPrefix)
+            .AddEnvironmentPlaceholders();
     }
 }

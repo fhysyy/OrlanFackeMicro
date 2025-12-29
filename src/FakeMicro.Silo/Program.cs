@@ -12,7 +12,7 @@ using Microsoft.Extensions.Options;
 using Orleans.Configuration;
 using Orleans.Hosting;
 using Orleans.Storage;
-using OrleansDatabaseInitialization;
+using FakeMicro.Silo.Services; // 修复命名空间引用
 using SqlSugar;
 using System;
 using System.Configuration;
@@ -223,9 +223,8 @@ namespace FakeMicro.Silo
                     services.Configure<ConnectionStringsOptions>(context.Configuration.GetSection("ConnectionStrings"));
                     
                     // 添加 Orleans 数据库初始化服务
-                    services.AddTransient<OrleansDatabaseInitialization.OrleansPostgresInitializer>();
+                    services.AddTransient<OrleansDatabaseInitializer>();
 
-              
                     // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
                     services.AddDatabaseInitializer(context.Configuration);
 
@@ -258,11 +257,11 @@ namespace FakeMicro.Silo
                     // 首先初始化 Orleans 数据库表结构
                     using (var scope = host.Services.CreateScope())
                     {
-                        var dbInitializer = scope.ServiceProvider.GetService<OrleansDatabaseInitialization.OrleansPostgresInitializer>();
+                        var dbInitializer = scope.ServiceProvider.GetService<OrleansDatabaseInitializer>();
                         if (dbInitializer != null)
                         {
                             Console.WriteLine("正在初始化 Orleans 数据库表结构...");
-                            await dbInitializer.InitializeAsync();
+                            await dbInitializer.StartAsync(default);
                             Console.WriteLine("✅ Orleans 数据库表结构初始化完成");
                         }
                         else
@@ -296,12 +295,37 @@ namespace FakeMicro.Silo
 
                     fallbackHostBuilder.UseOrleans((context, siloBuilder) =>
                     {
-                        var fallbackOrleansConfig = context.Configuration.GetSection("Orleans").Get<OrleansConfig>() ?? new OrleansConfig();
-                        var fallbackConnectionString = context.Configuration.GetConnectionString("DefaultConnection");
+                        // 使用统一配置方式
+                        var appSettings = context.Configuration.GetAppSettings();
+                        var fallbackConnectionString = appSettings.Database.GetConnectionString();
 
+                        // 配置Orleans
                         siloBuilder.UseLocalhostClustering(
-                            clusterId: fallbackOrleansConfig.ClusterId ?? "FakeMicroCluster",
-                            serviceId: fallbackOrleansConfig.ServiceId ?? "FakeMicroService");
+                            clusterId: appSettings.Orleans.ClusterId ?? "FakeMicroCluster",
+                            serviceId: appSettings.Orleans.ServiceId ?? "FakeMicroService");
+
+                        // 配置持久化存储
+                        if (!string.IsNullOrEmpty(fallbackConnectionString))
+                        {
+                            siloBuilder.AddAdoNetGrainStorage("Default", options =>
+                            {
+                                options.Invariant = "Npgsql";
+                                options.ConnectionString = fallbackConnectionString;
+                            });
+
+                            // 暂时注释掉提醒服务配置，后续修复
+                            // siloBuilder.UseAdoNetReminderService(options =>
+                            // {
+                            //     options.Invariant = "Npgsql";
+                            //     options.ConnectionString = fallbackConnectionString;
+                            // });
+
+                            siloBuilder.UseAdoNetClustering(options =>
+                            {
+                                options.Invariant = "Npgsql";
+                                options.ConnectionString = fallbackConnectionString;
+                            });
+                        }
                     });
 
                     var fallbackHost = fallbackHostBuilder.Build();

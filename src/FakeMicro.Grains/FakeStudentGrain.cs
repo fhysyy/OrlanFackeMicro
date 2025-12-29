@@ -24,26 +24,27 @@ using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.Utilities.CodeGenerator;
 using CodeGeneratorValidationResult = FakeMicro.Utilities.CodeGenerator;
 using InterfacesValidationResult = FakeMicro.Interfaces.Models.ValidationResult;
+using FakeMicro.Grains; // 引用OrleansGrainBase所在的命名空间
 
 namespace FakeMicro.Entities.Grains
 {
     /// <summary>
     /// FakeStudentGrain实现
     /// </summary>
-    public class FakeStudentGrain :Grain,IFakeStudentGrain
+    public class FakeStudentGrain : OrleansGrainBase, IFakeStudentGrain
     {
-        private readonly ILogger<FakeStudentGrain> _logger;
         private readonly IMapper _mapper;
         private readonly IFakeStudentRepository _repository;
 
         public FakeStudentGrain(
             ILogger<FakeStudentGrain> logger,
             IMapper mapper,
-            IFakeStudentRepository repository) // 通过接口注入
+            IFakeStudentRepository repository,
+            IGrainContext? grainContext = null)
+            : base(logger, grainContext)
         {
-            _logger = logger;
             _mapper = mapper;
-            _repository = repository; // 使用注入的仓储
+            _repository = repository;
         }
 
         /// <summary>
@@ -51,28 +52,23 @@ namespace FakeMicro.Entities.Grains
         /// </summary>
         public async Task<FakeStudentDto?> GetAsync(CancellationToken cancellationToken = default)
         {
-            try
+            return await SafeExecuteAsync("GetFakeStudent", async () =>
             {
                 var grainIdStr = this.GetPrimaryKeyString();
                 if (!long.TryParse(grainIdStr, out long grainId))
                 {
-                    _logger.LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
+                    LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
                     return null;
                 }
 
                 var entity = await _repository.GetByIdAsync(grainId, cancellationToken);
                 if (entity == null)
                 {
-                    _logger.LogInformation("FakeStudent不存在: {Id}", grainId);
+                    LogInformation("FakeStudent不存在: {Id}", grainId);
                     return null;
                 }
                 return _mapper.Map<FakeStudentDto>(entity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取FakeStudent时发生错误: {Id}", this.GetPrimaryKeyString());
-                throw; // 对于查询操作，抛出异常更合适
-            }
+            });
         }
         
         /// <summary>
@@ -80,28 +76,23 @@ namespace FakeMicro.Entities.Grains
         /// </summary>
         public async Task<FakeStudent?> GetByGrainIdAsync(CancellationToken cancellationToken = default)
         {
-            try
+            return await SafeExecuteAsync("GetFakeStudentByGrainId", async () =>
             {
                 var grainIdStr = this.GetPrimaryKeyString();
                 if (!long.TryParse(grainIdStr, out long grainId))
                 {
-                    _logger.LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
+                    LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
                     return null;
                 }
 
                 var entity = await _repository.GetByIdAsync(grainId, cancellationToken);
                 if (entity == null)
                 {
-                    _logger.LogInformation("FakeStudent实体不存在: {Id}", grainId);
+                    LogInformation("FakeStudent实体不存在: {Id}", grainId);
                     return null;
                 }
                 return entity;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "通过Grain ID获取FakeStudent实体时发生错误: {Id}", this.GetPrimaryKeyString());
-                throw;
-            }
+            });
         }
 
         /// <summary>
@@ -109,12 +100,12 @@ namespace FakeMicro.Entities.Grains
         /// </summary>
         public async Task<CreateFakeStudentResult> CreateAsync(CreateFakeStudentRequest request, CancellationToken cancellationToken = default)
         {
-            try
+            return await SafeExecuteAsync("CreateFakeStudent", async () =>
             {
                 var grainIdStr = this.GetPrimaryKeyString();
                 if (!long.TryParse(grainIdStr, out long grainId))
                 {
-                    _logger.LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
+                    LogWarning("无效的Grain ID: {GrainId}", grainIdStr);
                     return CreateFakeStudentResult.InvalidGrainId();
                 }
 
@@ -125,29 +116,12 @@ namespace FakeMicro.Entities.Grains
                 entity.CreatedAt = DateTime.UtcNow;
                 entity.UpdatedAt = DateTime.UtcNow;
 
-                // 修复CS0815错误，AddAsync可能返回void
                 await _repository.AddAsync(entity, cancellationToken);
                 var result = _mapper.Map<FakeStudentDto>(entity);
 
-                _logger.LogInformation("FakeStudent创建成功: {Id}", entity.Id);
+                LogInformation("FakeStudent创建成功: {Id}", entity.Id);
                 return CreateFakeStudentResult.CreateSuccess(result, entity.Id);
-            }
-            catch (SqlSugarException ex)
-            {
-                var msg = ex.InnerException?.Message ?? ex.Message;
-                if (msg.Contains("FK_"))
-                {
-                    _logger.LogWarning(ex, "创建FakeStudent时发生外键约束错误");
-                    return CreateFakeStudentResult.InvalidReference("引用的数据不存在");
-                }
-                _logger.LogWarning(ex, "创建FakeStudent时发生唯一键冲突或数据库错误");
-                return CreateFakeStudentResult.Conflict("该FakeStudent已存在");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "创建FakeStudent时发生系统错误");
-                return CreateFakeStudentResult.Failed("创建失败，请稍后重试");
-            }
+            });
         }
 
         /// <summary>

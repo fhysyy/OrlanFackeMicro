@@ -18,7 +18,11 @@ namespace FakeMicro.Utilities
             {
                 if (a is JObject)
                 {
-                    obj.Add(((JObject)a).ToObject<IDictionary<string, object>>().ToExpando());
+                    var dictionary = ((JObject)a).ToObject<IDictionary<string, object>>();
+                    if (dictionary != null)
+                    {
+                        obj.Add(dictionary.ToExpando());
+                    }
                 }
             }
             return obj;
@@ -46,14 +50,17 @@ namespace FakeMicro.Utilities
                     {
                         if (item is Newtonsoft.Json.Linq.JContainer)
                         {
-                            var expandoItem = ((Newtonsoft.Json.Linq.JContainer)item).ToObject<IDictionary<string, object>>().ToExpando();
-                            itemList.Add(expandoItem);
+                            var expandoItem = ((Newtonsoft.Json.Linq.JContainer)item).ToObject<IDictionary<string, object>>()?.ToExpando();
+                            if (expandoItem != null)
+                            {
+                                itemList.Add(expandoItem);
+                            }
                         }
                         else
                         {
                             if (item is Newtonsoft.Json.Linq.JValue)
                                 itemList.Add(((Newtonsoft.Json.Linq.JValue)item).Value);
-                            else
+                            else if (item != null)
                                 itemList.Add(item);
                         }
                     }
@@ -61,8 +68,11 @@ namespace FakeMicro.Utilities
                 }
                 else if (kvp.Value is Newtonsoft.Json.Linq.JContainer)
                 {
-                    var expandoValue = ((Newtonsoft.Json.Linq.JContainer)kvp.Value).ToObject<IDictionary<string, object>>().ToExpando();
-                    expandoDic.Add(kvp.Key, expandoValue);
+                    var expandoValue = ((Newtonsoft.Json.Linq.JContainer)kvp.Value).ToObject<IDictionary<string, object>>()?.ToExpando();
+                    if (expandoValue != null)
+                    {
+                        expandoDic.Add(kvp.Key, expandoValue);
+                    }
                 }
                 else
                 {

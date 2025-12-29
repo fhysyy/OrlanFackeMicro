@@ -20,26 +20,27 @@ using FakeMicro.Utilities.CodeGenerator;
 using FakeMicro.DatabaseAccess.Interfaces;
 using AutoMapper;
 using System.Linq.Expressions;
+using FakeMicro.Grains; // 引用OrleansGrainBase所在的命名空间
 
 namespace FakeMicro.Entities.Grains
 {
     /// <summary>
     /// FakeNewsGrain实现
     /// </summary>
-    public class FakeNewsGrain :Grain,IFakeNewsGrain
+    public class FakeNewsGrain : OrleansGrainBase, IFakeNewsGrain
     {
-        private readonly ILogger<FakeNewsGrain> _logger;
         private readonly IMapper _mapper;
         private readonly IFakeNewsRepository _repository;
 
         public FakeNewsGrain(
             ILogger<FakeNewsGrain> logger,
             IMapper mapper,
-            IFakeNewsRepository repository) // 通过接口注入
+            IFakeNewsRepository repository,
+            IGrainContext? grainContext = null)
+            : base(logger, grainContext)
         {
-            _logger = logger;
             _mapper = mapper;
-            _repository = repository; // 使用注入的仓储
+            _repository = repository;
         }
 
         /// <summary>
@@ -47,29 +48,24 @@ namespace FakeMicro.Entities.Grains
         /// </summary>
         public async Task<FakeNewsDto?> GetAsync(CancellationToken cancellationToken = default)
         {
-            try
+            return await SafeExecuteAsync("GetFakeNews", async () =>
             {
                 long grainId;
                 var idString = this.GetPrimaryKeyString();
                 if (string.IsNullOrEmpty(idString) || !long.TryParse(idString, out grainId))
                 {
-                    _logger.LogWarning("无效的Grain ID: {GrainId}", idString);
+                    LogWarning("无效的Grain ID: {GrainId}", idString);
                     return null;
                 }
 
                 var entity = await _repository.GetByIdAsync(grainId, cancellationToken);
                 if (entity == null)
                 {
-                    _logger.LogInformation("FakeNews不存在: {Id}", grainId);
+                    LogInformation("FakeNews不存在: {Id}", grainId);
                     return null;
                 }
                 return _mapper.Map<FakeNewsDto>(entity);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "获取FakeNews时发生错误: {Id}", this.GetPrimaryKeyString());
-                throw; // 对于查询操作，抛出异常更合适
-            }
+            });
         }
 
         /// <summary>
@@ -77,13 +73,13 @@ namespace FakeMicro.Entities.Grains
         /// </summary>
         public async Task<CreateFakeNewsResult> CreateAsync(CreateFakeNewsRequest request, CancellationToken cancellationToken = default)
         {
-            try
+            return await SafeExecuteAsync("CreateFakeNews", async () =>
             {
                 long grainId;
                 var idString = this.GetPrimaryKeyString();
                 if (string.IsNullOrEmpty(idString) || !long.TryParse(idString, out grainId))
                 {
-                    _logger.LogWarning("无效的Grain ID: {GrainId}", idString);
+                    LogWarning("无效的Grain ID: {GrainId}", idString);
                     return CreateFakeNewsResult.Failed("无效的Grain ID", "INVALID_GRAIN_ID");
                 }
 
@@ -97,25 +93,9 @@ namespace FakeMicro.Entities.Grains
                 await _repository.AddAsync(entity, cancellationToken);
                 var result = _mapper.Map<FakeNewsDto>(entity);
 
-                _logger.LogInformation("FakeNews创建成功: {Id}", entity.Id);
-                return CreateFakeNewsResult.CreateSuccess(result,entity.Id);
-            }
-            catch (SqlSugarException ex) 
-{
-               var msg = ex.InnerException?.Message ?? ex.Message; 
-              if(msg.Contains("FK_"))
-{ 
-                _logger.LogError(ex, "创建FakeNews创建FakeStudent时发生外键约束错误");
-               return CreateFakeNewsResult.Failed("引用的数据不存在");
-}
-             _logger.LogWarning(ex, "FakeNews时发生唯一键冲突或数据库错误");
-              return CreateFakeNewsResult.Failed("FakeNews已存在", "CONFLICT");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "创建FakeNews时发生系统错误");
-                return CreateFakeNewsResult.Failed("创建失败，请稍后重试");
-            }
+                LogInformation("FakeNews创建成功: {Id}", entity.Id);
+                return CreateFakeNewsResult.CreateSuccess(result, entity.Id);
+            });
         }
 
         /// <summary>

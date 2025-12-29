@@ -1,3 +1,4 @@
+using FakeMicro.Interfaces.Monitoring;
 using FakeMicro.Shared.Exceptions;
 using Microsoft.Extensions.Logging;
 using Orleans;
@@ -19,6 +20,7 @@ namespace FakeMicro.Grains
     {
         protected readonly ILogger _logger;
         protected readonly IGrainContext? _grainContext;
+        protected readonly ISystemMonitorGrain _systemMonitor;
 
         // 日志记录阈值配置
         protected const int PERFORMANCE_LOG_THRESHOLD = 500; // 毫秒
@@ -35,6 +37,7 @@ namespace FakeMicro.Grains
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _grainContext = grainContext;
+            _systemMonitor = this.GrainFactory.GetGrain<ISystemMonitorGrain>("system");
         }
 
         /// <summary>
@@ -60,6 +63,7 @@ namespace FakeMicro.Grains
         public override Task OnActivateAsync(CancellationToken cancellationToken)
         {
             LogInformation("已激活");
+            _systemMonitor.ReportMetricAsync($"{GetGrainTypeName()}.Activations", 1, GetGrainTypeName());
             
             try
             {
@@ -69,6 +73,7 @@ namespace FakeMicro.Grains
             catch (Exception ex)
             {
                 LogError(ex, "状态恢复失败");
+                _systemMonitor.ReportMetricAsync($"{GetGrainTypeName()}.ActivationErrors", 1, GetGrainTypeName());
                 // 即使状态恢复失败，也要继续激活Grain
                 return base.OnActivateAsync(cancellationToken);
             }
@@ -80,6 +85,7 @@ namespace FakeMicro.Grains
         public override Task OnDeactivateAsync(DeactivationReason reason, CancellationToken cancellationToken)
         {
             LogInformation("正在停用，原因: {Reason}", reason.Description);
+            _systemMonitor.ReportMetricAsync($"{GetGrainTypeName()}.Deactivations", 1, GetGrainTypeName());
             
             try
             {
@@ -89,13 +95,14 @@ namespace FakeMicro.Grains
             catch (Exception ex)
             {
                 LogError(ex, "资源清理失败");
+                _systemMonitor.ReportMetricAsync($"{GetGrainTypeName()}.DeactivationErrors", 1, GetGrainTypeName());
                 // 即使清理失败，也要继续停用Grain
                 return base.OnDeactivateAsync(reason, cancellationToken);
             }
         }
 
         /// <summary>
-        /// 性能监控：记录方法执行时间（Orleans最佳实践：避免过度日志）
+        /// 性能监控：记录方法执行时间并报告到监控系统
         /// </summary>
         protected async Task<T> TrackPerformanceAsync<T>(string operationName, Func<Task<T>> operation, params string[]? sensitiveParameters)
         {
@@ -104,6 +111,10 @@ namespace FakeMicro.Grains
             {
                 var result = await operation();
                 stopwatch.Stop();
+                
+                // 报告性能指标到监控系统
+                var metricName = $"{GetGrainTypeName()}.{operationName}";
+                await _systemMonitor.ReportMetricAsync($"{metricName}.ResponseTime", stopwatch.ElapsedMilliseconds, GetGrainTypeName());
                 
                 // 仅记录耗时超过阈值的操作，避免日志噪声
                 if (stopwatch.ElapsedMilliseconds > PERFORMANCE_LOG_THRESHOLD)
@@ -117,6 +128,12 @@ namespace FakeMicro.Grains
             catch (Exception ex)
             {
                 stopwatch.Stop();
+                
+                // 报告错误指标到监控系统
+                var metricName = $"{GetGrainTypeName()}.{operationName}";
+                await _systemMonitor.ReportMetricAsync($"{metricName}.ErrorTime", stopwatch.ElapsedMilliseconds, GetGrainTypeName());
+                await _systemMonitor.ReportMetricAsync($"{GetGrainTypeName()}.{operationName}.Errors", 1, GetGrainTypeName());
+                
                 LogError(ex, "操作失败: {OperationName}, 耗时: {ElapsedMs}ms",
                     operationName, stopwatch.ElapsedMilliseconds);
                 throw;
@@ -162,7 +179,7 @@ namespace FakeMicro.Grains
             LogTrace("开始执行: {OperationName} {Parameters}", operationName, parametersLog);
             try
             {
-                // 使用性能跟踪包装操作
+                // 使用性能跟踪包装操作，自动报告指标
                 var result = await TrackPerformanceAsync(operationName, operation, sensitiveParameters);
                 
                 LogTrace("执行成功: {OperationName}", operationName);

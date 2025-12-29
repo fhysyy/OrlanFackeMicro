@@ -1,100 +1,90 @@
-using System;
+using System.ComponentModel.DataAnnotations;
 
-namespace FakeMicro.DatabaseAccess;
-
-/// <summary>
-/// 数据库配置类
-/// </summary>
-public class DatabaseConfig
+namespace FakeMicro.DatabaseAccess
 {
     /// <summary>
-    /// 数据库类型
+    /// 数据库配置类
     /// </summary>
-    public DatabaseType Type { get; set; } = DatabaseType.PostgreSQL;
-    
-    /// <summary>
-    /// 服务器地址
-    /// </summary>
-    public string Server { get; set; } = "localhost";
-    
-    /// <summary>
-    /// 端口号
-    /// </summary>
-    public int Port { get; set; } = 5432;
-    
-    /// <summary>
-    /// 数据库名称
-    /// </summary>
-    public string Database { get; set; } = "fakemicro";
-    
-    /// <summary>
-    /// 用户名
-    /// </summary>
-    public string Username { get; set; } = "postgres";
-    
-    /// <summary>
-    /// 密码
-    /// </summary>
-    public string Password { get; set; } = "123456";
-    
-    /// <summary>
-    /// 是否允许信任服务器证书（用于SSL连接）
-    /// </summary>
-    public bool TrustServerCertificate { get; set; } = true;
-    
-    /// <summary>
-    /// 连接超时时间（秒）
-    /// </summary>
-    public int ConnectionTimeout { get; set; } = 30;
-    
-    /// <summary>
-    /// 最小连接池大小
-    /// </summary>
-    public int MinPoolSize { get; set; } = 5;
-    
-    /// <summary>
-    /// 最大连接池大小
-    /// </summary>
-    public int MaxPoolSize { get; set; } = 100;
-    
-    /// <summary>
-    /// 根据数据库类型获取默认端口
-    /// </summary>
-    /// <param name="type">数据库类型</param>
-    /// <returns>默认端口号</returns>
-    public static int GetDefaultPort(DatabaseType type)
+    public class DatabaseConfig
     {
-        return type switch
+        /// <summary>
+        /// 数据库类型
+        /// </summary>
+        public string Type { get; set; } = "PostgreSQL";
+
+        /// <summary>
+        /// 服务器地址
+        /// </summary>
+        public string Server { get; set; } = "localhost";
+
+        /// <summary>
+        /// 端口号
+        /// </summary>
+        public int Port { get; set; } = 5432;
+
+        /// <summary>
+        /// 数据库名称
+        /// </summary>
+        public string DatabaseName { get; set; } = "fakemicro";
+
+        /// <summary>
+        /// 用户名
+        /// </summary>
+        public string Username { get; set; } = "postgres";
+
+        /// <summary>
+        /// 密码
+        /// </summary>
+        public string Password { get; set; } = string.Empty; // 不再使用硬编码默认密码
+
+        /// <summary>
+        /// 是否信任服务器证书
+        /// </summary>
+        public bool TrustServerCertificate { get; set; } = false;
+
+        /// <summary>
+        /// 连接超时时间（秒）
+        /// </summary>
+        public int ConnectionTimeout { get; set; } = 30;
+
+        /// <summary>
+        /// 最小连接池大小
+        /// </summary>
+        public int MinPoolSize { get; set; } = 5;
+
+        /// <summary>
+        /// 最大连接池大小
+        /// </summary>
+        public int MaxPoolSize { get; set; } = 100;
+
+        /// <summary>
+        /// 获取连接字符串
+        /// </summary>
+        /// <returns>连接字符串</returns>
+        public string GetConnectionString()
         {
-            DatabaseType.MySQL => 3306,
-            DatabaseType.PostgreSQL => 5432,
-            DatabaseType.MariaDB => 3306,
-            DatabaseType.SQLite => 0, // SQLite不需要端口
-            _ => throw new ArgumentException("不支持的数据库类型")
-        };
-    }
-    
-    /// <summary>
-    /// 根据配置生成连接字符串
-    /// </summary>
-    /// <returns>数据库连接字符串</returns>
-    public string GetConnectionString()
-    {
-        return Type switch
-        {
-            DatabaseType.MySQL => $"Server={Server};Port={Port};Database={Database};User={Username};Password={Password};Connection Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +
-                              (TrustServerCertificate ? "SslMode=Required;" : ""),
-            
-            DatabaseType.PostgreSQL => $"Host={Server};Port={Port};Database={Database};Username={Username};Password={Password};Timeout={ConnectionTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};" +
-                                    (TrustServerCertificate ? "Trust Server Certificate=true;" : ""),
-            
-            DatabaseType.MariaDB => $"Server={Server};Port={Port};Database={Database};User={Username};Password={Password};Connection Timeout={ConnectionTimeout};Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};" +
-                                 (TrustServerCertificate ? "SslMode=Required;" : ""),
-            
-            DatabaseType.SQLite => $"Data Source={Database};Version=3;Timeout={ConnectionTimeout};Pooling=True;Max Pool Size={MaxPoolSize};" +
-                                (TrustServerCertificate ? "SSL Mode=Require;" : ""),
-            
-            _ => throw new ArgumentException($"不支持的数据库类型: {Type}")
-        };
+            // 优先使用环境变量
+            var server = Environment.GetEnvironmentVariable("DB_SERVER") ?? Server;
+            var port = Environment.GetEnvironmentVariable("DB_PORT") != null ? 
+                int.Parse(Environment.GetEnvironmentVariable("DB_PORT")!) : Port;
+            var databaseName = Environment.GetEnvironmentVariable("DB_NAME") ?? DatabaseName;
+            var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username;
+            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? Password;
+
+            // 根据数据库类型生成连接字符串
+            switch (Type?.ToLower())
+            {
+                case "postgresql":
+                    return $"Host={server};Port={port};Database={databaseName};Username={username};Password={password};" +
+                           $"Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};" +
+                           $"MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};";
+                case "sqlserver":
+                    return $"Server={server},{port};Database={databaseName};User Id={username};Password={password};" +
+                           $"TrustServerCertificate={TrustServerCertificate};Connection Timeout={ConnectionTimeout};" +
+                           $"Min Pool Size={MinPoolSize};Max Pool Size={MaxPoolSize};";
+                default:
+                    throw new NotSupportedException($"Database type '{Type}' is not supported.");
+            }
+        }
     }
 }

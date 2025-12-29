@@ -2,6 +2,9 @@
   "profiles": {
     "Host": {
       "commandName": "Project",
+      "environmentVariables": {
+        "DB_PASSWORD": "123456"
+      },
       "applicationUrl": "https://localhost:56538;http://localhost:56539"
     }
   }

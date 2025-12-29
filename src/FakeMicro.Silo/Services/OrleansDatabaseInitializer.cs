@@ -1,132 +1,93 @@
-using System;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Npgsql;
+using System.Threading.Tasks;
+using FakeMicro.Utilities.Configuration;
 
-namespace OrleansDatabaseInitialization
+namespace FakeMicro.Silo.Services
 {
-    public class OrleansPostgresInitializer
+    /// <summary>
+    /// Orleans数据库初始化器
+    /// 负责创建Orleans所需的数据库和表结构
+    /// </summary>
+    public class OrleansDatabaseInitializer : IHostedService
     {
-        private readonly string _connectionString;
-        private readonly ILogger<OrleansPostgresInitializer> _logger;
+        private readonly IConfiguration _configuration;
+        private readonly ILogger<OrleansDatabaseInitializer> _logger;
 
-        public OrleansPostgresInitializer(IConfiguration configuration, ILogger<OrleansPostgresInitializer> logger)
+        public OrleansDatabaseInitializer(IConfiguration configuration, ILogger<OrleansDatabaseInitializer> logger)
         {
-            _connectionString = configuration.GetConnectionString("DefaultConnection")
-                                ?? "Host=localhost;Database=fakemicro;Username=postgres;Password=123456;Port=5432";
+            _configuration = configuration;
             _logger = logger;
         }
 
-        public async Task InitializeAsync()
+        /// <summary>
+        /// 启动服务
+        /// </summary>
+        public async Task StartAsync(System.Threading.CancellationToken cancellationToken)
         {
-            await using var connection = new NpgsqlConnection(_connectionString);
+            try
+            {
+                _logger.LogInformation("Starting Orleans database initialization...");
+
+                // 获取应用配置
+                var appSettings = _configuration.Get<AppSettings>() ?? new AppSettings();
+                
+                // 使用数据库配置获取连接字符串
+                string connectionString = appSettings.Database.GetConnectionString();
+
+                // 确保数据库存在
+                await EnsureDatabaseExistsAsync(connectionString);
+
+                _logger.LogInformation("Orleans database initialization completed successfully.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to initialize Orleans database.");
+                // 不抛出异常，允许服务继续启动
+            }
+        }
+
+        /// <summary>
+        /// 停止服务
+        /// </summary>
+        public Task StopAsync(System.Threading.CancellationToken cancellationToken)
+        {
+            return Task.CompletedTask;
+        }
+
+        /// <summary>
+        /// 确保数据库存在
+        /// </summary>
+        private async Task EnsureDatabaseExistsAsync(string connectionString)
+        {
+            var builder = new NpgsqlConnectionStringBuilder(connectionString);
+            var databaseName = builder.Database;
+
+            // 移除数据库名称，连接到默认的postgres数据库
+            builder.Database = "postgres";
+
+            using var connection = new NpgsqlConnection(builder.ConnectionString);
             await connection.OpenAsync();
 
-            _logger.LogInformation("开始初始化 Orleans PostgreSQL 表...");
+            // 检查数据库是否存在
+            using var command = new NpgsqlCommand($"SELECT 1 FROM pg_database WHERE datname = @databaseName", connection);
+            command.Parameters.AddWithValue("@databaseName", databaseName);
 
-            await CreateTables(connection);
-            await InsertDefaultQueryKeys(connection);
-            await InsertDefaultMembershipVersion(connection);
-
-            _logger.LogInformation("Orleans PostgreSQL 初始化完成.");
-        }
-
-        private async Task CreateTables(NpgsqlConnection conn)
-        {
-            var sql = @"
--- MembershipVersion 表
-CREATE TABLE IF NOT EXISTS orleansmembershipversion (
-    deploymentid VARCHAR(150) NOT NULL,
-    version INT NOT NULL,
-    CONSTRAINT pk_orleansmembershipversion PRIMARY KEY (deploymentid)
-);
-
--- Membership 表
-CREATE TABLE IF NOT EXISTS orleansmembership (
-    deploymentid VARCHAR(150) NOT NULL,
-    address VARCHAR(45) NOT NULL,
-    port INT NOT NULL,
-    generation INT NOT NULL,
-    silo_name VARCHAR(150) NOT NULL,
-    hostname VARCHAR(150) NOT NULL,
-    status INT NOT NULL,
-    proxy_port INT NULL,
-    start_time TIMESTAMP NOT NULL,
-    i_am_alive_time TIMESTAMP NOT NULL,
-    CONSTRAINT pk_orleansmembership PRIMARY KEY (deploymentid, address, port, generation)
-);
-CREATE INDEX IF NOT EXISTS ix_orleansmembership_status
-    ON orleansmembership (deploymentid, status);
-
--- Storage 表
-CREATE TABLE IF NOT EXISTS orleansstorage (
-    serviceid VARCHAR(150) NOT NULL,
-    grainid VARCHAR(150) NOT NULL,
-    graintype VARCHAR(150) NOT NULL,
-    payloadbinary BYTEA,
-    payloadjson TEXT,
-    modifiedon TIMESTAMP NOT NULL DEFAULT now(),
-    version INT NOT NULL,
-    CONSTRAINT pk_orleansstorage PRIMARY KEY (serviceid, grainid, graintype)
-);
-CREATE INDEX IF NOT EXISTS ix_orleansstorage_grainid
-    ON orleansstorage (grainid);
-
--- Reminders 表
-CREATE TABLE IF NOT EXISTS orleansreminderstable (
-    serviceid VARCHAR(150) NOT NULL,
-    grainid VARCHAR(150) NOT NULL,
-    remindername VARCHAR(150) NOT NULL,
-    starttime TIMESTAMP NOT NULL,
-    period BIGINT NOT NULL,
-    grainhash INT NOT NULL,
-    CONSTRAINT pk_orleansreminderstable PRIMARY KEY (serviceid, grainid, remindername)
-);
-CREATE INDEX IF NOT EXISTS ix_orleansreminderstable_hash
-    ON orleansreminderstable (grainhash);
-
--- Query 表
-CREATE TABLE IF NOT EXISTS orleansquery (
-    querykey VARCHAR(64) NOT NULL,
-    querytext TEXT NOT NULL,
-    CONSTRAINT pk_orleansquery PRIMARY KEY (querykey)
-);
-";
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        private async Task InsertDefaultQueryKeys(NpgsqlConnection conn)
-        {
-            var sql = @"
-INSERT INTO orleansquery (querykey, querytext) VALUES
-('InsertMembershipVersionKey', 'INSERT INTO orleansmembershipversion (deploymentid, version) VALUES (@DeploymentId, 0)'),
-('UpdateMembershipVersionKey', 'UPDATE orleansmembershipversion SET version = version + 1 WHERE deploymentid = @DeploymentId AND version = @Version'),
-('InsertMembershipKey', 'INSERT INTO orleansmembership (deploymentid, address, port, generation, silo_name, hostname, status, proxy_port, start_time, i_am_alive_time) VALUES (@DeploymentId, @Address, @Port, @Generation, @SiloName, @HostName, @Status, @ProxyPort, @StartTime, @IAmAliveTime)'),
-('UpdateIAmAlivetimeKey', 'UPDATE orleansmembership SET i_am_alive_time = @IAmAliveTime WHERE deploymentid = @DeploymentId AND address = @Address AND port = @Port AND generation = @Generation'),
-('UpdateMembershipKey', 'UPDATE orleansmembership SET status = @Status, proxy_port = @ProxyPort, i_am_alive_time = @IAmAliveTime WHERE deploymentid = @DeploymentId AND address = @Address AND port = @Port AND generation = @Generation'),
-('DeleteMembershipKey', 'DELETE FROM orleansmembership WHERE deploymentid = @DeploymentId AND address = @Address AND port = @Port AND generation = @Generation'),
-('SelectMembershipKey', 'SELECT deploymentid, address, port, generation, silo_name, hostname, status, proxy_port, start_time, i_am_alive_time FROM orleansmembership WHERE deploymentid = @DeploymentId'),
-('UpsertGrainStateKey', 'INSERT INTO orleansstorage (serviceid, grainid, graintype, payloadbinary, payloadjson, modifiedon, version) VALUES (@ServiceId, @GrainId, @GrainType, @PayloadBinary, @PayloadJson, @ModifiedOn, @Version) ON CONFLICT (serviceid, grainid, graintype) DO UPDATE SET payloadbinary = EXCLUDED.payloadbinary, payloadjson = EXCLUDED.payloadjson, modifiedon = EXCLUDED.modifiedon, version = EXCLUDED.version'),
-('ReadGrainStateKey', 'SELECT payloadbinary, payloadjson, version FROM orleansstorage WHERE serviceid = @ServiceId AND grainid = @GrainId AND graintype = @GrainType'),
-('ClearGrainStateKey', 'DELETE FROM orleansstorage WHERE serviceid = @ServiceId AND grainid = @GrainId AND graintype = @GrainType'),
-('UpsertReminderKey', 'INSERT INTO orleansreminderstable (serviceid, grainid, remindername, starttime, period, grainhash) VALUES (@ServiceId, @GrainId, @ReminderName, @StartTime, @Period, @GrainHash) ON CONFLICT (serviceid, grainid, remindername) DO UPDATE SET starttime = EXCLUDED.starttime, period = EXCLUDED.period')
-ON CONFLICT (querykey) DO NOTHING;
-";
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
-        }
-
-        private async Task InsertDefaultMembershipVersion(NpgsqlConnection conn)
-        {
-            var sql = @"
-INSERT INTO orleansmembershipversion (deploymentid, version)
-VALUES ('default', 0)
-ON CONFLICT (deploymentid) DO NOTHING;
-";
-            await using var cmd = new NpgsqlCommand(sql, conn);
-            await cmd.ExecuteNonQueryAsync();
+            var result = await command.ExecuteScalarAsync();
+            if (result == null)
+            {
+                // 创建数据库
+                _logger.LogInformation($"Creating database '{databaseName}'...");
+                using var createCommand = new NpgsqlCommand($"CREATE DATABASE {databaseName}", connection);
+                await createCommand.ExecuteNonQueryAsync();
+                _logger.LogInformation($"Database '{databaseName}' created successfully.");
+            }
+            else
+            {
+                _logger.LogInformation($"Database '{databaseName}' already exists.");
+            }
         }
     }
 }

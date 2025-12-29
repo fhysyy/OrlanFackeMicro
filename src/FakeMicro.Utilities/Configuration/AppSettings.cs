@@ -20,6 +20,53 @@ public class AppSettings
     public CorsConfig Cors { get; set; } = new();
     public AnomalyDetectionConfig AnomalyDetection { get; set; } = new();
     public HangfireConfig Hangfire { get; set; } = new();
+    public CapConfig CAP { get; set; } = new(); // 添加CAP配置
+}
+
+/// <summary>
+/// CAP事件总线配置
+/// </summary>
+public class CapConfig
+{
+    /// <summary>
+    /// 是否启用CAP
+    /// </summary>
+    public bool Enabled { get; set; } = true;
+    
+    /// <summary>
+    /// 失败重试次数
+    /// </summary>
+    public int FailedRetryCount { get; set; } = 3;
+    
+    /// <summary>
+    /// 失败重试间隔（秒）
+    /// </summary>
+    public int FailedRetryInterval { get; set; } = 30;
+    
+    /// <summary>
+    /// 成功消息过期时间（秒）
+    /// </summary>
+    public int SucceedMessageExpiredAfter { get; set; } = 3600;
+    
+    /// <summary>
+    /// 消费者线程数
+    /// </summary>
+    public int ConsumerThreadCount { get; set; } = 1;
+    
+    /// <summary>
+    /// 是否启用Dashboard
+    /// </summary>
+    public bool UseDashboard { get; set; } = true;
+    
+    /// <summary>
+    /// Dashboard路径
+    /// </summary>
+    public string DashboardPath { get; set; } = "/cap";
+    
+    /// <summary>
+    /// Dashboard是否允许匿名访问
+    /// </summary>
+    public bool DashboardAllowAnonymous { get; set; } = false;
 }
 
 /// <summary>
@@ -43,7 +90,7 @@ public class DatabaseConfig
     public int Port { get; set; } = 5432;
     public string Database { get; set; } = "fakemicro";
     public string Username { get; set; } = "postgres";
-    public string Password { get; set; } = "123456";
+    public string Password { get; set; } = string.Empty; // 不再使用硬编码默认密码
     public bool TrustServerCertificate { get; set; } = false;
     public int ConnectionTimeout { get; set; } = 30;
     public int MinPoolSize { get; set; } = 5;

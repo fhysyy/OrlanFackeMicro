@@ -41,8 +41,9 @@ public static class SimpleConfigurationExtensions
             var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
             var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "fakemicro";
             var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
-            var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "123456";
+            var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? string.Empty;
             
+            // 直接构建连接字符串，不调用InitializeDatabaseConnection方法
             settings.DatabaseConnectionString = $"Server={dbServer};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};";
         }
         
@@ -68,7 +69,7 @@ public static class SimpleConfigurationExtensions
                 throw new InvalidOperationException("生产环境必须设置JWT_SECRET环境变量");
             }
             
-            if (settings.DatabaseConnectionString.Contains("Password=123456"))
+            if (settings.DatabaseConnectionString.Contains("Password=123456") || settings.DatabaseConnectionString.Contains("Password="))
             {
                 throw new InvalidOperationException("生产环境必须设置DB_PASSWORD环境变量");
             }

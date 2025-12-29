@@ -37,8 +37,12 @@ namespace FakeMicro.Api
     public class Program
     {
         public static async Task Main(string[] args)
+        
         {
             var builder = WebApplication.CreateBuilder(args);
+            
+            // 使用集中式配置管理 - 加载所有配置源
+            builder.Configuration.AddDefaultConfiguration();
             
             // 使用集中式配置管理
             var appSettings = builder.Configuration.GetAppSettings();
@@ -114,8 +118,39 @@ namespace FakeMicro.Api
             // 添加幂等性服务
             builder.Services.AddIdempotency();
 
+            // 配置HTTPS
+            if (!builder.Environment.IsDevelopment())
+            {
+                builder.Services.AddHsts(options =>
+                {
+                    options.MaxAge = TimeSpan.FromDays(30);
+                    options.IncludeSubDomains = true;
+                    options.Preload = true;
+                });
+            }
+            
+            // 添加CORS配置 - 使用正确的方法
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
             // 构建应用，添加异常处理以获取详细错误信息
             var app = builder.Build();
+            
+            // 配置HTTPS重定向
+            app.UseHttpsRedirection();
+            
+            // 在生产环境中使用HSTS
+            if (!app.Environment.IsDevelopment())
+            {
+                app.UseHsts();
+            }
             
             // 配置所有中间件
             app.ConfigureAllMiddleware();
