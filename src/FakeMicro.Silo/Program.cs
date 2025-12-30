@@ -173,7 +173,7 @@ namespace FakeMicro.Silo
 
         public static async Task Main(string[] args)
         {
-            Console.WriteLine("=== 启动FakeMicro Orleans Silo ===");
+         
 
             try
             {
@@ -181,27 +181,27 @@ namespace FakeMicro.Silo
                 DiagnoseConfigurationLoading(args);
 
                 var hostBuilder = Host.CreateDefaultBuilder(args);
-
+        
                 // 配置服务
                 hostBuilder.ConfigureServices((context,services)=>
                 {
                     Console.WriteLine($"配置环境: {context.HostingEnvironment.EnvironmentName}");
-                    Console.WriteLine($"内容根路径: {context.HostingEnvironment.ContentRootPath}");
+                  
                     
                     // 使用集中式配置管理
                     var appSettings = context.Configuration.GetAppSettings();
                     
                     // 配置字符串详细诊断
-                    Console.WriteLine("=== 配置字符串诊断 ===");
+                
                     var connectionString = context.Configuration.GetConnectionString("DefaultConnection");
-                    Console.WriteLine($"从GetConnectionString('DefaultConnection')获取的值: {(connectionString ?? "NULL")}");
+         
                     
                     // 尝试直接从配置中读取
                     var directConnectionString = context.Configuration["ConnectionStrings:DefaultConnection"];
-                    Console.WriteLine($"从配置['ConnectionStrings:DefaultConnection']获取的值: {(directConnectionString ?? "NULL")}");
+                    
                     
                     // 检查所有配置键
-                    Console.WriteLine("所有配置键:");
+                 
                     foreach (var key in context.Configuration.AsEnumerable())
                     {
                         if (key.Key.Contains("Connection") || key.Key.Contains("Default") || key.Key.Contains("Database"))
@@ -236,13 +236,8 @@ namespace FakeMicro.Silo
 
                     // 添加Grain服务依赖注入
                     services.AddGrainServices();
-
-                    Console.WriteLine("服务注册中...");
-                    
-                    Console.WriteLine("服务注册完成");
-                    
                     // SqlSugar 配置诊断
-                    Console.WriteLine("=== SqlSugar 配置诊断 ===");
+                  
                     DiagnoseSqlSugarConfiguration(context.Configuration, services);
                 });
 
@@ -251,7 +246,7 @@ namespace FakeMicro.Silo
 
                 var host = hostBuilder.Build();
 
-                Console.WriteLine("启动Silo...");
+                
                 try
                 {
                     // 首先初始化 Orleans 数据库表结构
@@ -260,9 +255,9 @@ namespace FakeMicro.Silo
                         var dbInitializer = scope.ServiceProvider.GetService<OrleansDatabaseInitializer>();
                         if (dbInitializer != null)
                         {
-                            Console.WriteLine("正在初始化 Orleans 数据库表结构...");
+                           
                             await dbInitializer.StartAsync(default);
-                            Console.WriteLine("✅ Orleans 数据库表结构初始化完成");
+                           
                         }
                         else
                         {
@@ -271,7 +266,7 @@ namespace FakeMicro.Silo
                     }
 
                     await host.StartAsync();
-                    Console.WriteLine("Orleans Silo运行中");
+                   
                     Console.WriteLine("Silo启动成功！按Ctrl+C停止...");
                     // 保持应用运行
                     await Task.Delay(-1);
@@ -329,7 +324,7 @@ namespace FakeMicro.Silo
                     });
 
                     var fallbackHost = fallbackHostBuilder.Build();
-                    Console.WriteLine("使用PostgreSQL持久化存储重新启动Silo...");
+                  
                     await fallbackHost.StartAsync();
                     Console.WriteLine("✅ Orleans Silo已使用PostgreSQL持久化存储成功启动！按Ctrl+C停止...");
                     await Task.Delay(-1);

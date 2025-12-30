@@ -43,7 +43,6 @@ namespace FakeMicro.Api
             
             // 使用集中式配置管理 - 加载所有配置源
             builder.Configuration.AddDefaultConfiguration();
-            
             // 使用集中式配置管理
             var appSettings = builder.Configuration.GetAppSettings();
             
