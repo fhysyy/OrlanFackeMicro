@@ -29,38 +29,28 @@ namespace FakeMicro.Silo
         /// </summary>
         private static void DiagnoseConfigurationLoading(string[] args)
         {
-            Console.WriteLine("=== 配置加载诊断 ===");
+ 
             
             try
             {
-                Console.WriteLine($"当前工作目录: {Environment.CurrentDirectory}");
+               
                 
                 // 检查 appsettings.json 文件是否存在
                 var appsettingsPath = Path.Combine(Environment.CurrentDirectory, "appsettings.json");
-                Console.WriteLine($"appsettings.json 路径: {appsettingsPath}");
-                Console.WriteLine($"文件存在: {File.Exists(appsettingsPath)}");
+            
                 
                 if (File.Exists(appsettingsPath))
                 {
                     var content = File.ReadAllText(appsettingsPath);
-                    Console.WriteLine($"文件大小: {content.Length} 字符");
-                    Console.WriteLine($"包含Jwt配置: {content.Contains("Jwt")}");
-                    Console.WriteLine($"包含Orleans配置: {content.Contains("Orleans")}");
-                    Console.WriteLine($"包含SqlSugar配置: {content.Contains("SqlSugar")}");
-                    Console.WriteLine($"包含ConnectionStrings配置: {content.Contains("ConnectionStrings")}");
-                    
-                    // 检查连接字符串是否存在
-                    Console.WriteLine($"包含DefaultConnection: {content.Contains("DefaultConnection")}");
+                  
                 }
                 else
                 {
                     // 尝试在bin目录查找
                     var binAppsettingsPath = Path.Combine(Environment.CurrentDirectory, "bin", "Debug", "net9.0", "appsettings.json");
-                    Console.WriteLine($"bin目录appsettings.json路径: {binAppsettingsPath}");
-                    Console.WriteLine($"bin文件存在: {File.Exists(binAppsettingsPath)}");
+                   
                 }
-                
-                Console.WriteLine("=== 诊断完成 ===");
+               
             }
             catch (Exception ex)
             {
@@ -76,64 +66,33 @@ namespace FakeMicro.Silo
             try
             {
                 // 1. 检查 appsettings.json 中是否存在 SqlSugar 配置
-                Console.WriteLine("1. 检查 appsettings.json 配置:");
+            
                 var sqlSugarSection = configuration.GetSection("SqlSugar");
                 if (!sqlSugarSection.Exists())
                 {
-                    Console.WriteLine("   ❌ 未找到 'SqlSugar' 配置节点");
+                   
                     return;
                 }
 
-                Console.WriteLine("   ✅ 找到 'SqlSugar' 配置节点");
-
-                // 2. 读取并显示配置内容
-                Console.WriteLine("   配置内容:");
-                foreach (var child in sqlSugarSection.GetChildren())
-                {
-                    Console.WriteLine($"     {child.Key} = {child.Value}");
-                }
-
+               
+         
                 // 3. 尝试绑定配置到 SqlSugarOptions
-                Console.WriteLine("2. 尝试绑定配置到 SqlSugarOptions:");
+              
                 var sqlSugarOptions = sqlSugarSection.Get<SqlSugarConfig.SqlSugarOptions>();
-                if (sqlSugarOptions != null)
-                {
-                    Console.WriteLine($"   DbType: {sqlSugarOptions.DbType}");
-                    Console.WriteLine($"   ConnectionString: {sqlSugarOptions.ConnectionString}");
-                    Console.WriteLine($"   EnableSqlLog: {sqlSugarOptions.EnableSqlLog}");
-                    Console.WriteLine($"   SlaveConnectionStrings: {(sqlSugarOptions.SlaveConnectionStrings?.Count ?? 0)} 个从库");
-                }
-                else
-                {
-                    Console.WriteLine("   ❌ 无法绑定到 SqlSugarOptions");
-                }
-
-                // 4. 检查服务是否已注册
-                Console.WriteLine("3. 检查 SqlSugar 相关服务注册:");
+           
                 var registeredServices = services.Where(s => s.ServiceType.FullName?.Contains("SqlSugar") == true || 
                                                              s.ServiceType.FullName?.Contains("Database") == true).ToList();
                 
-                if (registeredServices.Any())
-                {
-                    Console.WriteLine($"   ✅ 已注册 {registeredServices.Count} 个相关服务:");
-                    foreach (var service in registeredServices)
-                    {
-                        Console.WriteLine($"     {service.ServiceType.FullName} -> {service.ImplementationType?.FullName ?? "未指定实现类型"}");
-                    }
-                }
-                else
-                {
-                    Console.WriteLine("   ❌ 未找到已注册的 SqlSugar 相关服务");
-                }
+           
 
-                // 5. 尝试创建 SqlSugar 客户端并测试连接
-                Console.WriteLine("4. 尝试创建 SqlSugar 客户端:");
+          
+            
                 try
                 {
                     var connectionString = sqlSugarOptions.ConnectionString;
                     var dbType = DatabaseAccess.SqlSugarConfig.ConvertToSqlSugarDbType(sqlSugarOptions.DbType);
                     
-                    Console.WriteLine($"   正在创建客户端... (类型: {dbType})");
+                  
                     using (var db = new SqlSugarClient(new ConnectionConfig
                     {
                         ConnectionString = connectionString,
@@ -141,28 +100,18 @@ namespace FakeMicro.Silo
                         IsAutoCloseConnection = true
                     }))
                     {
-                        Console.WriteLine("   ✅ SqlSugar 客户端创建成功");
-                        
-                        // 测试连接
-                        Console.WriteLine("   正在测试数据库连接...");
+                      
                         var isConnected = db.Ado.IsValidConnection();
-                        if (isConnected)
-                        {
-                            Console.WriteLine("   ✅ 数据库连接测试成功");
-                        }
-                        else
-                        {
-                            Console.WriteLine("   ❌ 数据库连接测试失败");
-                        }
+                
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"   ❌ 创建 SqlSugar 客户端失败: {ex.Message}");
-                    Console.WriteLine($"   详细错误: {ex}");
+                  
                 }
                 
-                Console.WriteLine("=== 诊断完成 ===");
+              
             }
             catch (Exception ex)
             {
@@ -185,8 +134,7 @@ namespace FakeMicro.Silo
                 // 配置服务
                 hostBuilder.ConfigureServices((context,services)=>
                 {
-                    Console.WriteLine($"配置环境: {context.HostingEnvironment.EnvironmentName}");
-                  
+                   
                     
                     // 使用集中式配置管理
                     var appSettings = context.Configuration.GetAppSettings();
@@ -202,13 +150,7 @@ namespace FakeMicro.Silo
                     
                     // 检查所有配置键
                  
-                    foreach (var key in context.Configuration.AsEnumerable())
-                    {
-                        if (key.Key.Contains("Connection") || key.Key.Contains("Default") || key.Key.Contains("Database"))
-                        {
-                            Console.WriteLine($"  {key.Key} = {key.Value}");
-                        }
-                    }
+         
                     
                     // 添加配置服务 - 修正 JWT 配置绑定
                     services.AddConfigurationServices(context.Configuration);
@@ -266,19 +208,17 @@ namespace FakeMicro.Silo
                     }
 
                     await host.StartAsync();
-                   
-                    Console.WriteLine("Silo启动成功！按Ctrl+C停止...");
-                    // 保持应用运行
+                
                     await Task.Delay(-1);
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Silo启动过程中遇到错误: {ex.Message}");
+                   
                     if (ex.InnerException != null)
                     {
                         Console.WriteLine($"内部错误: {ex.InnerException.Message}");
                     }
-                    Console.WriteLine("尝试重新配置Silo，仅使用PostgreSQL持久化存储...");
+                 
 
                     // 重新构建配置，确保使用PostgreSQL持久化存储
                     var fallbackHostBuilder = Host.CreateDefaultBuilder(args);
@@ -326,20 +266,13 @@ namespace FakeMicro.Silo
                     var fallbackHost = fallbackHostBuilder.Build();
                   
                     await fallbackHost.StartAsync();
-                    Console.WriteLine("✅ Orleans Silo已使用PostgreSQL持久化存储成功启动！按Ctrl+C停止...");
+                
                     await Task.Delay(-1);
                 }
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"启动错误: {ex.Message}");
-                if (ex.InnerException != null)
-                {
-                    Console.WriteLine($"内部错误: {ex.InnerException.Message}");
-                    Console.WriteLine($"内部错误堆栈: {ex.InnerException.StackTrace}");
-                }
-                Console.WriteLine($"错误类型: {ex.GetType().FullName}");
-                Console.WriteLine($"错误堆栈: {ex.StackTrace}");
                 throw;
             }
         }
