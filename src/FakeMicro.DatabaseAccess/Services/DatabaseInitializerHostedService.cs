@@ -442,10 +442,11 @@ namespace FakeMicro.DatabaseAccess.Services
 
             if (!adminExists)
             {
-                // 使用与AuthGrain相同的密码哈希生成逻辑
-                using var hmac = new HMACSHA512();
-                var salt = Convert.ToBase64String(hmac.Key);
-                var hash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes("admin123")));
+                // 使用PBKDF2密码哈希生成逻辑
+                var combinedHash = CryptoHelper.GeneratePasswordHash("admin123");
+                var hashBytes = Convert.FromBase64String(combinedHash);
+                var salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
+                var hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
                 
                 var snowflakeGenerator = new SnowflakeIdGenerator(1); // 机器ID为1
 

@@ -306,21 +306,58 @@ namespace FakeMicro.Grains
 
         private (string hash, string salt) GeneratePasswordHash(string password)
         {
-            using var hmac = new HMACSHA512();
-            var salt = Convert.ToBase64String(hmac.Key);
-            var hash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
-            return (hash, salt);
+            // 使用PBKDF2生成更安全的密码哈希
+            var combinedHash = FakeMicro.Utilities.CryptoHelper.GeneratePasswordHash(password);
+            
+            // 分割盐和哈希（前16字节是盐，后面是哈希）
+            var hashBytes = Convert.FromBase64String(combinedHash);
+            var saltBytes = new byte[16];
+            var hashOnlyBytes = new byte[hashBytes.Length - 16];
+            
+            Array.Copy(hashBytes, 0, saltBytes, 0, 16);
+            Array.Copy(hashBytes, 16, hashOnlyBytes, 0, hashOnlyBytes.Length);
+            
+            return (Convert.ToBase64String(hashOnlyBytes), Convert.ToBase64String(saltBytes));
         }
 
         private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
         {
-            if (string.IsNullOrEmpty(storedHash) || string.IsNullOrEmpty(storedSalt))
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash) || string.IsNullOrEmpty(storedSalt))
                 return false;
-
-            var saltBytes = Convert.FromBase64String(storedSalt);
-            using var hmac = new HMACSHA512(saltBytes);
-            var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
-            return Convert.ToBase64String(computedHash) == storedHash;
+            
+            // 检查是否是新的PBKDF2格式（盐+哈希组合）
+            try
+            {
+                // 尝试使用PBKDF2验证（组合盐和哈希）
+                var combinedHash = FakeMicro.Utilities.CryptoHelper.GeneratePasswordHash(password);
+                var combinedHashBytes = Convert.FromBase64String(combinedHash);
+                var saltBytes = new byte[16];
+                var hashOnlyBytes = new byte[combinedHashBytes.Length - 16];
+                
+                Array.Copy(combinedHashBytes, 0, saltBytes, 0, 16);
+                Array.Copy(combinedHashBytes, 16, hashOnlyBytes, 0, hashOnlyBytes.Length);
+                
+                // 安全比较哈希值
+                bool result = true;
+                var storedHashBytes = Convert.FromBase64String(storedHash);
+                for (int i = 0; i < Math.Min(hashOnlyBytes.Length, storedHashBytes.Length); i++)
+                {
+                    result &= (hashOnlyBytes[i] == storedHashBytes[i]);
+                }
+                result &= (hashOnlyBytes.Length == storedHashBytes.Length);
+                
+                if (result)
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                // 忽略错误，尝试旧格式
+            }
+            
+            // 使用旧的HMACSHA512验证（用于迁移）
+            return FakeMicro.Utilities.CryptoHelper.VerifyLegacyPasswordHash(password, storedHash, storedSalt);
         }
 
         private string GenerateJwtToken(long userId, string username, string[] roles)

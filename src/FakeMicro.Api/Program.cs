@@ -24,6 +24,7 @@ using Orleans.Configuration;
 using Orleans.Hosting;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Runtime.Serialization.Formatters;
 using System.Text.Encodings.Web;
@@ -128,14 +129,26 @@ namespace FakeMicro.Api
                 });
             }
             
-            // 添加CORS配置 - 使用正确的方法
+            // 添加CORS配置 - 使用配置文件中的设置
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowAll", policy =>
+                options.AddPolicy("AllowConfiguredOrigins", policy =>
                 {
-                    policy.AllowAnyOrigin()
-                          .AllowAnyHeader()
-                          .AllowAnyMethod();
+                    if (appSettings.Cors.AllowedOrigins != null && appSettings.Cors.AllowedOrigins.Any())
+                    {
+                        policy.WithOrigins(appSettings.Cors.AllowedOrigins.ToArray())
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
+                    else
+                    {
+                        // 如果没有配置允许的源，默认拒绝所有跨域请求
+                        policy.WithOrigins(Array.Empty<string>())
+                              .AllowAnyHeader()
+                              .AllowAnyMethod()
+                              .AllowCredentials();
+                    }
                 });
             });
 
@@ -160,8 +173,8 @@ namespace FakeMicro.Api
                 app.UseHangfireDashboard(appSettings.Hangfire.DashboardPath);
             }
 
-            // 暂时注释掉默认的定时任务，专注于测试Orleans连接
-            ConfigureDefaultJobs();
+            // 暂时注释掉默认的定时任务
+           // ConfigureDefaultJobs();
 
             Console.WriteLine("=== API服务器启动成功 ===");
             Console.WriteLine("访问 http://localhost:5000/swagger 查看API文档");
@@ -185,58 +198,58 @@ namespace FakeMicro.Api
         }
         
         // Orleans客户端生命周期服务，负责Orleans客户端的初始化和关闭
-        public class OrleansClientLifecycleService : IHostedService
-        {
-            private readonly IClusterClient _client;
-            private readonly ILogger _logger;
+        //public class OrleansClientLifecycleService : IHostedService
+        //{
+        //    private readonly IClusterClient _client;
+        //    private readonly ILogger _logger;
 
-            public OrleansClientLifecycleService(IClusterClient client, ILogger<OrleansClientLifecycleService> logger)
-            {
-                _client = client;
-                _logger = logger;
-            }
+        //    public OrleansClientLifecycleService(IClusterClient client, ILogger<OrleansClientLifecycleService> logger)
+        //    {
+        //        _client = client;
+        //        _logger = logger;
+        //    }
 
-            public async Task StartAsync(CancellationToken cancellationToken)
-            {
-                _logger.LogInformation("正在初始化Orleans客户端连接...");
-                try
-                {
-                    // 在Orleans 7.x中，连接是自动处理的，但我们可以添加验证逻辑
-                    // 尝试调用一个简单的grain来验证连接
-                    var helloGrain = _client.GetGrain<IHelloGrain>("system");
-                     await helloGrain.SayHelloAsync("Connection Test");
-                    _logger.LogInformation("Orleans客户端连接验证成功");
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Orleans客户端连接验证失败，但应用将继续运行");
-                }
-            }
+        //    public async Task StartAsync(CancellationToken cancellationToken)
+        //    {
+        //        _logger.LogInformation("正在初始化Orleans客户端连接...");
+        //        try
+        //        {
+        //            // 在Orleans 7.x中，连接是自动处理的，但我们可以添加验证逻辑
+        //            // 尝试调用一个简单的grain来验证连接
+        //            var helloGrain = _client.GetGrain<IHelloGrain>("system");
+        //             await helloGrain.SayHelloAsync("Connection Test");
+        //            _logger.LogInformation("Orleans客户端连接验证成功");
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            _logger.LogWarning(ex, "Orleans客户端连接验证失败，但应用将继续运行");
+        //        }
+        //    }
 
-            public async Task StopAsync(CancellationToken cancellationToken)
-            {
-                try
-                {
-                    _logger.LogInformation("正在断开与Orleans Silo的连接...");
-                    // 尝试安全地处理客户端连接
-                    try
-                    {
-                        // 对于较新版本的Orleans，使用DisposeAsync方法关闭连接
-                        if (_client is IAsyncDisposable asyncDisposable)
-                        {
-                            await asyncDisposable.DisposeAsync();
-                        }
-                    }
-                    catch
-                    {
-                        // 忽略关闭连接时的错误
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "断开Orleans连接时发生错误");
-                }
-            }
-        }
+        //    public async Task StopAsync(CancellationToken cancellationToken)
+        //    {
+        //        try
+        //        {
+        //            _logger.LogInformation("正在断开与Orleans Silo的连接...");
+        //            // 尝试安全地处理客户端连接
+        //            try
+        //            {
+        //                // 对于较新版本的Orleans，使用DisposeAsync方法关闭连接
+        //                if (_client is IAsyncDisposable asyncDisposable)
+        //                {
+        //                    await asyncDisposable.DisposeAsync();
+        //                }
+        //            }
+        //            catch
+        //            {
+        //                // 忽略关闭连接时的错误
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            _logger.LogError(ex, "断开Orleans连接时发生错误");
+        //        }
+        //    }
+        //}
     }
 }

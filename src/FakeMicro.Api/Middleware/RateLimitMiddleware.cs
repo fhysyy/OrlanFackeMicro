@@ -46,18 +46,23 @@ namespace FakeMicro.Api.Middleware
                 return;
             }
 
-            // 获取限流配置
-            var rateLimitConfig = GetRateLimitConfig(context);
-            _logger.LogInformation("[{RequestId}] 使用限流配置 - 容量: {Capacity}, 速率: {Rate}/s, 窗口: {Window}s", 
-                requestId, rateLimitConfig.BucketCapacity, rateLimitConfig.TokensPerSecond, rateLimitConfig.WindowSeconds);
+            // 获取限流配置和端点模式
+            var (rateLimitConfig, endpointPattern) = GetRateLimitConfig(context);
+            _logger.LogInformation("[{RequestId}] 使用限流配置 - 端点: {Endpoint}, 容量: {Capacity}, 速率: {Rate}/s, 窗口: {Window}s", 
+                requestId, endpointPattern, rateLimitConfig.BucketCapacity, rateLimitConfig.TokensPerSecond, rateLimitConfig.WindowSeconds);
 
             // 检查是否超过限制
-            if (!await CheckRateLimit(clientIdentifier, rateLimitConfig))
+            if (!await CheckRateLimit(clientIdentifier, endpointPattern, rateLimitConfig))
             {
-                _logger.LogWarning("[{RequestId}] 客户端触发限流 - 标识: {ClientIdentifier}, 路径: {Path}", 
-                    requestId, clientIdentifier, context.Request.Path);
+                _logger.LogWarning("[{RequestId}] 客户端触发限流 - 标识: {ClientIdentifier}, 路径: {Path}, 端点类型: {Endpoint}", 
+                    requestId, clientIdentifier, context.Request.Path, endpointPattern);
+                
+                // 计算预计重试时间（基于当前令牌数量和补充速率）
+                var retryAfterSeconds = Math.Ceiling(1 / rateLimitConfig.TokensPerSecond);
                 
                 context.Response.StatusCode = StatusCodes.Status429TooManyRequests;
+                // 添加Retry-After响应头，帮助客户端了解何时可以重试
+                context.Response.Headers.Append("Retry-After", retryAfterSeconds.ToString());
                 context.Response.ContentType = "application/json";
                 await context.Response.WriteAsync(System.Text.Json.JsonSerializer.Serialize(new
                 {
@@ -65,12 +70,13 @@ namespace FakeMicro.Api.Middleware
                     errorCode = "rate_limit_exceeded",
                     message = "您已超过接口调用频率限制",
                     requestId = requestId,
-                    retryAfter = rateLimitConfig.WindowSeconds,
+                    retryAfter = retryAfterSeconds,
                     clientIdentifier = clientIdentifier,
                     timestamp = DateTime.UtcNow,
                     details = new {
                         path = context.Request.Path,
                         method = context.Request.Method,
+                        endpointType = endpointPattern,
                         rateLimit = new {
                             capacity = rateLimitConfig.BucketCapacity,
                             tokensPerSecond = rateLimitConfig.TokensPerSecond,
@@ -116,7 +122,7 @@ namespace FakeMicro.Api.Middleware
             return false;
         }
 
-        private RateLimitOptions GetRateLimitConfig(HttpContext context)
+        private (RateLimitOptions Config, string EndpointPattern) GetRateLimitConfig(HttpContext context)
         {
             var path = context.Request.Path.ToString().ToLower();
             
@@ -124,70 +130,80 @@ namespace FakeMicro.Api.Middleware
             if (path.Contains("/auth/login") || path.Contains("/auth/register"))
             {
                 // 认证接口限制更严格
-                return _rateLimitConfig.AuthEndpoints;
+                return (_rateLimitConfig.AuthEndpoints, "auth");
             }
             else if (path.Contains("/files/upload") || path.Contains("/files/download"))
             {
                 // 文件上传下载接口
-                return _rateLimitConfig.FileEndpoints;
+                return (_rateLimitConfig.FileEndpoints, "file");
             }
             else if (path.Contains("/admin/"))
             {
                 // 管理接口
-                return _rateLimitConfig.AdminEndpoints;
+                return (_rateLimitConfig.AdminEndpoints, "admin");
             }
             else if (path.Contains("/api/"))
             {
                 // 普通API接口
-                return _rateLimitConfig.ApiEndpoints;
+                return (_rateLimitConfig.ApiEndpoints, "api");
             }
             else
             {
                 // 默认配置
-                return _rateLimitConfig.Default;
+                return (_rateLimitConfig.Default, "default");
             }
         }
 
-        private async Task<bool> CheckRateLimit(string clientIdentifier, RateLimitOptions config)
+        private async Task<bool> CheckRateLimit(string clientIdentifier, string endpointPattern, RateLimitOptions config)
         {
-            var cacheKey = $"ratelimit:{clientIdentifier}";
+            // 为每个客户端+端点组合创建唯一的缓存键，实现更精细的限流
+            var cacheKey = $"ratelimit:{clientIdentifier}:{endpointPattern}";
             var now = DateTime.UtcNow;
 
-            // 获取或创建令牌桶
-            var bucket = _cache.GetOrCreate(cacheKey, entry =>
+            // 线程安全的方式获取或创建令牌桶
+            var bucket = await _cache.GetOrCreateAsync(cacheKey, entry =>
             {
+                // 设置缓存过期时间为窗口时间的2倍，确保令牌桶能正确重置
                 entry.AbsoluteExpiration = now.AddSeconds(config.WindowSeconds * 2);
-                return new TokenBucket
+                entry.SlidingExpiration = TimeSpan.FromSeconds(config.WindowSeconds);
+                
+                return Task.FromResult(new TokenBucket
                 {
                     Tokens = config.BucketCapacity,
                     LastRefillTime = now
-                };
+                });
             });
 
-            // 检查bucket是否为null
+            // 检查bucket是否为null（不应该发生，但为了安全考虑）
             if (bucket == null)
             {
-                _logger.LogWarning("令牌桶创建失败，客户端: {ClientIdentifier}", clientIdentifier);
-                return await Task.FromResult(false);
+                _logger.LogWarning("令牌桶创建失败，客户端: {ClientIdentifier}, 端点: {Endpoint}", clientIdentifier, endpointPattern);
+                return false;
             }
 
             // 计算应该补充的令牌数量
             var timePassed = now - bucket.LastRefillTime;
             var tokensToAdd = timePassed.TotalSeconds * config.TokensPerSecond;
-            bucket.Tokens = Math.Min(bucket.Tokens + tokensToAdd, config.BucketCapacity);
-            bucket.LastRefillTime = now;
-
-            // 检查是否有足够的令牌
-            if (bucket.Tokens >= 1)
+            
+            // 更新令牌桶状态（线程安全）
+            lock (bucket)
             {
-                bucket.Tokens -= 1;
-                _cache.Set(cacheKey, bucket, TimeSpan.FromSeconds(config.WindowSeconds * 2));
-                return await Task.FromResult(true);
+                bucket.Tokens = Math.Min(bucket.Tokens + tokensToAdd, config.BucketCapacity);
+                bucket.LastRefillTime = now;
+
+                // 检查是否有足够的令牌
+                if (bucket.Tokens >= 1)
+                {
+                    bucket.Tokens -= 1;
+                    // 更新缓存中的令牌桶
+                    _cache.Set(cacheKey, bucket, TimeSpan.FromSeconds(config.WindowSeconds * 2));
+                    return true;
+                }
             }
 
-            _logger.LogWarning("客户端 {ClientIdentifier} 触发限流，当前令牌数: {Tokens}", 
-                clientIdentifier, bucket.Tokens);
-            return await Task.FromResult(false);
+            _logger.LogWarning("客户端 {ClientIdentifier} 在端点 {Endpoint} 触发限流，当前令牌数: {Tokens}", 
+                clientIdentifier, endpointPattern, bucket.Tokens);
+            return false;
         }
     }
 

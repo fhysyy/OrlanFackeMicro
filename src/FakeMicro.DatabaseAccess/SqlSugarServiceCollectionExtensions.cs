@@ -2,6 +2,7 @@ using FakeMicro.DatabaseAccess.Interfaces;
 using FakeMicro.DatabaseAccess.Repositories;
 using FakeMicro.DatabaseAccess.Transaction;
 using FakeMicro.Entities;
+using FakeMicro.Utilities.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -45,10 +46,21 @@ namespace FakeMicro.DatabaseAccess
                 var connectionStrings = provider.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
                 var logger = provider.GetService<ILogger<ISqlSugarClient>>();
                 
-                // 如果连接字符串未配置，尝试从ConnectionStrings获取
+                // 从AppSettings获取配置
+                var appSettings = configuration.GetAppSettings();
+                
+                // 如果连接字符串未配置，尝试从AppSettings获取
                 if (string.IsNullOrEmpty(sqlSugarOptions.ConnectionString))
                 {
-                    sqlSugarOptions.ConnectionString = connectionStrings.DefaultConnection ?? string.Empty;
+                    sqlSugarOptions.ConnectionString = appSettings.Database.GetConnectionString() ?? connectionStrings.DefaultConnection ?? string.Empty;
+                }
+                
+                // 配置读写分离
+                sqlSugarOptions.EnableReadWriteSeparation = appSettings.Database.EnableReadWriteSeparation;
+                if (appSettings.Database.EnableReadWriteSeparation)
+                {
+                    // 添加从库连接字符串
+                    sqlSugarOptions.SlaveConnectionStrings.Add(appSettings.Database.GetReadConnectionString());
                 }
                 
                 return CreateSqlSugarClient(sqlSugarOptions, logger);

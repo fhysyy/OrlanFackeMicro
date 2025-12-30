@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using FakeMicro.Api.Services;
+using FakeMicro.Api.Config;
 using FakeMicro.DatabaseAccess;
 using FakeMicro.Utilities.Storage;
 using FakeMicro.Utilities.CodeGenerator;
@@ -15,6 +16,7 @@ using System;
 using Orleans.Hosting;
 using Prometheus.Client.AspNetCore;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using FakeMicro.Monitoring.OpenTelemetry;
 using FakeMicro.Monitoring;
 
@@ -38,6 +40,9 @@ public static class DependencyInjectionExtensions
 
         // 添加内存缓存服务
         builder.Services.AddMemoryCache();
+        
+        // 注册限流服务
+        builder.Services.AddRateLimitServices(configuration);
 
         // 配置MVC控制器
         builder.Services.AddControllers()
@@ -105,7 +110,7 @@ public static class DependencyInjectionExtensions
             options.EnableAlerting = true;
         });
         
-        // 配置OpenTelemetry指标收集
+        // 配置OpenTelemetry
         builder.Services.AddOpenTelemetry()
             .WithMetrics(builder =>
             {
@@ -120,6 +125,23 @@ public static class DependencyInjectionExtensions
                 
                 // 导出到Prometheus
                 builder.AddPrometheusExporter();
+            })
+            .WithTracing(builder =>
+            {
+                // 收集ASP.NET Core请求追踪
+                builder.AddAspNetCoreInstrumentation();
+                
+                // 收集HTTP客户端请求追踪
+                builder.AddHttpClientInstrumentation();
+                
+                // 配置采样率
+                builder.SetSampler(new OpenTelemetry.Trace.AlwaysOnSampler());
+                
+                // 导出到控制台（生产环境可替换为Jaeger、Zipkin等）
+                builder.AddConsoleExporter(options =>
+                {
+                    options.Targets = OpenTelemetry.Exporter.ConsoleExporterOutputTargets.Console;
+                });
             });
             
         // 添加数据库连接池监控服务
@@ -156,9 +178,15 @@ public static class DependencyInjectionExtensions
         // 配置HTTPS重定向
         app.UseHttpsRedirection();
 
+        // 配置CORS
+        app.UseCors("AllowConfiguredOrigins");
+
         // 注册全局异常处理中间件
         app.UseMiddleware<FakeMicro.Api.Middleware.ExceptionHandlingMiddleware>();
         app.UseMiddleware<FakeMicro.Api.Middleware.RequestResponseLoggingMiddleware>();
+        
+        // 注册限流中间件
+        app.UseMiddleware<FakeMicro.Api.Middleware.RateLimitMiddleware>();
         
         // 注册幂等性中间件
         app.UseIdempotency();

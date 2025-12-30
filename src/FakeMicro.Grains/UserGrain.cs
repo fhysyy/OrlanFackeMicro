@@ -12,6 +12,7 @@ using System.Text;
 using FakeMicro.Shared.Exceptions;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
+using FakeMicro.Utilities;
 
 namespace FakeMicro.Grains
 {
@@ -540,9 +541,27 @@ namespace FakeMicro.Grains
 
                 try
                 {
-                    using var hmac = new HMACSHA512(Convert.FromBase64String(State.PasswordSalt));
-                    var computedHash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password)));
-                    return SecureCompareHash(computedHash, State.PasswordHash);
+                    // 首先尝试使用PBKDF2验证（新格式）
+                    // 组合盐和哈希以匹配CryptoHelper的格式
+                    var combinedHashBytes = new byte[16 + Convert.FromBase64String(State.PasswordHash).Length];
+                    Array.Copy(Convert.FromBase64String(State.PasswordSalt), 0, combinedHashBytes, 0, 16);
+                    Array.Copy(Convert.FromBase64String(State.PasswordHash), 0, combinedHashBytes, 16, Convert.FromBase64String(State.PasswordHash).Length);
+                    var combinedHash = Convert.ToBase64String(combinedHashBytes);
+                    
+                    if (CryptoHelper.VerifyPasswordHash(password, combinedHash))
+                    {
+                        return true;
+                    }
+                }
+                catch
+                {
+                    // 忽略错误，尝试旧格式
+                }
+
+                try
+                {
+                    // 使用旧的HMACSHA512验证（用于迁移）
+                    return CryptoHelper.VerifyLegacyPasswordHash(password, State.PasswordHash, State.PasswordSalt);
                 }
                 catch
                 {
@@ -591,9 +610,13 @@ namespace FakeMicro.Grains
         /// </summary>
         private void GeneratePasswordHash(string password, out string hash, out string salt)
         {
-            using var hmac = new HMACSHA512();
-            salt = Convert.ToBase64String(hmac.Key);
-            hash = Convert.ToBase64String(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password)));
+            // 使用PBKDF2生成更安全的密码哈希
+            var combinedHash = CryptoHelper.GeneratePasswordHash(password);
+            var hashBytes = Convert.FromBase64String(combinedHash);
+            
+            // 分割盐和哈希（前16字节是盐，后面是哈希）
+            salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
+            hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
         }
 
         /// <summary>

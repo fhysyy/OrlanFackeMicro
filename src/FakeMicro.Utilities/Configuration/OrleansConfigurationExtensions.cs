@@ -194,7 +194,6 @@ public static class OrleansConfigurationExtensions
         {
             options.Invariant = "Npgsql";
             options.ConnectionString = connectionString;
-            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
         });
 
         // 使用PostgreSQL作为发布/订阅存储
@@ -202,7 +201,6 @@ public static class OrleansConfigurationExtensions
         {
             options.Invariant = "Npgsql";
             options.ConnectionString = connectionString;
-            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
         });
 
         // 配置用户状态存储
@@ -210,7 +208,6 @@ public static class OrleansConfigurationExtensions
         {
             options.Invariant = "Npgsql";
             options.ConnectionString = connectionString;
-            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
         });
 
         // 配置Orleans系统存储
@@ -218,7 +215,6 @@ public static class OrleansConfigurationExtensions
         {
             options.Invariant = "Npgsql";
             options.ConnectionString = connectionString;
-            // 在新版本Orleans中，UseJsonFormat已被移除，不需要设置
         });
     }
 
@@ -244,6 +240,12 @@ public static class OrleansConfigurationExtensions
             options.ResponseTimeout = TimeSpan.FromSeconds(30);
             options.MaxMessageBodySize = 10 * 1024 * 1024; // 10MB
         });
+
+        // 配置并发消息处理
+        builder.Configure<SiloMessagingOptions>(options =>
+        {
+            options.MaxForwardCount = 10; // 最大转发次数
+        });
     }
 
     /// <summary>
@@ -254,6 +256,13 @@ public static class OrleansConfigurationExtensions
         builder.Configure<ClusterMembershipOptions>(options =>
         {
             options.NumMissedProbesLimit = 3;
+            options.ProbeTimeout = TimeSpan.FromSeconds(10);
+        });
+
+        // 配置Silo性能选项
+        builder.Configure<SiloOptions>(options =>
+        {
+            options.SiloName = Environment.MachineName;
         });
     }
 

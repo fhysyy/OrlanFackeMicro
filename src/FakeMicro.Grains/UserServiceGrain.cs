@@ -423,9 +423,13 @@ namespace FakeMicro.Grains
         /// </summary>
         private void GeneratePasswordHash(string password, out string hash, out string salt)
         {
-            using var hmac = new HMACSHA512();
-            salt = Convert.ToBase64String(hmac.Key);
-            hash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
+            // 使用PBKDF2生成更安全的密码哈希
+            var combinedHash = CryptoHelper.GeneratePasswordHash(password);
+            var hashBytes = Convert.FromBase64String(combinedHash);
+            
+            // 分割盐和哈希（前16字节是盐，后面是哈希）
+            salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
+            hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
         }
 
         /// <summary>
@@ -435,10 +439,27 @@ namespace FakeMicro.Grains
         {
             try
             {
-                var saltBytes = Convert.FromBase64String(salt);
-                using var hmac = new HMACSHA512(saltBytes);
-                var computedHash = Convert.ToBase64String(hmac.ComputeHash(Encoding.UTF8.GetBytes(password)));
-                return computedHash == hash;
+                // 首先尝试使用PBKDF2验证（新格式）
+                // 组合盐和哈希以匹配CryptoHelper的格式
+                var combinedHashBytes = new byte[16 + Convert.FromBase64String(hash).Length];
+                Array.Copy(Convert.FromBase64String(salt), 0, combinedHashBytes, 0, 16);
+                Array.Copy(Convert.FromBase64String(hash), 0, combinedHashBytes, 16, Convert.FromBase64String(hash).Length);
+                var combinedHash = Convert.ToBase64String(combinedHashBytes);
+                
+                if (CryptoHelper.VerifyPasswordHash(password, combinedHash))
+                {
+                    return true;
+                }
+            }
+            catch
+            {
+                // 忽略错误，尝试旧格式
+            }
+
+            try
+            {
+                // 使用旧的HMACSHA512验证（用于迁移）
+                return CryptoHelper.VerifyLegacyPasswordHash(password, hash, salt);
             }
             catch
             {

@@ -162,7 +162,12 @@ namespace FakeMicro.Utilities
         /// <summary>
         /// 生成安全的密码哈希（使用PBKDF2）
         /// </summary>
-        public static string GeneratePasswordHash(string password, int saltSize = 16, int iterations = 10000, int hashSize = 32)
+        /// <param name="password">密码明文</param>
+        /// <param name="saltSize">盐大小（字节）</param>
+        /// <param name="iterations">迭代次数</param>
+        /// <param name="hashSize">哈希大小（字节）</param>
+        /// <returns>Base64编码的密码哈希</returns>
+        public static string GeneratePasswordHash(string password, int saltSize = 16, int iterations = 30000, int hashSize = 32)
         {
             if (string.IsNullOrEmpty(password)) return string.Empty;
             
@@ -184,7 +189,13 @@ namespace FakeMicro.Utilities
         /// <summary>
         /// 验证密码哈希
         /// </summary>
-        public static bool VerifyPasswordHash(string password, string hashedPassword, int saltSize = 16, int iterations = 10000, int hashSize = 32)
+        /// <param name="password">密码明文</param>
+        /// <param name="hashedPassword">Base64编码的哈希值</param>
+        /// <param name="saltSize">盐大小（字节）</param>
+        /// <param name="iterations">迭代次数</param>
+        /// <param name="hashSize">哈希大小（字节）</param>
+        /// <returns>验证结果</returns>
+        public static bool VerifyPasswordHash(string password, string hashedPassword, int saltSize = 16, int iterations = 30000, int hashSize = 32)
         {
             if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(hashedPassword)) return false;
             
@@ -199,13 +210,48 @@ namespace FakeMicro.Utilities
                 using var pbkdf2 = new Rfc2898DeriveBytes(password, salt, iterations, HashAlgorithmName.SHA256);
                 var hash = pbkdf2.GetBytes(hashSize);
                 
+                // 安全比较哈希值，防止计时攻击
+                bool result = true;
                 for (int i = 0; i < hashSize; i++)
                 {
-                    if (hashBytes[i + saltSize] != hash[i])
-                        return false;
+                    result &= (hashBytes[i + saltSize] == hash[i]);
                 }
                 
-                return true;
+                return result;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// 验证旧的HMACSHA512密码哈希（用于迁移）
+        /// </summary>
+        /// <param name="password">密码明文</param>
+        /// <param name="storedHash">存储的哈希值</param>
+        /// <param name="storedSalt">存储的盐值</param>
+        /// <returns>验证结果</returns>
+        public static bool VerifyLegacyPasswordHash(string password, string storedHash, string storedSalt)
+        {
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash) || string.IsNullOrEmpty(storedSalt))
+                return false;
+
+            try
+            {
+                var saltBytes = Convert.FromBase64String(storedSalt);
+                using var hmac = new HMACSHA512(saltBytes);
+                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
+                var computedHashString = Convert.ToBase64String(computedHash);
+                
+                // 安全比较哈希值
+                bool result = true;
+                for (int i = 0; i < storedHash.Length; i++)
+                {
+                    result &= (storedHash[i] == computedHashString[i]);
+                }
+                
+                return result;
             }
             catch
             {
