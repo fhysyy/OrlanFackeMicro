@@ -55,8 +55,8 @@ namespace FakeMicro.Utilities.Configuration.Extensions
                     var variableName = match.Groups[1].Value;
                     var envValue = Environment.GetEnvironmentVariable(variableName);
                     
-                    // 如果环境变量不存在，则保留原始占位符
-                    return envValue ?? match.Value;
+                    // 如果环境变量不存在，则返回空字符串，避免使用无效路径
+                    return envValue ?? string.Empty;
                 }
                 return match.Value;
             });

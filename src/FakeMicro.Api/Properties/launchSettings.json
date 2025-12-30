@@ -19,7 +19,10 @@
         "DB_USERNAME": "postgres",
         "DB_PASSWORD": "123456",
         "DB_HOST": "localhost",
-        "HANGFIRE_DB_NAME": "fakemicro"
+        "HANGFIRE_DB_NAME": "fakemicro",
+        "ASPNETCORE_ENVIRONMENT": "",
+        "SSL_CERT_PATH": "",
+        "SSL_CERT_PASSWORD": ""
       },
       "dotnetRunMessages": true,
       "applicationUrl": "http://localhost:5000"
