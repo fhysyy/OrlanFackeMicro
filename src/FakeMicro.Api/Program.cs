@@ -52,8 +52,9 @@ namespace FakeMicro.Api
             // 配置Orleans Silo
             var configuration = builder.Configuration;
           
-            var siloPort = int.TryParse(Environment.GetEnvironmentVariable("ORLEANS_SILO_PORT"), out var sp) ? sp : 11111;
-            var gatewayPort = int.TryParse(Environment.GetEnvironmentVariable("ORLEANS_GATEWAY_PORT"), out var gp) ? gp : 30000;
+            // 从appsettings.json中读取Orleans端口配置
+            var siloPort = appSettings.Orleans.SiloPort;
+            var gatewayPort = appSettings.Orleans.GatewayPort;
             
             // 配置Orleans Silo - 同时启动Silo和Client
             builder.Host.ConfigureOrleansSilo();
@@ -163,20 +164,22 @@ namespace FakeMicro.Api
                 app.UseHsts();
             }
             
-            // 配置所有中间件
-            app.ConfigureAllMiddleware();
-
+            // 首先配置Dashboard，确保它们不受其他中间件影响
             // 使用配置的Hangfire Dashboard路径
             if (appSettings.Hangfire.UseDashboard)
             {
                 app.UseHangfireDashboard(appSettings.Hangfire.DashboardPath, new DashboardOptions
                 {
-                    Authorization = new[] { new FakeMicro.Api.Security.HangfireDashboardAuthorizationFilter() }
+                    Authorization = new[] { new FakeMicro.Api.Security.HangfireAuthorizationFilter() }
                 });
             }
 
             // 启用CAP中间件（用于事件总线和CAP Dashboard）
             app.UseCap();
+            
+            // 配置所有其他中间件
+            app.ConfigureAllMiddleware();
+            
             app.MapControllers();
             app.MapGet("/health", () => "Healthy");
             // 暂时注释掉默认的定时任务

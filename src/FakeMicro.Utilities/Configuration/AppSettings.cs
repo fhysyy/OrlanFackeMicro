@@ -111,42 +111,23 @@ public class DatabaseConfig
 
         public string GetConnectionString()
         {
-            // 检查是否直接设置了完整的连接字符串（优先级最高）
-            var fullConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
-            if (!string.IsNullOrEmpty(fullConnectionString))
-            {
-                return fullConnectionString;
-            }
-            
-            // 使用环境变量优先级高于配置文件
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? Password;
-            var server = Environment.GetEnvironmentVariable("DB_HOST") ?? Environment.GetEnvironmentVariable("DB_SERVER") ?? Server; // 兼容两种命名
-            var port = Environment.GetEnvironmentVariable("DB_PORT") != null ? int.Parse(Environment.GetEnvironmentVariable("DB_PORT")!) : Port;
-            var database = Environment.GetEnvironmentVariable("DB_NAME") ?? Database;
-            var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username; // 兼容两种命名
-            
+            // 直接使用appsettings.json中的配置值
             // 添加PostgreSQL特定选项，解决大小写敏感和表名引用问题
-            return $"Host={server};Port={port};Database={database};Username={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};CommandTimeout={CommandTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};Connection Lifetime={ConnectionLifetime};Include Error Detail={IncludeErrorDetail};SearchPath=public;ApplicationName=FakeMicroApp;";
+            return $"Host={Server};Port={Port};Database={Database};Username={Username};Password={Password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};CommandTimeout={CommandTimeout};MinPoolSize={MinPoolSize};MaxPoolSize={MaxPoolSize};Connection Lifetime={ConnectionLifetime};Include Error Detail={IncludeErrorDetail};SearchPath=public;ApplicationName=FakeMicroApp;";
         }
         
         public string GetReadConnectionString()
         {
-            // 检查是否直接设置了完整的读库连接字符串（优先级最高）
-            var fullConnectionString = Environment.GetEnvironmentVariable("DB_READ_CONNECTION_STRING");
-            if (!string.IsNullOrEmpty(fullConnectionString))
-            {
-                return fullConnectionString;
-            }
-            
-            // 使用环境变量优先级高于配置文件
-            var password = Environment.GetEnvironmentVariable("DB_READ_PASSWORD") ?? ReadPassword ?? Password;
-            var server = Environment.GetEnvironmentVariable("DB_READ_HOST") ?? Environment.GetEnvironmentVariable("DB_READ_SERVER") ?? ReadServer ?? Server; // 兼容两种命名
-            var port = Environment.GetEnvironmentVariable("DB_READ_PORT") != null ? int.Parse(Environment.GetEnvironmentVariable("DB_READ_PORT")!) : ReadPort;
-            var database = Environment.GetEnvironmentVariable("DB_READ_NAME") ?? ReadDatabase ?? Database;
-            var username = Environment.GetEnvironmentVariable("DB_READ_USER") ?? Environment.GetEnvironmentVariable("DB_READ_USERNAME") ?? ReadUsername ?? Username; // 兼容两种命名
+            // 直接使用appsettings.json中的配置值
+            // 如果没有配置读库，使用主库配置
+            var readServer = ReadServer ?? Server;
+            var readPort = ReadPort > 0 ? ReadPort : Port;
+            var readDatabase = ReadDatabase ?? Database;
+            var readUsername = ReadUsername ?? Username;
+            var readPassword = ReadPassword ?? Password;
             
             // 添加PostgreSQL特定选项，解决大小写敏感和表名引用问题
-            return $"Host={server};Port={port};Database={database};Username={username};Password={password};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};CommandTimeout={CommandTimeout};MinPoolSize={ReadMinPoolSize};MaxPoolSize={ReadMaxPoolSize};Connection Lifetime={ConnectionLifetime};Include Error Detail={IncludeErrorDetail};SearchPath=public;ApplicationName=FakeMicroApp_Read;";
+            return $"Host={readServer};Port={readPort};Database={readDatabase};Username={readUsername};Password={readPassword};Trust Server Certificate={TrustServerCertificate};Timeout={ConnectionTimeout};CommandTimeout={CommandTimeout};MinPoolSize={ReadMinPoolSize};MaxPoolSize={ReadMaxPoolSize};Connection Lifetime={ConnectionLifetime};Include Error Detail={IncludeErrorDetail};SearchPath=public;ApplicationName=FakeMicroApp_Read;";
         }
     }
 
@@ -270,16 +251,16 @@ public class RabbitMQConfig
     public string Password { get; set; } = "";
     public string VirtualHost { get; set; } = "/";
     
-    // 获取RabbitMQ密码（优先使用环境变量）
+    // 获取RabbitMQ密码（直接使用appsettings.json中的配置值）
     public string GetPassword()
     {
-        return Environment.GetEnvironmentVariable("RABBITMQ_PASSWORD") ?? Password;
+        return Password;
     }
     
-    // 获取RabbitMQ主机（优先使用环境变量）
+    // 获取RabbitMQ主机（直接使用appsettings.json中的配置值）
     public string GetHostName()
     {
-        return Environment.GetEnvironmentVariable("RABBITMQ_HOST") ?? HostName;
+        return HostName;
     }
 }
 
@@ -394,10 +375,10 @@ public class ElasticsearchConfig
     public string? Username { get; set; }
     public string? Password { get; set; }
     
-    // 获取Elasticsearch密码（优先使用环境变量）
+    // 获取Elasticsearch密码（直接使用appsettings.json中的配置值）
     public string? GetPassword()
     {
-        return Environment.GetEnvironmentVariable("ELASTIC_PASSWORD") ?? Password;
+        return Password;
     }
 }
 

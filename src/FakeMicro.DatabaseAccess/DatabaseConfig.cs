@@ -63,13 +63,12 @@ namespace FakeMicro.DatabaseAccess
         /// <returns>连接字符串</returns>
         public string GetConnectionString()
         {
-            // 优先使用环境变量
-            var server = Environment.GetEnvironmentVariable("DB_SERVER") ?? Server;
-            var port = Environment.GetEnvironmentVariable("DB_PORT") != null ? 
-                int.Parse(Environment.GetEnvironmentVariable("DB_PORT")!) : Port;
-            var databaseName = Environment.GetEnvironmentVariable("DB_NAME") ?? DatabaseName;
-            var username = Environment.GetEnvironmentVariable("DB_USER") ?? Environment.GetEnvironmentVariable("DB_USERNAME") ?? Username;
-            var password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? Password;
+            // 直接使用appsettings.json中的配置值
+            var server = Server;
+            var port = Port;
+            var databaseName = DatabaseName;
+            var username = Username;
+            var password = Password;
 
             // 根据数据库类型生成连接字符串
             switch (Type?.ToLower())

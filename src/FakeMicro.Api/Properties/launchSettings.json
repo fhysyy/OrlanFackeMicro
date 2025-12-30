@@ -20,7 +20,7 @@
         "DB_PASSWORD": "123456",
         "DB_HOST": "localhost",
         "HANGFIRE_DB_NAME": "fakemicro",
-        "ASPNETCORE_ENVIRONMENT": "",
+        "ASPNETCORE_ENVIRONMENT": "Development",
         "SSL_CERT_PATH": "",
         "SSL_CERT_PASSWORD": ""
       },

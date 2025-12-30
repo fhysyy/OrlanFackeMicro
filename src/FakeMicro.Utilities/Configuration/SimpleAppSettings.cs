@@ -46,22 +46,4 @@ public class SimpleAppSettings
     /// RabbitMQ连接字符串
     /// </summary>
     public string RabbitMQConnectionString { get; set; } = string.Empty;
-    
-    /// <summary>
-    /// 初始化数据库连接字符串
-    /// 优先使用环境变量，然后使用配置文件值
-    /// </summary>
-    public void InitializeDatabaseConnection()
-    {
-        if (string.IsNullOrEmpty(DatabaseConnectionString))
-        {
-            var dbServer = Environment.GetEnvironmentVariable("DB_SERVER") ?? "localhost";
-            var dbPort = Environment.GetEnvironmentVariable("DB_PORT") ?? "5432";
-            var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "fakemicro";
-            var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
-            var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? string.Empty;
-            
-            DatabaseConnectionString = $"Server={dbServer};Port={dbPort};Database={dbName};User Id={dbUser};Password={dbPassword};";
-        }
-    }
 }
