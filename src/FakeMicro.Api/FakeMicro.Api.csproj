@@ -57,7 +57,6 @@
     <Compile Include="Controllers\CounterController.cs" />
     <Compile Include="Controllers\DictionaryController.cs" />
     <Compile Include="Controllers\EventsController.cs" />
-    <Compile Include="Controllers\FakeNewsController.cs" />
     <Compile Include="Controllers\FakeStudentController.cs" />
     <Compile Include="Controllers\FilesController.cs" />
     <Compile Include="Controllers\FormConfigController.cs" />

@@ -20,7 +20,6 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
 {
     private readonly ILogger<DatabaseConnectionPoolMonitor> _logger;
     private readonly PerformanceMonitor _performanceMonitor;
-    private readonly ISqlSugarClient _sharedSqlSugarClient; // 保留用于向后兼容
     private readonly MongoClient _mongoClient;
     private readonly System.Timers.Timer _timer;
     private readonly int _monitoringIntervalMs = 5000; // 默认监控间隔5秒
@@ -31,14 +30,12 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
     public DatabaseConnectionPoolMonitor(
         ILogger<DatabaseConnectionPoolMonitor> logger,
         PerformanceMonitor performanceMonitor,
-        ISqlSugarClient sqlSugarClient,
         MongoClient mongoClient,
         IOptions<SqlSugarConfig.SqlSugarOptions> sqlSugarOptions,
         IOptions<ConnectionStringsOptions> connectionStringsOptions)
     {
         _logger = logger;
         _performanceMonitor = performanceMonitor;
-        _sharedSqlSugarClient = sqlSugarClient;
         _mongoClient = mongoClient;
         _timer = new System.Timers.Timer(_monitoringIntervalMs);
         _timer.Elapsed += async (sender, e) => await CollectConnectionPoolMetricsAsync();

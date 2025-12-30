@@ -67,10 +67,10 @@ namespace FakeMicro.DatabaseAccess
             };
             
             // 注册PostgreSQL SqlSugar客户端（命名注册，避免与MongoDB冲突）
-            services.AddKeyedSingleton<ISqlSugarClient>("PostgreSQL", createPostgreSqlClient);
+            services.AddKeyedScoped<ISqlSugarClient>("PostgreSQL", createPostgreSqlClient);
             
             // 注册默认SqlSugar客户端（指向PostgreSQL）
-            services.AddSingleton<ISqlSugarClient>(provider => createPostgreSqlClient(provider, null));
+            services.AddScoped<ISqlSugarClient>(provider => createPostgreSqlClient(provider, null));
 
             // 注册事务服务以解决UserServiceGrain依赖注入问题
             services.AddScoped<ITransactionService, SqlSugarTransactionService>();
