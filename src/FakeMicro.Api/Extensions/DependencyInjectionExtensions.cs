@@ -191,15 +191,13 @@ public static class DependencyInjectionExtensions
         // 注册幂等性中间件
         app.UseIdempotency();
 
-        // 添加认证和授权中间件
-        app.UseAuthentication();
-        app.UseAuthorization();
+        // 暂时注释掉认证和授权中间件，因为JWT认证服务已被注释
+        // app.UseAuthentication();
+        // app.UseAuthorization();
 
         // 配置OpenTelemetry Prometheus指标端点
         app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
-        // 配置路由
-        app.MapControllers();
-        app.MapGet("/health", () => "Healthy");
+      
     }
 }

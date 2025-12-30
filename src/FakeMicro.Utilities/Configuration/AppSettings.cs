@@ -66,7 +66,7 @@ public class CapConfig
     /// <summary>
     /// Dashboard是否允许匿名访问
     /// </summary>
-    public bool DashboardAllowAnonymous { get; set; } = false;
+    public bool DashboardAllowAnonymous { get; set; } = true;
 }
 
 /// <summary>
