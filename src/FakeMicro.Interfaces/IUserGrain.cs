@@ -1,4 +1,5 @@
 using FakeMicro.Entities;
+using FakeMicro.Entities.Enums;
 using FakeMicro.Interfaces.Models;
 using Orleans;
 using Orleans.Concurrency;
@@ -48,6 +49,186 @@ namespace FakeMicro.Interfaces
         Task<ChangePasswordResult> ChangePasswordAsync(string currentPassword, string newPassword, CancellationToken cancellationToken = default);
         
         /// <summary>
+        /// 设置昵称
+        /// </summary>
+        Task SetNicknameAsync(string nickname);
+        
+        /// <summary>
+        /// 获取昵称
+        /// </summary>
+        [ReadOnly]
+        Task<string> GetNicknameAsync();
+        
+        /// <summary>
+        /// 设置头像
+        /// </summary>
+        Task SetAvatarAsync(string avatarUrl);
+        
+        /// <summary>
+        /// 获取头像
+        /// </summary>
+        [ReadOnly]
+        Task<string> GetAvatarAsync();
+        
+        /// <summary>
+        /// 获取个人资料
+        /// </summary>
+        [ReadOnly]
+        Task<Dictionary<string, object>> GetProfileAsync();
+        
+        /// <summary>
+        /// 更新个人资料
+        /// </summary>
+        Task UpdateProfileAsync(Dictionary<string, object> profile);
+        
+        /// <summary>
+        /// 创建用户会话
+        /// </summary>
+        Task CreateSessionAsync(UserSession session);
+        
+        /// <summary>
+        /// 获取用户权限
+        /// </summary>
+        [ReadOnly]
+        Task<List<Permission>> GetPermissionsAsync(CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// 添加用户权限
+        /// </summary>
+        Task AddPermissionAsync(Permission permission);
+        
+        /// <summary>
+        /// 移除用户权限
+        /// </summary>
+        Task RemovePermissionAsync(string resource, string permissionType);
+        
+        /// <summary>
+        /// 检查用户是否有权限
+        /// </summary>
+        [ReadOnly]
+        Task<bool> HasPermissionAsync(string resource, string permissionType, CancellationToken cancellationToken = default);
+        
+        /// <summary>
+        /// 删除用户
+        /// </summary>
+        Task DeleteAsync();
+        
+        /// <summary>
+        /// 设置用户状态
+        /// </summary>
+        Task SetStatusAsync(UserStatus status);
+        
+        /// <summary>
+        /// 获取用户状态
+        /// </summary>
+        [ReadOnly]
+        Task<UserStatus> GetStatusAsync();
+        
+        /// <summary>
+        /// 获取用户邮箱
+        /// </summary>
+        [ReadOnly]
+        Task<string> GetEmailAsync();
+        
+        /// <summary>
+        /// 设置用户邮箱
+        /// </summary>
+        Task SetEmailAsync(string email);
+        
+        /// <summary>
+        /// 设置密码哈希
+        /// </summary>
+        Task SetPasswordAsync(string passwordHash);
+        
+        /// <summary>
+        /// 获取密码哈希
+        /// </summary>
+        [ReadOnly]
+        Task<string> GetPasswordAsync();
+        
+        /// <summary>
+        /// 获取最后登录时间
+        /// </summary>
+        [ReadOnly]
+        Task<DateTime> GetLastLoginAsync();
+        
+        /// <summary>
+        /// 设置最后登录时间
+        /// </summary>
+        Task SetLastLoginAsync(DateTime lastLogin);
+        
+        /// <summary>
+        /// 更新在线状态
+        /// </summary>
+        Task UpdateOnlineStatusAsync(bool isOnline);
+        
+        /// <summary>
+        /// 检查用户是否在线
+        /// </summary>
+        [ReadOnly]
+        Task<bool> IsOnlineAsync();
+        
+        /// <summary>
+        /// 获取用户好友列表
+        /// </summary>
+        [ReadOnly]
+        Task<List<long>> GetFriendsAsync();
+        
+        /// <summary>
+        /// 添加好友
+        /// </summary>
+        Task AddFriendAsync(long friendUserId);
+        
+        /// <summary>
+        /// 移除好友
+        /// </summary>
+        Task RemoveFriendAsync(long friendUserId);
+        
+        /// <summary>
+        /// 检查是否为好友
+        /// </summary>
+        [ReadOnly]
+        Task<bool> IsFriendAsync(long friendUserId);
+        
+        /// <summary>
+        /// 获取被屏蔽的用户列表
+        /// </summary>
+        [ReadOnly]
+        Task<List<long>> GetBlockedUsersAsync();
+        
+        /// <summary>
+        /// 屏蔽用户
+        /// </summary>
+        Task BlockUserAsync(long userId);
+        
+        /// <summary>
+        /// 取消屏蔽用户
+        /// </summary>
+        Task UnblockUserAsync(long userId);
+        
+        /// <summary>
+        /// 检查用户是否被屏蔽
+        /// </summary>
+        [ReadOnly]
+        Task<bool> IsBlockedAsync(long userId);
+        
+        /// <summary>
+        /// 获取用户设置
+        /// </summary>
+        [ReadOnly]
+        Task<Dictionary<string, string>> GetSettingsAsync();
+        
+        /// <summary>
+        /// 更新用户设置
+        /// </summary>
+        Task UpdateSettingAsync(string key, string value);
+        
+        /// <summary>
+        /// 删除用户设置
+        /// </summary>
+        Task DeleteSettingAsync(string key);
+        
+        /// <summary>
         /// 更新登录信息
         /// </summary>
         Task UpdateLoginInfoAsync(bool success, string? ipAddress = null, string? userAgent = null, CancellationToken cancellationToken = default);
@@ -62,18 +243,6 @@ namespace FakeMicro.Interfaces
         /// </summary>
         [ReadOnly]
         Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 获取用户权限
-        /// </summary>
-        [ReadOnly]
-        Task<List<Permission>> GetPermissionsAsync(CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 检查用户是否有权限
-        /// </summary>
-        [ReadOnly]
-        Task<bool> HasPermissionAsync(string resource, string permissionType, CancellationToken cancellationToken = default);
         
         /// <summary>
         /// 发送邮箱验证邮件
@@ -147,9 +316,6 @@ namespace FakeMicro.Interfaces
         
         public static UpdateUserResult CreateSuccess(UserDto user)
             => new() { Success = true, UpdatedUser = user };
-        
-        public static UpdateUserResult CreateFailed(string errorMessage)
-            => new() { Success = false, ErrorMessage = errorMessage };
     }
     
     /// <summary>
@@ -327,111 +493,11 @@ namespace FakeMicro.Interfaces
         public bool Success { get; set; }
         [Id(1)]
         public string? ErrorMessage { get; set; }
-        [Id(2)]
-        public bool IsSoftDeleted { get; set; }
         
-        public static DeleteUserResult CreateSuccess(bool isSoftDeleted = true)
-            => new() { Success = true, IsSoftDeleted = isSoftDeleted };
+        public static DeleteUserResult CreateSuccess()
+            => new() { Success = true };
         
         public static DeleteUserResult CreateFailed(string errorMessage)
             => new() { Success = false, ErrorMessage = errorMessage };
-    }
-
-    /// <summary>
-    /// 用户服务Grain接口
-    /// </summary>
-    public interface IUserServiceGrain : IGrainWithIntegerKey
-    {
-        /// <summary>
-        /// 用户注册
-        /// </summary>
-        Task<AuthResponse> RegisterAsync(RegisterRequest request, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 用户登录
-        /// </summary>
-        Task<AuthResponse> LoginAsync(LoginRequest request, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 刷新令牌
-        /// </summary>
-        Task<AuthResponse> RefreshTokenAsync(RefreshTokenRequest request, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 根据用户名或邮箱查找用户
-        /// </summary>
-        Task<long?> FindUserByUsernameOrEmailAsync(string usernameOrEmail, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 验证用户权限
-        /// </summary>
-        Task<bool> ValidateUserPermissionAsync(long userId, string resource, string permissionType, CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 获取用户统计信息
-        /// </summary>
-        Task<UserStatistics> GetUserStatisticsAsync(CancellationToken cancellationToken = default);
-        
-        /// <summary>
-        /// 获取用户列表（支持搜索）
-        /// </summary>
-        Task<List<UserDto>> GetUsersAsync(string? username = null, string? email = null, string? status = null, CancellationToken cancellationToken = default);
-
-    }
-
-    /// <summary>
-    /// 用户统计信息
-    /// </summary>
-    [GenerateSerializer]
-    public class UserStatistics
-    {
-        [Id(0)]
-        public int TotalUsers { get; set; }
-        [Id(1)]
-        public int ActiveUsers { get; set; }
-        [Id(2)]
-        public int NewUsersToday { get; set; }
-        [Id(3)]
-        public Dictionary<string, int> RoleDistribution { get; set; } = new();
-        [Id(4)]
-        public Dictionary<string, int> StatusDistribution { get; set; } = new();
-    }
-
-    /// <summary>
-    /// 用户会话信息
-    /// </summary>
-    [GenerateSerializer]
-    public class UserSession
-    {
-        [Id(0)]
-        public string SessionId { get; set; } = string.Empty;
-        [Id(1)]
-        public DateTime LoginTime { get; set; }
-        [Id(2)]
-        public DateTime? LastActivity { get; set; }
-        [Id(3)]
-        public string? IpAddress { get; set; }
-        [Id(4)]
-        public string? UserAgent { get; set; }
-        [Id(5)]
-        public bool IsCurrent { get; set; }
-    }
-
-    /// <summary>
-    /// 用户资料更新请求
-    /// </summary>
-    [GenerateSerializer]
-    public class UserProfileUpdateRequest
-    {
-        [Id(0)]
-        public string? DisplayName { get; set; }
-        [Id(1)]
-        public string? Phone { get; set; }
-        [Id(2)]
-        public string? AvatarUrl { get; set; }
-        [Id(3)]
-        public string? Bio { get; set; }
-        [Id(4)]
-        public string PhoneNumber { get; set; }
     }
 }

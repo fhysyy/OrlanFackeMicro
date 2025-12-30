@@ -1,5 +1,6 @@
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Interfaces;
+using FakeMicro.Api.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Orleans;
@@ -131,7 +132,7 @@ namespace FakeMicro.Api.Controllers
             try
             {
                 // 使用UserServiceGrain进行令牌刷新，支持分布式事务
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(0);
+                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
                 var result = await userServiceGrain.RefreshTokenAsync(request);
 
                 if (result.Success)
@@ -422,7 +423,7 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(0);
+                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
                 var userId = await userServiceGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
 
                 if (userId.HasValue)
@@ -454,7 +455,7 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(0);
+                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
                 var userId = await userServiceGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
 
                 if (userId.HasValue)

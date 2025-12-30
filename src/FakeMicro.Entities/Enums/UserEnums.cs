@@ -50,7 +50,17 @@ namespace FakeMicro.Entities.Enums
         /// <summary>
         /// 锁定
         /// </summary>
-        Locked = 3
+        Locked = 3,
+        
+        /// <summary>
+        /// 在线
+        /// </summary>
+        Online = 4,
+        
+        /// <summary>
+        /// 离线
+        /// </summary>
+        Offline = 5
     }
 
     /// <summary>

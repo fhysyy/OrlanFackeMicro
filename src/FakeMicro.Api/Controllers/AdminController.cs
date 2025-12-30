@@ -40,7 +40,7 @@ namespace FakeMicro.Api.Controllers
                     username ?? "全部", email ?? "全部", status ?? "全部");
                 
                 // 通过Orleans Grain获取用户列表
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(0); // 使用固定key获取服务粒度Grain
+                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty); // 使用固定key获取服务粒度Grain
                 var userDtos = await userServiceGrain.GetUsersAsync(username, email, status);
                 
                 return Ok(new { success = true, users = userDtos });
@@ -162,7 +162,7 @@ namespace FakeMicro.Api.Controllers
                 _logger.LogInformation("管理员请求获取系统统计信息");
                 
                 // 调用UserServiceGrain获取用户统计信息
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(0); // 使用固定key获取服务粒度Grain
+                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty); // 使用固定key获取服务粒度Grain
                 var userStats = await userServiceGrain.GetUserStatisticsAsync();
                 
                 // 构建完整的系统统计信息

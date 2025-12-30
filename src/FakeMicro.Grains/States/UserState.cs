@@ -1,5 +1,9 @@
 using FakeMicro.Interfaces;
+using FakeMicro.Entities;
 using System.Text.Json.Serialization;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace FakeMicro.Grains.States
 {
@@ -39,9 +43,15 @@ namespace FakeMicro.Grains.States
         public string DisplayName { get; set; } = string.Empty;
 
         /// <summary>
-        /// 用户角色
+        /// 用户头像URL
         /// </summary>
         [JsonPropertyOrder(5)]
+        public string? AvatarUrl { get; set; }
+
+        /// <summary>
+        /// 用户角色
+        /// </summary>
+        [JsonPropertyOrder(6)]
         public string Role { get; set; } = string.Empty;
 
         /// <summary>
@@ -69,10 +79,22 @@ namespace FakeMicro.Grains.States
         public bool EmailVerified { get; set; }
 
         /// <summary>
+        /// 邮箱是否已验证（用于兼容UserGrain中的使用）
+        /// </summary>
+        [JsonIgnore]
+        public bool IsEmailVerified { get => EmailVerified; set => EmailVerified = value; }
+
+        /// <summary>
         /// 手机是否已验证
         /// </summary>
         [JsonPropertyOrder(10)]
         public bool PhoneVerified { get; set; }
+
+        /// <summary>
+        /// 手机是否已验证（用于兼容UserGrain中的使用）
+        /// </summary>
+        [JsonIgnore]
+        public bool IsPhoneVerified { get => PhoneVerified; set => PhoneVerified = value; }
 
         /// <summary>
         /// 创建时间
@@ -99,16 +121,46 @@ namespace FakeMicro.Grains.States
         public List<UserPermission> Permissions { get; set; } = new();
 
         /// <summary>
+        /// 用户好友列表
+        /// </summary>
+        [JsonPropertyOrder(15)]
+        public Dictionary<long, DateTime> Friends { get; set; } = new();
+
+        /// <summary>
+        /// 被阻止的用户列表
+        /// </summary>
+        [JsonPropertyOrder(16)]
+        public Dictionary<long, DateTime> BlockedUsers { get; set; } = new();
+
+        /// <summary>
+        /// 用户设置
+        /// </summary>
+        [JsonPropertyOrder(17)]
+        public UserSettings Settings { get; set; } = new();
+
+        /// <summary>
         /// 当前有效的刷新令牌
         /// </summary>
         [JsonPropertyOrder(15)]
         public string? CurrentRefreshToken { get; set; }
 
         /// <summary>
+        /// 刷新令牌（用于兼容UserGrain中的使用）
+        /// </summary>
+        [JsonIgnore]
+        public string? RefreshToken { get => CurrentRefreshToken; set => CurrentRefreshToken = value; }
+
+        /// <summary>
         /// 刷新令牌过期时间
         /// </summary>
         [JsonPropertyOrder(16)]
         public DateTime? RefreshTokenExpiresAt { get; set; }
+
+        /// <summary>
+        /// 刷新令牌过期时间（用于兼容UserGrain中的使用）
+        /// </summary>
+        [JsonIgnore]
+        public DateTime? RefreshTokenExpiry { get => RefreshTokenExpiresAt; set => RefreshTokenExpiresAt = value; }
 
         /// <summary>
         /// 状态最后修改时间
@@ -136,7 +188,7 @@ namespace FakeMicro.Grains.States
         [JsonPropertyOrder(15)]
         public bool IsLoaded { get; set; } = false;
 
- 
+
 
         /// <summary>
         /// 检查状态是否有效
@@ -171,7 +223,7 @@ namespace FakeMicro.Grains.States
                 Version = this.Version,
                 IsLoaded = this.IsLoaded,
                 LastModified = this.LastModified,
-                // 深拷贝列表
+                // 深拷贝列表和字典
                 Sessions = this.Sessions.Select(s => new UserSession
                 {
                     SessionId = s.SessionId,
@@ -186,7 +238,31 @@ namespace FakeMicro.Grains.States
                     Resource = p.Resource,
                     Type = p.Type,
                     GrantedAt = p.GrantedAt
-                }).ToList()
+                }).ToList(),
+                // 深拷贝字典
+                Friends = new Dictionary<long, DateTime>(this.Friends),
+                BlockedUsers = new Dictionary<long, DateTime>(this.BlockedUsers),
+                // 深拷贝设置
+                Settings = new UserSettings
+                {
+                    Notifications = new NotificationSettings
+                    {
+                        EmailEnabled = this.Settings.Notifications.EmailEnabled,
+                        SmsEnabled = this.Settings.Notifications.SmsEnabled,
+                        PushEnabled = this.Settings.Notifications.PushEnabled
+                    },
+                    Privacy = new PrivacySettings
+                    {
+                        ShowEmail = this.Settings.Privacy.ShowEmail,
+                        ShowPhone = this.Settings.Privacy.ShowPhone,
+                        AllowFriendRequests = this.Settings.Privacy.AllowFriendRequests
+                    },
+                    Theme = new ThemeSettings
+                    {
+                        ThemeName = this.Settings.Theme.ThemeName,
+                        AutoTheme = this.Settings.Theme.AutoTheme
+                    }
+                }
             };
             return copy;
         }
@@ -277,25 +353,15 @@ namespace FakeMicro.Grains.States
             UpdatedAt = DateTime.UtcNow;
             Sessions.Clear();
             Permissions.Clear();
+            Friends.Clear();
+            BlockedUsers.Clear();
+            Settings = new UserSettings();
             // 重置刷新令牌
             CurrentRefreshToken = null;
             RefreshTokenExpiresAt = null;
             IsLoaded = false;
             LastModified = DateTime.UtcNow;
         }
-    }
-
-    /// <summary>
-    /// 用户会话信息
-    /// </summary>
-    public class UserSession
-    {
-        public string SessionId { get; set; } = string.Empty;
-        public DateTime LoginTime { get; set; } = DateTime.UtcNow;
-        public DateTime LastActivity { get; set; } = DateTime.UtcNow;
-        public string? IpAddress { get; set; }
-        public string? UserAgent { get; set; }
-        public bool IsCurrent { get; set; } = true;
     }
 
     /// <summary>
@@ -306,5 +372,55 @@ namespace FakeMicro.Grains.States
         public string Resource { get; set; } = string.Empty;
         public string Type { get; set; } = string.Empty;
         public DateTime GrantedAt { get; set; } = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// 用户设置
+    /// </summary>
+    public class UserSettings
+    {
+        /// <summary>
+        /// 通知设置
+        /// </summary>
+        public NotificationSettings Notifications { get; set; } = new();
+
+        /// <summary>
+        /// 隐私设置
+        /// </summary>
+        public PrivacySettings Privacy { get; set; } = new();
+
+        /// <summary>
+        /// 主题设置
+        /// </summary>
+        public ThemeSettings Theme { get; set; } = new();
+    }
+
+    /// <summary>
+    /// 通知设置
+    /// </summary>
+    public class NotificationSettings
+    {
+        public bool EmailEnabled { get; set; } = true;
+        public bool SmsEnabled { get; set; } = false;
+        public bool PushEnabled { get; set; } = true;
+    }
+
+    /// <summary>
+    /// 隐私设置
+    /// </summary>
+    public class PrivacySettings
+    {
+        public bool ShowEmail { get; set; } = false;
+        public bool ShowPhone { get; set; } = false;
+        public bool AllowFriendRequests { get; set; } = true;
+    }
+
+    /// <summary>
+    /// 主题设置
+    /// </summary>
+    public class ThemeSettings
+    {
+        public string ThemeName { get; set; } = "light";
+        public bool AutoTheme { get; set; } = true;
     }
 }

@@ -127,4 +127,22 @@ namespace FakeMicro.Interfaces.Models
         [Id(1)]
         public List<Permission> Permissions { get; set; } = new();
     }
+
+    /// <summary>
+    /// 用户统计信息
+    /// </summary>
+    [GenerateSerializer]
+    public class UserStatistics
+    {
+        [Id(0)]
+        public int TotalUsers { get; set; }
+        [Id(1)]
+        public int ActiveUsers { get; set; }
+        [Id(2)]
+        public int NewUsersToday { get; set; }
+        [Id(3)]
+        public Dictionary<string, int> StatusDistribution { get; set; } = new();
+        [Id(4)]
+        public Dictionary<string, int> RoleDistribution { get; set; } = new();
+    }
 }

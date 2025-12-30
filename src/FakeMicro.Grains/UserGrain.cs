@@ -13,48 +13,12 @@ using FakeMicro.Shared.Exceptions;
 using FakeMicro.Interfaces;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Utilities;
+using FakeMicro.Entities;
+using FakeMicro.Entities.Enums;
+using FakeMicro.Grains.States;
 
 namespace FakeMicro.Grains
 {
-    public interface IUserGrain : IGrainWithStringKey
-    {
-        Task SetNicknameAsync(string nickname);
-        Task<string> GetNicknameAsync();
-        Task SetAvatarAsync(string avatarUrl);
-        Task<string> GetAvatarAsync();
-        Task<Dictionary<string, object>> GetProfileAsync();
-        Task UpdateProfileAsync(Dictionary<string, object> profile);
-        Task<List<UserSession>> GetSessionsAsync(CancellationToken cancellationToken = default);
-        Task CreateSessionAsync(UserSession session);
-        Task TerminateSessionAsync(string sessionId);
-        Task<List<Permission>> GetPermissionsAsync(CancellationToken cancellationToken = default);
-        Task AddPermissionAsync(Permission permission);
-        Task RemovePermissionAsync(string resource, string permissionType);
-        Task<bool> HasPermissionAsync(string resource, string permissionType, CancellationToken cancellationToken = default);
-        Task DeleteAsync();
-        Task SetStatusAsync(UserStatus status);
-        Task<UserStatus> GetStatusAsync();
-        Task<string> GetEmailAsync();
-        Task SetEmailAsync(string email);
-        Task SetPasswordAsync(string passwordHash);
-        Task<string> GetPasswordAsync();
-        Task<DateTime> GetLastLoginAsync();
-        Task SetLastLoginAsync(DateTime lastLogin);
-        Task UpdateOnlineStatusAsync(bool isOnline);
-        Task<bool> IsOnlineAsync();
-        Task<List<string>> GetFriendsAsync();
-        Task AddFriendAsync(string friendUserId);
-        Task RemoveFriendAsync(string friendUserId);
-        Task<bool> IsFriendAsync(string friendUserId);
-        Task<List<string>> GetBlockedUsersAsync();
-        Task BlockUserAsync(string userId);
-        Task UnblockUserAsync(string userId);
-        Task<bool> IsBlockedAsync(string userId);
-        Task<Dictionary<string, string>> GetSettingsAsync();
-        Task UpdateSettingAsync(string key, string value);
-        Task DeleteSettingAsync(string key);
-    }
-
     public class UserGrain : OrleansGrainBase, IUserGrain
     {
         #region 状态管理
@@ -131,16 +95,15 @@ namespace FakeMicro.Grains
                     LogInformation("初始化新用户状态: {UserId}", this.GetPrimaryKeyString());
                     _userState.State = new UserState
                     {
-                        UserId = this.GetPrimaryKeyString(),
+                        UserId = long.Parse(this.GetPrimaryKeyString()),
                         CreatedAt = DateTime.UtcNow,
                         UpdatedAt = DateTime.UtcNow,
-                        Status = UserStatus.Offline,
-                        Profile = new Dictionary<string, object>(),
+                        Status = UserStatus.Offline.ToString(),
                         Sessions = new List<UserSession>(),
-                        Permissions = new List<Permission>(),
-                        Settings = new Dictionary<string, string>(),
-                        Friends = new List<string>(),
-                        BlockedUsers = new List<string>()
+                        Permissions = new List<UserPermission>(),
+                        Settings = new UserSettings(),
+                        Friends = new Dictionary<long, DateTime>(),
+                        BlockedUsers = new Dictionary<long, DateTime>()
                     };
                 }
             }
@@ -188,7 +151,7 @@ namespace FakeMicro.Grains
                     throw new ArgumentException("昵称不能为空", nameof(nickname));
                 }
 
-                State.Profile["nickname"] = nickname;
+                State.DisplayName = nickname;
                 await SaveUserStateAsync();
             }, nickname);
         }
@@ -200,7 +163,7 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetNicknameAsync", async () =>
             {
-                return State.Profile.TryGetValue("nickname", out var nickname) ? nickname?.ToString() : null;
+                return State.DisplayName;
             });
         }
 
@@ -211,7 +174,7 @@ namespace FakeMicro.Grains
         {
             await SafeExecuteAsync("SetAvatarAsync", async () =>
             {
-                State.Profile["avatar"] = avatarUrl;
+                State.AvatarUrl = avatarUrl;
                 await SaveUserStateAsync();
             }, avatarUrl);
         }
@@ -223,7 +186,7 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetAvatarAsync", async () =>
             {
-                return State.Profile.TryGetValue("avatar", out var avatar) ? avatar?.ToString() : null;
+                return State.AvatarUrl;
             });
         }
 
@@ -234,7 +197,22 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetProfileAsync", async () =>
             {
-                return new Dictionary<string, object>(State.Profile);
+                var profile = new Dictionary<string, object>
+                {
+                    { "userId", State.UserId },
+                    { "username", State.Username },
+                    { "email", State.Email },
+                    { "phone", State.Phone },
+                    { "displayName", State.DisplayName },
+                    { "role", State.Role },
+                    { "status", State.Status },
+                    { "isActive", State.IsActive },
+                    { "emailVerified", State.EmailVerified },
+                    { "phoneVerified", State.PhoneVerified },
+                    { "createdAt", State.CreatedAt },
+                    { "updatedAt", State.UpdatedAt }
+                };
+                return profile;
             });
         }
 
@@ -250,10 +228,44 @@ namespace FakeMicro.Grains
                     throw new ArgumentNullException(nameof(profile));
                 }
 
-                foreach (var kvp in profile)
+                if (profile.TryGetValue("username", out var username) && username is string usernameStr)
                 {
-                    State.Profile[kvp.Key] = kvp.Value;
+                    State.Username = usernameStr;
                 }
+                if (profile.TryGetValue("email", out var email) && email is string emailStr)
+                {
+                    State.Email = emailStr;
+                }
+                if (profile.TryGetValue("phone", out var phone) && phone is string phoneStr)
+                {
+                    State.Phone = phoneStr;
+                }
+                if (profile.TryGetValue("displayName", out var displayName) && displayName is string displayNameStr)
+                {
+                    State.DisplayName = displayNameStr;
+                }
+                if (profile.TryGetValue("role", out var role) && role is string roleStr)
+                {
+                    State.Role = roleStr;
+                }
+                if (profile.TryGetValue("status", out var status) && status is string statusStr)
+                {
+                    State.Status = statusStr;
+                }
+                if (profile.TryGetValue("isActive", out var isActive) && isActive is bool isActiveBool)
+                {
+                    State.IsActive = isActiveBool;
+                }
+                if (profile.TryGetValue("emailVerified", out var emailVerified) && emailVerified is bool emailVerifiedBool)
+                {
+                    State.EmailVerified = emailVerifiedBool;
+                }
+                if (profile.TryGetValue("phoneVerified", out var phoneVerified) && phoneVerified is bool phoneVerifiedBool)
+                {
+                    State.PhoneVerified = phoneVerifiedBool;
+                }
+
+                State.UpdatedAt = DateTime.UtcNow;
                 await SaveUserStateAsync();
             }, profile.Keys.FirstOrDefault());
         }
@@ -298,11 +310,250 @@ namespace FakeMicro.Grains
         }
 
         /// <summary>
+        /// 获取用户信息（从内存状态）
+        /// </summary>
+        public async Task<UserDto?> GetUserAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("GetUserAsync", async () =>
+            {
+                if (!IsStateValid)
+                {
+                    return null;
+                }
+
+                return new UserDto
+                {
+                    Id = State.UserId,
+                    Username = State.Username,
+                    Email = State.Email,
+                    DisplayName = State.DisplayName,
+                    Status = (UserStatus)Enum.Parse(typeof(UserStatus), State.Status)
+                };
+            });
+        }
+
+        /// <summary>
+        /// 从数据库直接获取用户信息
+        /// </summary>
+        public async Task<UserDto?> GetUserFromDatabaseAsync(CancellationToken cancellationToken = default)
+        {
+            // 实际项目中应该实现从数据库获取数据的逻辑
+            // 这里暂时返回与内存状态相同的结果
+            return await GetUserAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// 更新用户信息
+        /// </summary>
+        public async Task<UpdateUserResult> UpdateUserAsync(UserDto userDto, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("UpdateUserAsync", async () =>
+            {
+                if (userDto == null)
+                {
+                    throw new ArgumentNullException(nameof(userDto));
+                }
+
+                State.Username = userDto.Username;
+                State.Email = userDto.Email;
+                State.DisplayName = userDto.DisplayName;
+                State.Status = userDto.Status.ToString();
+                await SaveUserStateAsync();
+
+                return UpdateUserResult.CreateSuccess(userDto);
+            });
+        }
+
+        /// <summary>
+        /// 更新登录信息
+        /// </summary>
+        public async Task UpdateLoginInfoAsync(bool success, string? ipAddress = null, string? userAgent = null, CancellationToken cancellationToken = default)
+        {
+            await SafeExecuteAsync("UpdateLoginInfoAsync", async () =>
+            {
+                State.LastLoginAt = DateTime.UtcNow;
+                await SaveUserStateAsync();
+            });
+        }
+
+        /// <summary>
+        /// 生成刷新令牌
+        /// </summary>
+        public async Task<string?> GenerateRefreshTokenAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("GenerateRefreshTokenAsync", async () =>
+            {
+                var token = Guid.NewGuid().ToString();
+                State.RefreshToken = token;
+                State.RefreshTokenExpiry = DateTime.UtcNow.AddDays(7);
+                await SaveUserStateAsync();
+                return token;
+            });
+        }
+
+        /// <summary>
+        /// 验证刷新令牌
+        /// </summary>
+        public async Task<bool> ValidateRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("ValidateRefreshTokenAsync", async () =>
+            {
+                if (string.IsNullOrWhiteSpace(State.RefreshToken))
+                {
+                    return false;
+                }
+
+                if (State.RefreshTokenExpiry < DateTime.UtcNow)
+                {
+                    return false;
+                }
+
+                return State.RefreshToken == refreshToken;
+            });
+        }
+
+        /// <summary>
+        /// 发送邮箱验证邮件
+        /// </summary>
+        public async Task<SendVerificationResult> SendEmailVerificationAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("SendEmailVerificationAsync", async () =>
+            {
+                // 实际项目中应该实现发送邮件的逻辑
+                return SendVerificationResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 验证邮箱
+        /// </summary>
+        public async Task<VerifyEmailResult> VerifyEmailAsync(string token, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("VerifyEmailAsync", async () =>
+            {
+                // 实际项目中应该实现验证邮箱的逻辑
+                State.IsEmailVerified = true;
+                await SaveUserStateAsync();
+                return VerifyEmailResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 发送手机验证码
+        /// </summary>
+        public async Task<SendVerificationResult> SendPhoneVerificationAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("SendPhoneVerificationAsync", async () =>
+            {
+                // 实际项目中应该实现发送手机验证码的逻辑
+                return SendVerificationResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 验证手机
+        /// </summary>
+        public async Task<VerifyPhoneResult> VerifyPhoneAsync(string code, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("VerifyPhoneAsync", async () =>
+            {
+                // 实际项目中应该实现验证手机的逻辑
+                State.IsPhoneVerified = true;
+                await SaveUserStateAsync();
+                return VerifyPhoneResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 请求密码重置
+        /// </summary>
+        public async Task<RequestPasswordResetResult> RequestPasswordResetAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("RequestPasswordResetAsync", async () =>
+            {
+                // 实际项目中应该实现请求密码重置的逻辑
+                return RequestPasswordResetResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 重置密码
+        /// </summary>
+        public async Task<ResetPasswordResult> ResetPasswordAsync(string token, string newPassword, CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("ResetPasswordAsync", async () =>
+            {
+                // 实际项目中应该实现重置密码的逻辑
+                var passwordHash = HashPassword(newPassword);
+                State.PasswordHash = passwordHash;
+                await SaveUserStateAsync();
+                return ResetPasswordResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 更新用户会话信息
+        /// </summary>
+        public async Task UpdateSessionAsync(string? ipAddress = null, string? userAgent = null, CancellationToken cancellationToken = default)
+        {
+            await SafeExecuteAsync("UpdateSessionAsync", async () =>
+            {
+                if (State.Sessions.Any(s => s.IsCurrent))
+                {
+                    var currentSession = State.Sessions.First(s => s.IsCurrent);
+                    currentSession.LastActivity = DateTime.UtcNow;
+                    if (ipAddress != null)
+                    {
+                        currentSession.IpAddress = ipAddress;
+                    }
+                    if (userAgent != null)
+                    {
+                        currentSession.UserAgent = userAgent;
+                    }
+                    await SaveUserStateAsync();
+                }
+            });
+        }
+
+        /// <summary>
+        /// 删除用户
+        /// </summary>
+        public async Task<DeleteUserResult> DeleteUserAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("DeleteUserAsync", async () =>
+            {
+                // 实际项目中应该实现删除用户的逻辑
+                await _userState.ClearStateAsync();
+                return DeleteUserResult.CreateSuccess();
+            });
+        }
+
+        /// <summary>
+        /// 终止所有会话（除当前会话外）
+        /// </summary>
+        public async Task<TerminateSessionResult> TerminateOtherSessionsAsync(CancellationToken cancellationToken = default)
+        {
+            return await SafeExecuteAsync("TerminateOtherSessionsAsync", async () =>
+            {
+                var currentSessions = State.Sessions.Where(s => !s.IsCurrent).ToList();
+                var count = currentSessions.Count;
+                
+                foreach (var session in currentSessions)
+                {
+                    State.Sessions.Remove(session);
+                }
+                
+                await SaveUserStateAsync();
+                return TerminateSessionResult.CreateSuccess(count);
+            });
+        }
+
+        /// <summary>
         /// 终止会话
         /// </summary>
-        public async Task TerminateSessionAsync(string sessionId)
+        public async Task<TerminateSessionResult> TerminateSessionAsync(string sessionId, CancellationToken cancellationToken = default)
         {
-            await SafeExecuteAsync("TerminateSessionAsync", async () =>
+            return await SafeExecuteAsync("TerminateSessionAsync", async () =>
             {
                 if (string.IsNullOrWhiteSpace(sessionId))
                 {
@@ -314,7 +565,9 @@ namespace FakeMicro.Grains
                 {
                     State.Sessions.Remove(session);
                     await SaveUserStateAsync();
+                    return TerminateSessionResult.CreateSuccess(1);
                 }
+                return TerminateSessionResult.CreateFailed("会话不存在");
             }, sessionId);
         }
 
@@ -329,7 +582,13 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetPermissionsAsync", async () =>
             {
-                return new List<Permission>(State.Permissions);
+                return State.Permissions
+                    .Select(p => new Permission
+                    {
+                        Resource = p.Resource,
+                        Type = Enum.TryParse<PermissionType>(p.Type, out var permissionType) ? permissionType : default
+                    })
+                    .ToList();
             });
         }
 
@@ -345,9 +604,14 @@ namespace FakeMicro.Grains
                     throw new ArgumentNullException(nameof(permission));
                 }
 
-                if (!State.Permissions.Any(p => p.Resource == permission.Resource && p.Type == permission.Type))
+                if (!State.Permissions.Any(p => p.Resource == permission.Resource && p.Type == permission.Type.ToString()))
                 {
-                    State.Permissions.Add(permission);
+                    State.Permissions.Add(new UserPermission
+                    {
+                        Resource = permission.Resource,
+                        Type = permission.Type.ToString(),
+                        GrantedAt = DateTime.UtcNow
+                    });
                     await SaveUserStateAsync();
                 }
             }, permission.Resource, permission.Type.ToString());
@@ -424,7 +688,7 @@ namespace FakeMicro.Grains
         {
             await SafeExecuteAsync("SetStatusAsync", async () =>
             {
-                State.Status = status;
+                State.Status = status.ToString();
                 await SaveUserStateAsync();
             }, status.ToString());
         }
@@ -436,7 +700,7 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetStatusAsync", async () =>
             {
-                return State.Status;
+                return Enum.TryParse<UserStatus>(State.Status, out var status) ? status : UserStatus.Pending;
             });
         }
 
@@ -447,7 +711,7 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetEmailAsync", async () =>
             {
-                return State.Profile.TryGetValue("email", out var email) ? email?.ToString() : null;
+                return State.Email;
             });
         }
 
@@ -463,16 +727,13 @@ namespace FakeMicro.Grains
                     throw new ArgumentException("邮箱不能为空", nameof(email));
                 }
 
-                State.Profile["email"] = email;
+                State.Email = email;
                 await SaveUserStateAsync();
             }, email);
         }
 
         /// <summary>
         /// 设置用户密码
-        /// </summary>
-        /// <summary>
-        /// 设置用户密码（内部使用，不推荐直接调用）
         /// </summary>
         public async Task SetPasswordAsync(string passwordHash)
         {
@@ -593,50 +854,28 @@ namespace FakeMicro.Grains
                     return ChangePasswordResult.CreateFailed("当前密码不正确");
                 }
 
-                // 生成新密码哈希和盐值
-                GeneratePasswordHash(newPassword, out string newPasswordHash, out string newPasswordSalt);
+                // 生成新密码哈希
+                var passwordHash = CryptoHelper.GeneratePasswordHash(newPassword);
+                
+                // 从哈希中提取盐（前16字节）
+                var hashBytes = Convert.FromBase64String(passwordHash);
+                var passwordSalt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
+                
+                // 提取实际哈希值（剩余字节）
+                passwordHash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
 
                 // 更新密码
-                State.PasswordHash = newPasswordHash;
-                State.PasswordSalt = newPasswordSalt;
+                State.PasswordHash = passwordHash;
+                State.PasswordSalt = passwordSalt;
                 await SaveUserStateAsync();
 
                 return ChangePasswordResult.CreateSuccess();
-            }, "[修改密码]");
+            }, "[密码修改]");
         }
 
-        /// <summary>
-        /// 生成密码哈希
-        /// </summary>
-        private void GeneratePasswordHash(string password, out string hash, out string salt)
-        {
-            // 使用PBKDF2生成更安全的密码哈希
-            var combinedHash = CryptoHelper.GeneratePasswordHash(password);
-            var hashBytes = Convert.FromBase64String(combinedHash);
-            
-            // 分割盐和哈希（前16字节是盐，后面是哈希）
-            salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
-            hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
-        }
+        #endregion
 
-        /// <summary>
-        /// 安全比较哈希值，防止计时攻击
-        /// </summary>
-        private bool SecureCompareHash(string hash1, string hash2)
-        {
-            if (hash1.Length != hash2.Length)
-            {
-                return false;
-            }
-
-            bool result = true;
-            for (int i = 0; i < hash1.Length; i++)
-            {
-                result &= (hash1[i] == hash2[i]);
-            }
-
-            return result;
-        }
+        #region 时间管理
 
         /// <summary>
         /// 获取最后登录时间
@@ -645,7 +884,7 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetLastLoginAsync", async () =>
             {
-                return State.LastLogin;
+                return State.LastLoginAt ?? DateTime.MinValue;
             });
         }
 
@@ -656,10 +895,14 @@ namespace FakeMicro.Grains
         {
             await SafeExecuteAsync("SetLastLoginAsync", async () =>
             {
-                State.LastLogin = lastLogin;
+                State.LastLoginAt = lastLogin;
                 await SaveUserStateAsync();
-            }, lastLogin.ToString());
+            }, lastLogin.ToString("yyyy-MM-dd HH:mm:ss"));
         }
+
+        #endregion
+
+        #region 在线状态管理
 
         /// <summary>
         /// 更新在线状态
@@ -668,7 +911,7 @@ namespace FakeMicro.Grains
         {
             await SafeExecuteAsync("UpdateOnlineStatusAsync", async () =>
             {
-                State.Status = isOnline ? UserStatus.Online : UserStatus.Offline;
+                State.Status = (isOnline ? UserStatus.Online : UserStatus.Offline).ToString();
                 await SaveUserStateAsync();
             }, isOnline.ToString());
         }
@@ -680,144 +923,148 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("IsOnlineAsync", async () =>
             {
-                return State.Status == UserStatus.Online;
+                return Enum.TryParse<UserStatus>(State.Status, out var status) && status == UserStatus.Online;
             });
         }
 
         #endregion
 
-        #region 社交关系
+        #region 社交关系管理
 
         /// <summary>
-        /// 获取好友列表
+        /// 获取用户好友列表
         /// </summary>
-        public async Task<List<string>> GetFriendsAsync()
+        public async Task<List<long>> GetFriendsAsync()
         {
             return await SafeExecuteAsync("GetFriendsAsync", async () =>
             {
-                return new List<string>(State.Friends);
+                return State.Friends.Keys.ToList();
             });
         }
 
         /// <summary>
         /// 添加好友
         /// </summary>
-        public async Task AddFriendAsync(string friendUserId)
+        public async Task AddFriendAsync(long friendUserId)
         {
             await SafeExecuteAsync("AddFriendAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(friendUserId))
+                if (friendUserId <= 0)
                 {
-                    throw new ArgumentException("好友用户ID不能为空", nameof(friendUserId));
+                    throw new ArgumentException("好友ID不能为空", nameof(friendUserId));
                 }
 
-                if (!State.Friends.Contains(friendUserId))
+                if (!State.Friends.ContainsKey(friendUserId))
                 {
-                    State.Friends.Add(friendUserId);
+                    State.Friends.Add(friendUserId, DateTime.UtcNow);
                     await SaveUserStateAsync();
                 }
-            }, friendUserId);
+            }, friendUserId.ToString());
         }
 
         /// <summary>
         /// 移除好友
         /// </summary>
-        public async Task RemoveFriendAsync(string friendUserId)
+        public async Task RemoveFriendAsync(long friendUserId)
         {
             await SafeExecuteAsync("RemoveFriendAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(friendUserId))
+                if (friendUserId <= 0)
                 {
-                    throw new ArgumentException("好友用户ID不能为空", nameof(friendUserId));
+                    throw new ArgumentException("好友ID不能为空", nameof(friendUserId));
                 }
 
-                if (State.Friends.Contains(friendUserId))
+                if (State.Friends.ContainsKey(friendUserId))
                 {
                     State.Friends.Remove(friendUserId);
                     await SaveUserStateAsync();
                 }
-            }, friendUserId);
+            }, friendUserId.ToString());
         }
 
         /// <summary>
-        /// 检查是否是好友
+        /// 检查是否为好友
         /// </summary>
-        public async Task<bool> IsFriendAsync(string friendUserId)
+        public async Task<bool> IsFriendAsync(long friendUserId)
         {
             return await SafeExecuteAsync("IsFriendAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(friendUserId))
+                if (friendUserId <= 0)
                 {
                     return false;
                 }
-                return State.Friends.Contains(friendUserId);
-            }, friendUserId);
+                return State.Friends.ContainsKey(friendUserId);
+            }, friendUserId.ToString());
         }
 
+        #endregion
+
+        #region 屏蔽用户管理
+
         /// <summary>
-        /// 获取黑名单
+        /// 获取被屏蔽的用户列表
         /// </summary>
-        public async Task<List<string>> GetBlockedUsersAsync()
+        public async Task<List<long>> GetBlockedUsersAsync()
         {
             return await SafeExecuteAsync("GetBlockedUsersAsync", async () =>
             {
-                return new List<string>(State.BlockedUsers);
+                return State.BlockedUsers.Keys.ToList();
             });
         }
 
         /// <summary>
-        /// 拉黑用户
+        /// 屏蔽用户
         /// </summary>
-        public async Task BlockUserAsync(string userId)
+        public async Task BlockUserAsync(long userId)
         {
             await SafeExecuteAsync("BlockUserAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(userId))
+                if (userId <= 0)
                 {
                     throw new ArgumentException("用户ID不能为空", nameof(userId));
                 }
 
-                if (!State.BlockedUsers.Contains(userId))
+                if (!State.BlockedUsers.ContainsKey(userId))
                 {
-                    State.BlockedUsers.Add(userId);
+                    State.BlockedUsers.Add(userId, DateTime.UtcNow);
                     await SaveUserStateAsync();
                 }
-            }, userId);
+            }, userId.ToString());
         }
 
         /// <summary>
-        /// 取消拉黑
+        /// 取消屏蔽用户
         /// </summary>
-        public async Task UnblockUserAsync(string userId)
+        public async Task UnblockUserAsync(long userId)
         {
             await SafeExecuteAsync("UnblockUserAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(userId))
+                if (userId <= 0)
                 {
                     throw new ArgumentException("用户ID不能为空", nameof(userId));
                 }
 
-                if (State.BlockedUsers.Contains(userId))
+                if (State.BlockedUsers.ContainsKey(userId))
                 {
                     State.BlockedUsers.Remove(userId);
                     await SaveUserStateAsync();
                 }
-            }, userId);
+            }, userId.ToString());
         }
 
         /// <summary>
-        /// 检查是否被拉黑
+        /// 检查用户是否被屏蔽
         /// </summary>
-        public async Task<bool> IsBlockedAsync(string userId)
+        public async Task<bool> IsBlockedAsync(long userId)
         {
             return await SafeExecuteAsync("IsBlockedAsync", async () =>
             {
-                if (string.IsNullOrWhiteSpace(userId))
+                if (userId <= 0)
                 {
                     return false;
                 }
-                return State.BlockedUsers.Contains(userId);
-            }, userId);
+                return State.BlockedUsers.ContainsKey(userId);
+            }, userId.ToString());
         }
 
         #endregion
@@ -831,7 +1078,21 @@ namespace FakeMicro.Grains
         {
             return await SafeExecuteAsync("GetSettingsAsync", async () =>
             {
-                return new Dictionary<string, string>(State.Settings);
+                var settings = new Dictionary<string, string>
+                {
+                    // 通知设置
+                    ["notifications.emailEnabled"] = State.Settings.Notifications.EmailEnabled.ToString(),
+                    ["notifications.smsEnabled"] = State.Settings.Notifications.SmsEnabled.ToString(),
+                    ["notifications.pushEnabled"] = State.Settings.Notifications.PushEnabled.ToString(),
+                    // 隐私设置
+                    ["privacy.showEmail"] = State.Settings.Privacy.ShowEmail.ToString(),
+                    ["privacy.showPhone"] = State.Settings.Privacy.ShowPhone.ToString(),
+                    ["privacy.allowFriendRequests"] = State.Settings.Privacy.AllowFriendRequests.ToString(),
+                    // 主题设置
+                    ["theme.themeName"] = State.Settings.Theme.ThemeName,
+                    ["theme.autoTheme"] = State.Settings.Theme.AutoTheme.ToString()
+                };
+                return settings;
             });
         }
 
@@ -847,13 +1108,34 @@ namespace FakeMicro.Grains
                     throw new ArgumentException("设置键不能为空", nameof(key));
                 }
 
-                State.Settings[key] = value;
+                var parts = key.Split('.');
+                if (parts.Length < 2)
+                {
+                    return;
+                }
+
+                var category = parts[0].ToLower();
+                var settingKey = parts[1].ToLower();
+
+                switch (category)
+                {
+                    case "notifications":
+                        UpdateNotificationSetting(settingKey, value);
+                        break;
+                    case "privacy":
+                        UpdatePrivacySetting(settingKey, value);
+                        break;
+                    case "theme":
+                        UpdateThemeSetting(settingKey, value);
+                        break;
+                }
+
                 await SaveUserStateAsync();
             }, key);
         }
 
         /// <summary>
-        /// 删除用户设置
+        /// 删除用户设置（重置为默认值）
         /// </summary>
         public async Task DeleteSettingAsync(string key)
         {
@@ -864,15 +1146,178 @@ namespace FakeMicro.Grains
                     throw new ArgumentException("设置键不能为空", nameof(key));
                 }
 
-                if (State.Settings.ContainsKey(key))
+                var parts = key.Split('.');
+                if (parts.Length < 2)
                 {
-                    State.Settings.Remove(key);
-                    await SaveUserStateAsync();
+                    return;
                 }
+
+                var category = parts[0].ToLower();
+                var settingKey = parts[1].ToLower();
+
+                // 重置为默认值
+                switch (category)
+                {
+                    case "notifications":
+                        ResetNotificationSetting(settingKey);
+                        break;
+                    case "privacy":
+                        ResetPrivacySetting(settingKey);
+                        break;
+                    case "theme":
+                        ResetThemeSetting(settingKey);
+                        break;
+                }
+
+                await SaveUserStateAsync();
             }, key);
         }
 
+        #region 私有辅助方法
+
+        /// <summary>
+        /// 更新通知设置
+        /// </summary>
+        private void UpdateNotificationSetting(string key, string value)
+        {
+            switch (key)
+            {
+                case "emailenabled":
+                    if (bool.TryParse(value, out var emailEnabled))
+                    {
+                        State.Settings.Notifications.EmailEnabled = emailEnabled;
+                    }
+                    break;
+                case "smsenabled":
+                    if (bool.TryParse(value, out var smsEnabled))
+                    {
+                        State.Settings.Notifications.SmsEnabled = smsEnabled;
+                    }
+                    break;
+                case "pushenabled":
+                    if (bool.TryParse(value, out var pushEnabled))
+                    {
+                        State.Settings.Notifications.PushEnabled = pushEnabled;
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 更新隐私设置
+        /// </summary>
+        private void UpdatePrivacySetting(string key, string value)
+        {
+            switch (key)
+            {
+                case "showemail":
+                    if (bool.TryParse(value, out var showEmail))
+                    {
+                        State.Settings.Privacy.ShowEmail = showEmail;
+                    }
+                    break;
+                case "showphone":
+                    if (bool.TryParse(value, out var showPhone))
+                    {
+                        State.Settings.Privacy.ShowPhone = showPhone;
+                    }
+                    break;
+                case "allowfriendrequests":
+                    if (bool.TryParse(value, out var allowFriendRequests))
+                    {
+                        State.Settings.Privacy.AllowFriendRequests = allowFriendRequests;
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 更新主题设置
+        /// </summary>
+        private void UpdateThemeSetting(string key, string value)
+        {
+            switch (key)
+            {
+                case "themename":
+                    State.Settings.Theme.ThemeName = value;
+                    break;
+                case "autotheme":
+                    if (bool.TryParse(value, out var autoTheme))
+                    {
+                        State.Settings.Theme.AutoTheme = autoTheme;
+                    }
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 重置通知设置
+        /// </summary>
+        private void ResetNotificationSetting(string key)
+        {
+            var defaultSettings = new NotificationSettings();
+            switch (key)
+            {
+                case "emailenabled":
+                    State.Settings.Notifications.EmailEnabled = defaultSettings.EmailEnabled;
+                    break;
+                case "smsenabled":
+                    State.Settings.Notifications.SmsEnabled = defaultSettings.SmsEnabled;
+                    break;
+                case "pushenabled":
+                    State.Settings.Notifications.PushEnabled = defaultSettings.PushEnabled;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 重置隐私设置
+        /// </summary>
+        private void ResetPrivacySetting(string key)
+        {
+            var defaultSettings = new PrivacySettings();
+            switch (key)
+            {
+                case "showemail":
+                    State.Settings.Privacy.ShowEmail = defaultSettings.ShowEmail;
+                    break;
+                case "showphone":
+                    State.Settings.Privacy.ShowPhone = defaultSettings.ShowPhone;
+                    break;
+                case "allowfriendrequests":
+                    State.Settings.Privacy.AllowFriendRequests = defaultSettings.AllowFriendRequests;
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// 重置主题设置
+        /// </summary>
+        private void ResetThemeSetting(string key)
+        {
+            var defaultSettings = new ThemeSettings();
+            switch (key)
+            {
+                case "themename":
+                    State.Settings.Theme.ThemeName = defaultSettings.ThemeName;
+                    break;
+                case "autotheme":
+                    State.Settings.Theme.AutoTheme = defaultSettings.AutoTheme;
+                    break;
+            }
+        }
+
         #endregion
+
+        #endregion
+
+        /// <summary>
+        /// 哈希密码
+        /// </summary>
+        private string HashPassword(string password)
+        {
+            return CryptoHelper.GeneratePasswordHash(password);
+        }
 
         #region 安全执行
 
@@ -907,55 +1352,6 @@ namespace FakeMicro.Grains
     }
 
     #region 数据模型
-
-    /// <summary>
-    /// 用户状态
-    /// </summary>
-    [Serializable]
-    public enum UserStatus
-    {
-        Online,
-        Offline,
-        Busy,
-        Away,
-        Invisible
-    }
-
-    
-
-    /// <summary>
-    /// 用户状态数据
-    /// </summary>
-    [GenerateSerializer]
-    public class UserState
-    {
-        [Id(0)]
-        public string UserId { get; set; }
-        [Id(1)]
-        public DateTime CreatedAt { get; set; }
-        [Id(2)]
-        public DateTime UpdatedAt { get; set; }
-        [Id(3)]
-        public UserStatus Status { get; set; }
-        [Id(4)]
-        public DateTime LastLogin { get; set; }
-        [Id(5)]
-        public string PasswordHash { get; set; }
-        [Id(6)]
-        public string PasswordSalt { get; set; }
-        [Id(7)]
-        public Dictionary<string, object> Profile { get; set; }
-        [Id(8)]
-        public List<UserSession> Sessions { get; set; }
-        [Id(9)]
-        public List<Permission> Permissions { get; set; }
-        [Id(10)]
-        public Dictionary<string, string> Settings { get; set; }
-        [Id(11)]
-        public List<string> Friends { get; set; }
-        [Id(12)]
-        public List<string> BlockedUsers { get; set; }
-    }
 
     #endregion
 }
