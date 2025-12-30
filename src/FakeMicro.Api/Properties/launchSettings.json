@@ -11,7 +11,6 @@
     },
     "api": {
       "commandName": "Project",
-      "launchBrowser": true,
       "launchUrl": "swagger",
       "environmentVariables": {
         "DB_PORT": "5432",
