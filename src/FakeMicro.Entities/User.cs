@@ -94,7 +94,7 @@ namespace FakeMicro.Entities
         /// 最后登录时间
         /// </summary>
         [Id(10)]
-        [SugarColumn(IsNullable = true, ColumnName = "last_login_at")]
+        [SugarColumn(IsNullable = true, ColumnName = "last_login_at", ColumnDataType = "timestamptz")]
         public DateTime? last_login_at { get; set; }
         
         /// <summary>
@@ -129,7 +129,7 @@ namespace FakeMicro.Entities
         /// 锁定时间
         /// </summary>
         [Id(15)]
-        [SugarColumn(IsNullable = true, ColumnName = "locked_until")]
+        [SugarColumn(IsNullable = true, ColumnName = "locked_until", ColumnDataType = "timestamptz")]
         public DateTime? locked_until { get; set; }
         
         /// <summary>
@@ -151,14 +151,14 @@ namespace FakeMicro.Entities
         /// </summary>
         [Required]
         [Id(18)]
-        [SugarColumn(IsNullable = true, ColumnName = "CreatedAt")]
+        [SugarColumn(IsNullable = true, ColumnName = "createdat", ColumnDataType = "timestamptz")]
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
         /// 更新时间
         /// </summary>
         [Id(19)]
-        [SugarColumn(IsNullable = true, ColumnName = "UpdatedAt")]
+        [SugarColumn(IsNullable = true, ColumnName = "updatedat", ColumnDataType = "timestamptz")]
         public DateTime? UpdatedAt { get; set; } = DateTime.UtcNow;
         
         /// <summary>
@@ -172,15 +172,15 @@ namespace FakeMicro.Entities
         /// 删除时间
         /// </summary>
         [Id(21)]
-        [SugarColumn(IsNullable = true, ColumnName = "deleted_at")]
+        [SugarColumn(IsNullable = true, ColumnName = "deleted_at", ColumnDataType = "timestamptz")]
         public DateTime? deleted_at { get; set; }
 
         [Id(22)]
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "CreatedBy")]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "createdby")]
         public string CreatedBy { get; set; } = string.Empty;
 
         [Id(23)]
-        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "UpdatedBy")]
+        [SqlSugar.SugarColumn(IsNullable = true, ColumnName = "updatedby")]
         public string UpdatedBy { get; set; } = string.Empty;
     }
     

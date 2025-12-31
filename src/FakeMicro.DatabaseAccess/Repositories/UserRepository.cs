@@ -1,14 +1,15 @@
 
+using FakeMicro.DatabaseAccess.Interfaces;
+using FakeMicro.Entities;
+using FakeMicro.Interfaces.Models;
+using FakeMicro.Shared.Exceptions;
+using FakeMicro.Utilities;
 using Microsoft.Extensions.Logging;
 using SqlSugar;
 using System.Linq.Expressions;
-using FakeMicro.Entities;
-using FakeMicro.DatabaseAccess.Interfaces;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
-using System.Security.Cryptography;
-using FakeMicro.Shared.Exceptions;
-using FakeMicro.Interfaces.Models;
 
 namespace FakeMicro.DatabaseAccess.Repositories
 {
@@ -254,7 +255,7 @@ namespace FakeMicro.DatabaseAccess.Repositories
                 // 使用 UpdatedAt 作为并发字段示例：先记录新的更新时间，再在 WHERE 中校验原始 UpdatedAt
                 //var originalUpdatedAt = originalUser.UpdatedAt;
                 //user.UpdatedAt = DateTime.SpecifyKind(DateTime.UtcNow, DateTimeKind.Utc);
-
+                user.UpdatedAt = DateTime.UtcNow.EnsureUtc();
                 // 只更新需要的列并忽略 CreatedAt（根据实际情况调整）
                 var result = await GetSqlSugarClient().Updateable(user)
                     .IgnoreColumns(u => new { u.CreatedAt }) // 不覆盖创建时间

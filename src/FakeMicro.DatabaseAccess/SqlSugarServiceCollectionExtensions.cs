@@ -155,6 +155,23 @@ namespace FakeMicro.DatabaseAccess
         {
             try
             {
+                // 首先测试数据库连接是否可用
+                try
+                {
+                    var isConnected = db.Ado.IsValidConnection();
+                    if (!isConnected)
+                    {
+                        logger?.LogWarning("数据库连接不可用，跳过实体类型注册");
+                        return;
+                    }
+                    logger?.LogInformation("数据库连接成功，开始注册实体类型");
+                }
+                catch (Exception ex)
+                {
+                    logger?.LogError(ex, "数据库连接测试失败，跳过实体类型注册");
+                    return;
+                }
+
                 // 注册所有实体类型，解决类型不支持问题
                 var entityTypes = new[]
                 {

@@ -60,8 +60,15 @@ namespace FakeMicro.Grains
                 return new AuthResponse { Success = false, ErrorMessage = "用户名、邮箱和密码不能为空" };
             }
 
-            // 生成密码哈希和盐值
-            GeneratePasswordHash(request.Password, out string passwordHash, out string passwordSalt);
+                    // 生成密码哈希和盐值
+                    _logger.LogInformation("=== 开始生成密码哈希 ===");
+                    _logger.LogInformation("用户名: {Username}", request.Username);
+                    _logger.LogInformation("密码长度: {PasswordLength}", request.Password?.Length ?? 0);
+                    GeneratePasswordHash(request.Password, out string passwordHash, out string passwordSalt);
+                    _logger.LogInformation("生成的哈希长度: {HashLength}", passwordHash.Length);
+                    _logger.LogInformation("生成的盐长度: {SaltLength}", passwordSalt.Length);
+                    _logger.LogInformation("哈希前20字符: {HashPrefix}", passwordHash.Substring(0, Math.Min(20, passwordHash.Length)));
+                    _logger.LogInformation("盐前20字符: {SaltPrefix}", passwordSalt.Substring(0, Math.Min(20, passwordSalt.Length)));
 
             try
             {
@@ -169,14 +176,26 @@ namespace FakeMicro.Grains
                 }
 
                 // 验证密码 - 使用盐值
+                _logger.LogInformation("=== 开始登录验证 ===");
+                _logger.LogInformation("用户: {UsernameOrEmail}", request.UsernameOrEmail);
+                _logger.LogInformation("用户状态: {Status}, 是否激活: {IsActive}", user.status, user.is_active);
+                _logger.LogInformation("密码哈希长度: {HashLength}, 盐长度: {SaltLength}", 
+                    user.password_hash?.Length ?? 0, user.password_salt?.Length ?? 0);
+                _logger.LogInformation("密码哈希前20字符: {HashPrefix}", 
+                    user.password_hash?.Substring(0, Math.Min(20, user.password_hash.Length)) ?? "NULL");
+                _logger.LogInformation("盐前20字符: {SaltPrefix}", 
+                    user.password_salt?.Substring(0, Math.Min(20, user.password_salt.Length)) ?? "NULL");
+                
                 if (!VerifyPassword(request.Password, user.password_hash, user.password_salt))
                 {
-                    _logger.LogWarning("密码错误: {UsernameOrEmail}", request.UsernameOrEmail);
+                    _logger.LogWarning("密码验证失败: {UsernameOrEmail}", request.UsernameOrEmail);
                     // 更新登录失败信息（移除UserGrain调用）
                     await _userRepository.UpdateLoginInfoAsync(user.id, false, DateTime.UtcNow, 
                         loginIp: null, cancellationToken: cancellationToken);
                     return new AuthResponse { Success = false, ErrorMessage = "用户名或密码错误" };
                 }
+                
+                _logger.LogInformation("密码验证成功: {UsernameOrEmail}", request.UsernameOrEmail);
 
                 // 检查用户状态
                 if (!user.is_active || user.status != UserStatusEnum.Active.ToString())
@@ -225,9 +244,12 @@ namespace FakeMicro.Grains
         {
             try
             {
+                _logger.LogInformation("开始刷新令牌");
+
                 // 参数验证
                 if (string.IsNullOrEmpty(request.Token) || string.IsNullOrEmpty(request.RefreshToken))
                 {
+                    _logger.LogWarning("令牌和刷新令牌不能为空");
                     return new AuthResponse { Success = false, ErrorMessage = "令牌和刷新令牌不能为空" };
                 }
 
@@ -235,8 +257,11 @@ namespace FakeMicro.Grains
                 var userId = ParseUserIdFromToken(request.Token);
                 if (userId <= 0)
                 {
+                    _logger.LogWarning("无效的令牌，无法解析用户ID");
                     return new AuthResponse { Success = false, ErrorMessage = "无效的令牌" };
                 }
+
+                _logger.LogInformation("从令牌解析到用户ID: {UserId}", userId);
 
                 // 直接从数据库获取用户信息（移除UserGrain调用）
                 var user = await _userRepository.GetByIdAsync(userId);
@@ -246,27 +271,48 @@ namespace FakeMicro.Grains
                     return new AuthResponse { Success = false, ErrorMessage = "用户不存在" };
                 }
 
+                _logger.LogInformation("找到用户: {Username}, 状态: {Status}, 是否激活: {IsActive}", user.username, user.status, user.is_active);
+
                 // 验证刷新令牌（直接查询数据库）
-                if (string.IsNullOrEmpty(user.refresh_token) || user.refresh_token != request.RefreshToken)
+                if (string.IsNullOrEmpty(user.refresh_token))
                 {
-                    _logger.LogWarning("刷新令牌无效: {UserId}", userId);
+                    _logger.LogWarning("用户没有刷新令牌: {UserId}", userId);
+                    return new AuthResponse { Success = false, ErrorMessage = "无效的刷新令牌" };
+                }
+
+                if (user.refresh_token != request.RefreshToken)
+                {
+                    _logger.LogWarning("刷新令牌不匹配: {UserId}, 数据库令牌: {DbToken}, 请求令牌: {RequestToken}", 
+                        userId, user.refresh_token.Substring(0, Math.Min(10, user.refresh_token.Length)) + "...", 
+                        request.RefreshToken.Substring(0, Math.Min(10, request.RefreshToken.Length)) + "...");
                     return new AuthResponse { Success = false, ErrorMessage = "无效的刷新令牌" };
                 }
 
                 // 检查用户状态
-                if (!user.is_active || user.status != UserStatusEnum.Active.ToString())
+                if (!user.is_active)
                 {
-                    _logger.LogWarning("用户未激活或状态异常: {UserId}", userId);
-                    return new AuthResponse { Success = false, ErrorMessage = "用户状态异常" };
+                    _logger.LogWarning("用户未激活: {UserId}", userId);
+                    return new AuthResponse { Success = false, ErrorMessage = "用户未激活" };
+                }
+
+                if (user.status != UserStatusEnum.Active.ToString())
+                {
+                    _logger.LogWarning("用户状态异常: {UserId}, 当前状态: {Status}", userId, user.status);
+                    return new AuthResponse { Success = false, ErrorMessage = $"用户状态异常: {user.status}" };
                 }
 
                 // 生成新的令牌
                 var accessToken = GenerateToken(user);
                 var newRefreshToken = GenerateRefreshToken();
 
+                _logger.LogInformation("生成新令牌成功，准备更新数据库");
+
                 // 更新数据库中的刷新令牌
                 user.refresh_token = newRefreshToken;
-                user.UpdatedAt = DateTime.UtcNow;
+               // user.UpdatedAt =new DateTimeOffset(DateTime.UtcNow, TimeSpan.Zero);   //DateTime.SpecifyKind(DateTime.UtcNow,DateTimeKind.Utc);
+                // 修复：确保写入的 DateTime 为 UTC，避免 Npgsql 抛出异常
+                user.UpdatedAt = DateTime.UtcNow.EnsureUtc();
+
                 await _userRepository.UpdateAsync(user);
 
                 _logger.LogInformation("刷新令牌成功: {UserId}", userId);
@@ -293,8 +339,8 @@ namespace FakeMicro.Grains
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "刷新令牌失败");
-                return new AuthResponse { Success = false, ErrorMessage = "刷新令牌失败" };
+                _logger.LogError(ex, "刷新令牌失败: {Message}, 堆栈: {StackTrace}", ex.Message, ex.StackTrace);
+                return new AuthResponse { Success = false, ErrorMessage = $"刷新令牌失败: {ex.Message}" };
             }
         }
 
@@ -430,6 +476,8 @@ namespace FakeMicro.Grains
             // 分割盐和哈希（前16字节是盐，后面是哈希）
             salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
             hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
+            
+            _logger.LogDebug("生成密码哈希成功，盐长度: {SaltLength}, 哈希长度: {HashLength}", salt.Length, hash.Length);
         }
 
         /// <summary>
@@ -437,32 +485,65 @@ namespace FakeMicro.Grains
         /// </summary>
         private bool VerifyPassword(string password, string hash, string salt)
         {
+            _logger.LogInformation("=== VerifyPassword 开始 ===");
+            _logger.LogInformation("输入密码长度: {PasswordLength}", password?.Length ?? 0);
+            _logger.LogInformation("存储哈希长度: {HashLength}", hash?.Length ?? 0);
+            _logger.LogInformation("存储盐长度: {SaltLength}", salt?.Length ?? 0);
+            
             try
             {
-                // 首先尝试使用PBKDF2验证（新格式）
-                // 组合盐和哈希以匹配CryptoHelper的格式
-                var combinedHashBytes = new byte[16 + Convert.FromBase64String(hash).Length];
-                Array.Copy(Convert.FromBase64String(salt), 0, combinedHashBytes, 0, 16);
-                Array.Copy(Convert.FromBase64String(hash), 0, combinedHashBytes, 16, Convert.FromBase64String(hash).Length);
+                _logger.LogInformation("尝试PBKDF2验证（新格式）");
+                
+                var saltBytes = Convert.FromBase64String(salt);
+                var hashBytes = Convert.FromBase64String(hash);
+                
+                _logger.LogInformation("盐字节数组长度: {SaltBytesLength}", saltBytes.Length);
+                _logger.LogInformation("哈希字节数组长度: {HashBytesLength}", hashBytes.Length);
+                
+                var combinedHashBytes = new byte[saltBytes.Length + hashBytes.Length];
+                Array.Copy(saltBytes, 0, combinedHashBytes, 0, saltBytes.Length);
+                Array.Copy(hashBytes, 0, combinedHashBytes, saltBytes.Length, hashBytes.Length);
                 var combinedHash = Convert.ToBase64String(combinedHashBytes);
+                
+                _logger.LogInformation("组合哈希长度: {CombinedHashLength}", combinedHash.Length);
+                _logger.LogInformation("组合哈希前20字符: {CombinedHashPrefix}", 
+                    combinedHash.Substring(0, Math.Min(20, combinedHash.Length)));
                 
                 if (CryptoHelper.VerifyPasswordHash(password, combinedHash))
                 {
+                    _logger.LogInformation("✓ PBKDF2验证成功");
                     return true;
                 }
+                else
+                {
+                    _logger.LogWarning("✗ PBKDF2验证失败");
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                // 忽略错误，尝试旧格式
+                _logger.LogError(ex, "✗ PBKDF2验证异常，尝试旧格式");
             }
 
             try
             {
-                // 使用旧的HMACSHA512验证（用于迁移）
-                return CryptoHelper.VerifyLegacyPasswordHash(password, hash, salt);
+                _logger.LogInformation("尝试HMACSHA512验证（旧格式）");
+                
+                var result = CryptoHelper.VerifyLegacyPasswordHash(password, hash, salt);
+                
+                if (result)
+                {
+                    _logger.LogInformation("✓ HMACSHA512验证成功");
+                }
+                else
+                {
+                    _logger.LogWarning("✗ HMACSHA512验证失败");
+                }
+                
+                return result;
             }
-            catch
+            catch (Exception ex)
             {
+                _logger.LogError(ex, "✗ HMACSHA512验证异常");
                 return false;
             }
         }
