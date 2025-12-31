@@ -22,7 +22,7 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
     private readonly PerformanceMonitor _performanceMonitor;
     private readonly MongoClient _mongoClient;
     private readonly System.Timers.Timer _timer;
-    private readonly int _monitoringIntervalMs = 5000; // 默认监控间隔5秒
+    private readonly int _monitoringIntervalMs = 30000; // 默认监控间隔30秒
     private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
     // 监控专用的SqlSugarClient
     private readonly ISqlSugarClient _monitoringSqlSugarClient;
