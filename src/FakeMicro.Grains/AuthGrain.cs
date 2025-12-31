@@ -153,7 +153,7 @@ namespace FakeMicro.Grains
 
                 // 验证密码
                 LogInformation("开始验证密码: {Username}", username);
-                bool passwordValid = VerifyPassword(password, user.password_hash, user.password_salt);
+                bool passwordValid = VerifyPasswordHash(password, user.password_hash, user.password_salt);
                 LogInformation("密码验证结果: {Result}", passwordValid ? "成功" : "失败");
                 
                 if (!passwordValid)
@@ -345,6 +345,32 @@ namespace FakeMicro.Grains
 
             // 尝试旧格式（兼容性）
             return CryptoHelper.VerifyLegacyPasswordHash(password, hash, salt);
+        }
+
+        private bool VerifyPasswordHash(string password, string storedHash, string storedSalt)
+        {
+            if (string.IsNullOrEmpty(password) || string.IsNullOrEmpty(storedHash) || string.IsNullOrEmpty(storedSalt))
+                return false;
+
+            try
+            {
+                // ✅ 使用存储的盐值重新组合
+                var saltBytes = Convert.FromBase64String(storedSalt);
+                var hashBytes = Convert.FromBase64String(storedHash);
+
+                var combinedHashBytes = new byte[saltBytes.Length + hashBytes.Length];
+                Array.Copy(saltBytes, 0, combinedHashBytes, 0, saltBytes.Length);
+                Array.Copy(hashBytes, 0, combinedHashBytes, saltBytes.Length, hashBytes.Length);
+                var combinedHash = Convert.ToBase64String(combinedHashBytes);
+
+                // ✅ 使用 CryptoHelper 验证
+                return FakeMicro.Utilities.CryptoHelper.VerifyPasswordHash(password, combinedHash);
+            }
+            catch
+            {
+                // 回退到旧格式验证
+                return FakeMicro.Utilities.CryptoHelper.VerifyLegacyPasswordHash(password, storedHash, storedSalt);
+            }
         }
 
         private string GenerateJwtToken(long userId, string username, string[] roles)

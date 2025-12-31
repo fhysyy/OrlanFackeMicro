@@ -23,7 +23,7 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
     private readonly MongoClient _mongoClient;
     private readonly System.Timers.Timer _timer;
     private readonly int _monitoringIntervalMs = 5000; // 默认监控间隔5秒
-    
+    private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
     // 监控专用的SqlSugarClient
     private readonly ISqlSugarClient _monitoringSqlSugarClient;
 
@@ -81,17 +81,24 @@ public class DatabaseConnectionPoolMonitor : IHostedService, IDisposable
     /// </summary>
     private async Task CollectConnectionPoolMetricsAsync()
     {
+        if (!_semaphore.Wait(0))
+        {
+            _logger.LogWarning("上一次监控任务还在执行，跳过本次监控");
+            return;
+        }
+
         try
         {
-            // 收集PostgreSQL连接池指标
             await CollectPostgreSqlConnectionPoolMetricsAsync();
-            
-            // 收集MongoDB连接池指标
             CollectMongoDbConnectionPoolMetrics();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "收集数据库连接池指标时出错");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 
