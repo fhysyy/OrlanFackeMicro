@@ -1,0 +1,44 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  test:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '9.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore
+
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run Unit Tests
+      run: dotnet test ./FakeMicro.Tests/FakeMicro.Tests.csproj --configuration Release --no-build --filter "FullyQualifiedName~UnitTests" --logger "trx;LogFileName=UnitTests.trx"
+
+    - name: Run Integration Tests
+      run: dotnet test ./FakeMicro.Tests/FakeMicro.Tests.csproj --configuration Release --no-build --filter "FullyQualifiedName~IntegrationTests" --logger "trx;LogFileName=IntegrationTests.trx"
+
+    - name: Run API Tests
+      run: dotnet test ./FakeMicro.Tests/FakeMicro.Tests.csproj --configuration Release --no-build --filter "FullyQualifiedName~ApiTests" --logger "trx;LogFileName=ApiTests.trx"
+
+    - name: Upload Test Results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-results
+        path: |
+          **/TestResults/*.trx
+          **/TestResults/*.html
