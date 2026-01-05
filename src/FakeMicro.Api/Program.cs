@@ -62,26 +62,10 @@ namespace FakeMicro.Api
             // 添加必要的服务
             builder.Services.AddEndpointsApiExplorer();
             
-            // 暂时注释掉 JWT 认证，确保 Hangfire 和 CAP Dashboard 可以正常访问
-            // builder.Services.AddAuthentication(options =>
-            // {
-            //     options.DefaultAuthenticateScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-            //     options.DefaultChallengeScheme = Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerDefaults.AuthenticationScheme;
-            // })
-            // .AddJwtBearer(options =>
-            // {
-            //     options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
-            //     {
-            //         ValidateIssuer = true,
-            //         ValidIssuer = appSettings.Jwt.Issuer,
-            //         ValidateAudience = true,
-            //         ValidAudience = appSettings.Jwt.Audience,
-            //         ValidateLifetime = true,
-            //         IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(appSettings.Jwt.SecretKey)),
-            //         ClockSkew = TimeSpan.Zero
-            //     };
-            // });
-            
+            // 使用基于日期的密码认证保护 Hangfire 和 CAP Dashboard
+            // 密码格式：yyyyMMdd（例如：20260105）
+            // 认证方式：Basic Auth 或 URL 参数 ?password=yyyyMMdd
+
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new() { Title = "FakeMicro API", Version = "v1" });
@@ -172,6 +156,12 @@ namespace FakeMicro.Api
                 {
                     Authorization = new[] { new FakeMicro.Api.Security.HangfireAuthorizationFilter() }
                 });
+            }
+
+            // 添加 CAP Dashboard 认证中间件
+            if (appSettings.CAP.UseDashboard)
+            {
+                app.UseMiddleware<Middleware.CapDashboardAuthMiddleware>(appSettings.CAP.DashboardPath);
             }
 
             // 启用CAP中间件（用于事件总线和CAP Dashboard）

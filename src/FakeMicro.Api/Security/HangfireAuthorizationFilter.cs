@@ -1,17 +1,38 @@
 using Hangfire.Dashboard;
 using Microsoft.AspNetCore.Http;
+using System;
 
 namespace FakeMicro.Api.Security
 {
-    /// <summary>
-    /// Hangfire Dashboard授权过滤器
-    /// </summary>
     public class HangfireAuthorizationFilter : IDashboardAuthorizationFilter
     {
         public bool Authorize(DashboardContext context)
         {
-            // 由于当前JWT认证已被注释，暂时允许匿名访问Hangfire Dashboard
-            return true;
+            var httpContext = context.GetHttpContext();
+            var requestPath = httpContext.Request.Path.Value;
+            var queryString = httpContext.Request.QueryString.Value;
+            var currentDatePassword = DateTime.Now.ToString("yyyyMMdd");
+
+            Console.WriteLine($"[HangfireAuth] Path: {requestPath}, QueryString: {queryString}, ExpectedPassword: {currentDatePassword}");
+
+            if (!string.IsNullOrEmpty(requestPath))
+            {
+                var lowerPath = requestPath.ToLowerInvariant();
+
+                if (lowerPath.Contains("/css") || lowerPath.Contains("/js") || lowerPath.Contains("/fonts") || 
+                    lowerPath.Contains("/images") || lowerPath.Contains(".css") || lowerPath.Contains(".js"))
+                {
+                    return true;
+                }
+            }
+
+            var authResult = DatePasswordAuthHelper.AuthenticateByCookie(httpContext) ||
+                            DatePasswordAuthHelper.AuthenticateRequest(httpContext) || 
+                            DatePasswordAuthHelper.AuthenticateByQueryString(httpContext);
+
+            Console.WriteLine($"[HangfireAuth] AuthResult: {authResult}");
+
+            return authResult;
         }
     }
 }

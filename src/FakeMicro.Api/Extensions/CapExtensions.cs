@@ -66,7 +66,7 @@ namespace FakeMicro.Api.Extensions
                 {
                     options.UseDashboard(d =>
                     {
-                        d.AllowAnonymousExplicit = capConfig.DashboardAllowAnonymous;
+                        d.AllowAnonymousExplicit = true;
                         d.PathMatch = capConfig.DashboardPath;
                     });
                 }
