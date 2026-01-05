@@ -73,20 +73,12 @@ namespace FakeMicro.Silo
                    
                     return;
                 }
-
-               
-         
                 // 3. 尝试绑定配置到 SqlSugarOptions
               
                 var sqlSugarOptions = sqlSugarSection.Get<SqlSugarConfig.SqlSugarOptions>();
            
                 var registeredServices = services.Where(s => s.ServiceType.FullName?.Contains("SqlSugar") == true || 
                                                              s.ServiceType.FullName?.Contains("Database") == true).ToList();
-                
-           
-
-          
-            
                 try
                 {
                     var connectionString = sqlSugarOptions.ConnectionString;
@@ -116,7 +108,6 @@ namespace FakeMicro.Silo
             catch (Exception ex)
             {
                 Console.WriteLine($"❌ 诊断过程中发生错误: {ex.Message}");
-                Console.WriteLine($"详细错误: {ex}");
             }
         }
 
@@ -156,7 +147,14 @@ namespace FakeMicro.Silo
                     services.AddConfigurationServices(context.Configuration);
 
                     // 添加数据库服务
-                    services.AddDatabaseServices(context.Configuration);
+                    services.AddDatabaseServices(context.Configuration, options =>
+                    {
+                        options.UsePostgreSQL = true;
+                        options.UseMongoDB = true;
+                        options.RegisterDefaultRepositories = true;
+                        options.RegisterDynamicRepositoryFactory = true;
+                        options.UseDatabaseInitializer = false;
+                    });
                     
                     // 添加 SqlSugar 配置绑定
                     services.Configure<SqlSugarConfig.SqlSugarOptions>(context.Configuration.GetSection("SqlSugar"));
@@ -168,7 +166,7 @@ namespace FakeMicro.Silo
                     services.AddTransient<OrleansDatabaseInitializer>();
 
                     // 暂时注释掉数据库初始化服务，专注于测试Orleans持久化状态配置
-                    services.AddDatabaseInitializer(context.Configuration);
+                    // services.AddDatabaseInitializer(context.Configuration);
 
                     // 添加代码生成器服务
                     services.AddCodeGenerator(context.Configuration);

@@ -147,6 +147,7 @@ public class OrleansConfig
     public bool UseLocalhostClustering { get; set; } = true;
     public int CollectionAgeMinutes { get; set; } = 5;
     public int CollectionQuantumSeconds { get; set; } = 1;
+    public bool EnableDashboard { get; set; } = true;
     public int DashboardPort { get; set; } = 8080;
     public string DashboardHost { get; set; } = "localhost";
     public int DashboardUpdateIntervalMs { get; set; } = 2000;

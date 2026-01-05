@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Orleans.Storage;
 using System;
+using OrleansDashboard;
 
 namespace FakeMicro.Utilities.Configuration;
 
@@ -68,6 +69,9 @@ public static class OrleansConfigurationExtensions
             ConfigureMessaging(siloBuilder);
             ConfigureClusteringOptions(siloBuilder);
             ConfigureLogging(siloBuilder);
+            
+            // 配置OrleansDashboard
+            ConfigureDashboard(siloBuilder, appSettings);
         });
 
         return hostBuilder;
@@ -285,5 +289,22 @@ public static class OrleansConfigurationExtensions
             logging.AddConsole();
             logging.SetMinimumLevel(LogLevel.Information);
         });
+    }
+
+    /// <summary>
+    /// 配置OrleansDashboard
+    /// </summary>
+    private static void ConfigureDashboard(ISiloBuilder builder, AppSettings appSettings)
+    {
+        if (appSettings.Orleans.EnableDashboard)
+        {
+            builder.UseDashboard(options =>
+            {
+                options.HostSelf = true;
+                options.Port = appSettings.Orleans.DashboardPort;
+                options.Host = "*";
+                options.CounterUpdateIntervalMs = 1000;
+            });
+        }
     }
 }

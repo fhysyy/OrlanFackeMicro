@@ -26,6 +26,7 @@
     <PackageReference Include="Microsoft.Orleans.Runtime" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="9.2.1" />
+    <PackageReference Include="OrleansDashboard" Version="8.2.0" />
     <PackageReference Include="SqlSugarCore" Version="5.1.4.207" />
     <PackageReference Include="System.Diagnostics.PerformanceCounter" Version="10.0.0" />
     <PackageReference Include="System.Text.Json" Version="10.0.0" />
