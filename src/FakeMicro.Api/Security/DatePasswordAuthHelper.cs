@@ -59,7 +59,7 @@ namespace FakeMicro.Api.Security
             var currentDatePassword = DateTime.Now.ToString("yyyyMMdd");
             var providedPassword = context.Request.Query["password"].ToString();
 
-            Console.WriteLine($"[DatePasswordAuth] QueryString Auth - Expected: {currentDatePassword}, Provided: {providedPassword}, Match: {providedPassword == currentDatePassword}");
+          
 
             if (providedPassword == currentDatePassword)
             {
@@ -75,7 +75,7 @@ namespace FakeMicro.Api.Security
             var currentDatePassword = DateTime.Now.ToString("yyyyMMdd");
             var cookieValue = context.Request.Cookies[CookieName];
 
-            Console.WriteLine($"[DatePasswordAuth] Cookie Auth - Expected: {currentDatePassword}, Provided: {cookieValue}, Match: {cookieValue == currentDatePassword}");
+           
 
             return cookieValue == currentDatePassword;
         }
@@ -91,7 +91,6 @@ namespace FakeMicro.Api.Security
             };
 
             context.Response.Cookies.Append(CookieName, password, cookieOptions);
-            Console.WriteLine($"[DatePasswordAuth] Cookie set: {password}");
         }
     }
 }

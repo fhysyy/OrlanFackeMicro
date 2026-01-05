@@ -13,7 +13,7 @@ namespace FakeMicro.Api.Security
             var queryString = httpContext.Request.QueryString.Value;
             var currentDatePassword = DateTime.Now.ToString("yyyyMMdd");
 
-            Console.WriteLine($"[HangfireAuth] Path: {requestPath}, QueryString: {queryString}, ExpectedPassword: {currentDatePassword}");
+           
 
             if (!string.IsNullOrEmpty(requestPath))
             {
@@ -30,8 +30,7 @@ namespace FakeMicro.Api.Security
                             DatePasswordAuthHelper.AuthenticateRequest(httpContext) || 
                             DatePasswordAuthHelper.AuthenticateByQueryString(httpContext);
 
-            Console.WriteLine($"[HangfireAuth] AuthResult: {authResult}");
-
+        
             return authResult;
         }
     }

@@ -10,7 +10,7 @@
       {
         "Path": "src\\FakeMicro.Api\\FakeMicro.Api.csproj",
         "Action": "Start",
-        "DebugTarget": "api-delayed"
+        "DebugTarget": "api"
       }
     ]
   }
