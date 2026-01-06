@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Orleans;
+using Orleans.Concurrency;
 using FakeMicro.Entities;
 
 namespace FakeMicro.Interfaces
@@ -14,6 +15,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取标签
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<NoteTag?> GetAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -34,16 +37,22 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 根据用户ID获取标签列表
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<NoteTag>> GetByUserIdAsync(Guid userId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 根据用户ID和标签名称获取标签
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<NoteTag?> GetByUserIdAndNameAsync(Guid userId, string name, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 检查标签名称是否存在
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> NameExistsAsync(Guid userId, string name, Guid excludeId = default, CancellationToken cancellationToken = default);
     }
 }

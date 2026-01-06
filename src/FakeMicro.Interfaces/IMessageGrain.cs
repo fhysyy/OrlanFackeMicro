@@ -2,6 +2,7 @@ using FakeMicro.Interfaces.Events;
 using FakeMicro.Entities.Enums;
 using FakeMicro.Interfaces.Models;
 using Orleans;
+using Orleans.Concurrency;
 
 namespace FakeMicro.Interfaces
 {
@@ -18,6 +19,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取消息详情
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<MessageDto?> GetMessageAsync();
         
         /// <summary>
@@ -38,6 +41,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取消息统计
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<MessageStatistics> GetStatisticsAsync();
     }
 
@@ -95,16 +100,22 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取模板详情
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<MessageTemplateDto?> GetTemplateAsync();
         
         /// <summary>
         /// 渲染模板
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<string> RenderTemplateAsync(Dictionary<string, object> variables);
         
         /// <summary>
         /// 验证模板变量
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> ValidateVariablesAsync(Dictionary<string, object> variables);
     }
 
@@ -131,6 +142,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取系统消息统计
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<SystemMessageStatistics> GetSystemStatisticsAsync();
     }
 

@@ -9,16 +9,14 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 标签Grain实现
     /// </summary>
-    public class NoteTagGrain : Grain, INoteTagGrain
+    public class NoteTagGrain : OrleansGrainBase, INoteTagGrain
     {
-        private readonly ILogger<NoteTagGrain> _logger;
         private readonly INoteTagRepository _repository; 
 
         public NoteTagGrain(
             ILogger<NoteTagGrain> logger,
-            INoteTagRepository repository)
+            INoteTagRepository repository) : base(logger)
         {
-            _logger = logger;
             _repository = repository;
         }
 

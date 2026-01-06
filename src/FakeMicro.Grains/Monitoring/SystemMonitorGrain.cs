@@ -9,12 +9,12 @@ using System;
 using System.Threading;
 using System.Collections.Generic;
 using System.Threading.Tasks.Dataflow;
+using Microsoft.Extensions.Logging;
 
 namespace FakeMicro.Grains.Monitoring
 {
-    public class SystemMonitorGrain : Grain, ISystemMonitorGrain
+    public class SystemMonitorGrain : OrleansGrainBase, ISystemMonitorGrain
     {
-        private readonly ILoggerService _logger;
         private readonly ConcurrentDictionary<string, List<double>> _metrics;
         private readonly ConcurrentDictionary<string, DateTime> _lastActivity;
         private readonly ConcurrentDictionary<string, AlertConfiguration> _alertConfigs;
@@ -26,11 +26,10 @@ namespace FakeMicro.Grains.Monitoring
         /// <summary>
         /// 构造函数
         /// </summary>
-        /// <param name="logger">日志服务</param>
+        /// <param name="logger">日志记录器</param>
         /// <exception cref="ArgumentNullException">当日志服务为null时抛出</exception>
-        public SystemMonitorGrain(ILoggerService logger)
+        public SystemMonitorGrain(ILogger<SystemMonitorGrain> logger) : base(logger)
         {
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _metrics = new ConcurrentDictionary<string, List<double>>();
             _lastActivity = new ConcurrentDictionary<string, DateTime>();
             _alertConfigs = new ConcurrentDictionary<string, AlertConfiguration>();

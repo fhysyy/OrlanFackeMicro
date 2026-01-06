@@ -46,21 +46,37 @@ namespace FakeMicro.DatabaseAccess
                 var connectionStrings = provider.GetRequiredService<IOptions<ConnectionStringsOptions>>().Value;
                 var logger = provider.GetService<ILogger<ISqlSugarClient>>();
                 
-                // 从AppSettings获取配置
-                var appSettings = configuration.GetAppSettings();
-                
-                // 如果连接字符串未配置，尝试从AppSettings获取
-                if (string.IsNullOrEmpty(sqlSugarOptions.ConnectionString))
+                // 尝试从AppSettings获取配置（生产环境）
+                try
                 {
-                    sqlSugarOptions.ConnectionString = appSettings.Database.GetConnectionString() ?? connectionStrings.DefaultConnection ?? string.Empty;
+                    var appSettings = configuration.GetAppSettings();
+                    
+                    // 如果连接字符串未配置，尝试从AppSettings获取
+                    if (string.IsNullOrEmpty(sqlSugarOptions.ConnectionString))
+                    {
+                        sqlSugarOptions.ConnectionString = appSettings.Database.GetConnectionString() ?? connectionStrings.DefaultConnection ?? string.Empty;
+                    }
+                    
+                    // 配置读写分离
+                    sqlSugarOptions.EnableReadWriteSeparation = appSettings.Database.EnableReadWriteSeparation;
+                    if (appSettings.Database.EnableReadWriteSeparation)
+                    {
+                        // 添加从库连接字符串
+                        sqlSugarOptions.SlaveConnectionStrings.Add(appSettings.Database.GetReadConnectionString());
+                    }
+                    
+                    // 从AppSettings中获取连接池配置
+                    sqlSugarOptions.MinPoolSize = appSettings.Database.MinPoolSize;
+                    sqlSugarOptions.MaxPoolSize = appSettings.Database.MaxPoolSize;
+                    sqlSugarOptions.ConnectionLifetime = appSettings.Database.ConnectionLifetime;
                 }
-                
-                // 配置读写分离
-                sqlSugarOptions.EnableReadWriteSeparation = appSettings.Database.EnableReadWriteSeparation;
-                if (appSettings.Database.EnableReadWriteSeparation)
+                catch
                 {
-                    // 添加从库连接字符串
-                    sqlSugarOptions.SlaveConnectionStrings.Add(appSettings.Database.GetReadConnectionString());
+                    // 测试环境可能没有AppSettings，使用默认值
+                    if (string.IsNullOrEmpty(sqlSugarOptions.ConnectionString))
+                    {
+                        sqlSugarOptions.ConnectionString = connectionStrings.DefaultConnection ?? string.Empty;
+                    }
                 }
                 
                 return CreateSqlSugarClient(sqlSugarOptions, logger);
@@ -117,7 +133,12 @@ namespace FakeMicro.DatabaseAccess
                 _ => "Connection Timeout"
             };
             
-            connectionConfig.ConnectionString += $@";Pooling=true;Maximum Pool Size={options.ConnectionPoolSize};{timeoutParam}={options.ConnectionTimeout}";
+            // 使用Options中的连接池配置
+            var minPoolSize = options.MinPoolSize;
+            var maxPoolSize = options.MaxPoolSize;
+            var connectionLifetime = options.ConnectionLifetime;
+            
+            connectionConfig.ConnectionString += $@";Pooling=true;Minimum Pool Size={minPoolSize};Maximum Pool Size={maxPoolSize};Connection Lifetime={connectionLifetime};{timeoutParam}={options.ConnectionTimeout}";
 
             // 配置读写分离
             if (options.EnableReadWriteSeparation && options.SlaveConnectionStrings.Any())

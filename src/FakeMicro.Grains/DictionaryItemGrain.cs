@@ -11,15 +11,13 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 字典项管理Grain实现
     /// </summary>
-    public class DictionaryItemGrain : Grain, IDictionaryItemGrain
+    public class DictionaryItemGrain : OrleansGrainBase, IDictionaryItemGrain
     {
         private readonly IDictionaryItemRepository _dictionaryItemRepository;
-        private readonly ILogger<DictionaryItemGrain> _logger;
 
-        public DictionaryItemGrain(IDictionaryItemRepository dictionaryItemRepository, ILogger<DictionaryItemGrain> logger)
+        public DictionaryItemGrain(IDictionaryItemRepository dictionaryItemRepository, ILogger<DictionaryItemGrain> logger) : base(logger)
         {
             _dictionaryItemRepository = dictionaryItemRepository;
-            _logger = logger;
         }
 
         public async Task<DictionaryItem> GetDictionaryItemAsync()
@@ -29,14 +27,14 @@ namespace FakeMicro.Grains
                 var primaryKeyString = this.GetPrimaryKeyString();
                 if (!long.TryParse(primaryKeyString, out long id))
                 {
-                    _logger.LogError("无效的字典项ID格式: {Id}", primaryKeyString);
+                    LogError(null, "无效的字典项ID格式: {Id}", primaryKeyString);
                     throw new ArgumentException("无效的字典项ID格式", nameof(primaryKeyString));
                 }
                 return await _dictionaryItemRepository.GetByIdAsync(id);
             }
             catch (System.Exception ex)
             {
-                _logger.LogError(ex, "获取字典项详情失败: {Id}", this.GetPrimaryKeyString());
+                LogError(ex, "获取字典项详情失败: {Id}", this.GetPrimaryKeyString());
                 throw;
             }
         }
@@ -106,15 +104,13 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 字典项管理服务Grain实现
     /// </summary>
-    public class DictionaryItemService : Grain, IDictionaryItemService
+    public class DictionaryItemService : OrleansGrainBase, IDictionaryItemService
     {
         private readonly IDictionaryItemRepository _dictionaryItemRepository;
-        private readonly ILogger<DictionaryItemService> _logger;
 
-        public DictionaryItemService(IDictionaryItemRepository dictionaryItemRepository, ILogger<DictionaryItemService> logger)
+        public DictionaryItemService(IDictionaryItemRepository dictionaryItemRepository, ILogger<DictionaryItemService> logger) : base(logger)
         {
             _dictionaryItemRepository = dictionaryItemRepository;
-            _logger = logger;
         }
 
         public async Task<List<DictionaryItem>> GetByDictionaryTypeIdAsync(long typeId)
@@ -140,7 +136,7 @@ namespace FakeMicro.Grains
             }
             catch (System.Exception ex)
             {
-                _logger.LogError(ex, "根据字典类型编码获取字典项列表失败: {Code}", code);
+                LogError(ex, "根据字典类型编码获取字典项列表失败: {Code}", code);
                 throw;
             }
         }

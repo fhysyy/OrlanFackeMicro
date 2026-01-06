@@ -10,15 +10,16 @@ using System.Dynamic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
 
 namespace FakeMicro.Grains
 {
-    public class ManagerVersionGrain : Grain, IManagerVersion
+    public class ManagerVersionGrain : OrleansGrainBase, IManagerVersion
     {
         private readonly IManagerVersionRepository _managerVersionRepository;
         private readonly string _databaseName; // 添加数据库名称字段
         
-        public ManagerVersionGrain(IManagerVersionRepository managerVersionRepository)
+        public ManagerVersionGrain(IManagerVersionRepository managerVersionRepository, ILogger<ManagerVersionGrain> logger) : base(logger)
         {
             _managerVersionRepository = managerVersionRepository;
             _databaseName = "your-database-name"; // 可以从配置中获取，这里示例直接赋值

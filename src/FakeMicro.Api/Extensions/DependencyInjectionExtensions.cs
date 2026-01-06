@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using FakeMicro.Api.Services;
 using FakeMicro.Api.Config;
 using FakeMicro.DatabaseAccess;
@@ -12,6 +13,11 @@ using Hangfire.PostgreSql;
 using FakeMicro.Utilities.Configuration;
 using FakeMicro.Utilities.CodeGenerator.DependencyInjection;
 using FakeMicro.Api.Security;
+using FakeMicro.Grains.Eventing;
+using FakeMicro.Interfaces.Eventing;
+using FakeMicro.Grains.Services;
+using FakeMicro.Grains.Extensions;
+using StackExchange.Redis;
 using System;
 using Orleans.Hosting;
 using Prometheus.Client.AspNetCore;
@@ -110,6 +116,9 @@ public static class DependencyInjectionExtensions
             options.EnableAlerting = true;
         });
         
+        // 注册Grain服务
+        builder.Services.AddGrainServices();
+        
         // 配置OpenTelemetry
         builder.Services.AddOpenTelemetry()
             .WithMetrics(builder =>
@@ -149,6 +158,34 @@ public static class DependencyInjectionExtensions
 
         // 注册用户服务
         builder.Services.AddScoped<IUserService, SimpleUserService>();
+        
+        // 注册事件流服务
+        builder.Services.AddSingleton<IStreamProviderFactory, StreamProviderFactory>();
+        builder.Services.AddSingleton<IEventPublisher, OrleansEventPublisher>();
+        builder.Services.AddSingleton<IEventSubscriber, OrleansEventSubscriber>();
+        builder.Services.AddSingleton<IEventStreamProvider, OrleansEventStreamProvider>();
+        
+        // 注册Redis缓存服务
+        if (appSettings.Redis != null && !string.IsNullOrEmpty(appSettings.Redis.ConnectionString))
+        {
+            builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+            {
+                var config = ConfigurationOptions.Parse(appSettings.Redis.ConnectionString);
+                config.ConnectTimeout = appSettings.Redis.ConnectTimeout;
+                config.SyncTimeout = appSettings.Redis.SyncTimeout;
+                config.AllowAdmin = appSettings.Redis.AllowAdmin;
+                return ConnectionMultiplexer.Connect(config);
+            });
+            
+            builder.Services.AddSingleton<IRedisCacheProvider>(sp =>
+            {
+                var redis = sp.GetRequiredService<IConnectionMultiplexer>();
+                var logger = sp.GetRequiredService<ILogger<RedisCacheProvider>>();
+                return new RedisCacheProvider(redis, logger, appSettings.Redis.Database);
+            });
+            
+            builder.Services.AddSingleton<IRedisCacheManager, RedisCacheManager>();
+        }
         
         // 不再需要注册OrleansDatabaseFixService为IHostedService，因为在Program.cs中已经手动调用了修复逻辑
     }

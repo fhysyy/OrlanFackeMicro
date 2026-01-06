@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces.Attributes;
+using Orleans;
+using Orleans.Concurrency;
 
 namespace FakeMicro.Interfaces
 {
@@ -15,6 +17,8 @@ namespace FakeMicro.Interfaces
         /// 获取字典项详情
         /// </summary>
         /// <returns>字典项实体</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<DictionaryItem> GetDictionaryItemAsync();
 
         /// <summary>
@@ -44,6 +48,8 @@ namespace FakeMicro.Interfaces
         /// <param name="value">字典项值</param>
         /// <param name="excludeId">排除的ID（用于更新场景）</param>
         /// <returns>是否存在</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> ValueExistsAsync(long dictionaryTypeId, string value, long excludeId = 0);
     }
 
@@ -57,6 +63,8 @@ namespace FakeMicro.Interfaces
         /// </summary>
         /// <param name="typeId">字典类型ID</param>
         /// <returns>字典项列表</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<DictionaryItem>> GetByDictionaryTypeIdAsync(long typeId);
 
         /// <summary>
@@ -64,6 +72,8 @@ namespace FakeMicro.Interfaces
         /// </summary>
         /// <param name="code">字典类型编码</param>
         /// <returns>字典项列表</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<DictionaryItem>> GetByDictionaryTypeCodeAsync(string code);
     }
 }

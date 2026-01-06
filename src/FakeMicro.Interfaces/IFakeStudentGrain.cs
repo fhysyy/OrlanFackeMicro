@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Orleans;  // Orleans Grain 接口支持
+using Orleans.Concurrency;
 using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Interfaces.Models.Results;
@@ -23,11 +24,15 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取FakeStudent
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<FakeStudentDto?> GetAsync(CancellationToken cancellationToken = default);
         
         /// <summary>
         /// 通过Grain ID获取FakeStudent实体
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<FakeStudent?> GetByGrainIdAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -48,16 +53,22 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 获取FakeStudent列表
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<FakeStudentDto>> GetListAsync(int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 获取FakeStudent总数
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<int> GetCountAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 搜索FakeStudent
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<FakeStudentDto>> SearchAsync(string keyword, int page = 1, int pageSize = 20, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -68,6 +79,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 验证FakeStudent数据
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<InterfacesValidationResult> ValidateAsync(FakeStudentDto data, CancellationToken cancellationToken = default);
     }
 }

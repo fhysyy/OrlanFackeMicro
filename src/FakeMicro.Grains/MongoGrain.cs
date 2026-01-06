@@ -18,14 +18,17 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using ZstdSharp.Unsafe;
+using Microsoft.Extensions.Logging;
+
 namespace FakeMicro.Grains
 {
-    public class MongoGrain : Grain, IMongoGrain
+    public class MongoGrain : OrleansGrainBase, IMongoGrain
     {
         private readonly IMongoActRepository mongoActRepository;
-        public MongoGrain(IMongoActRepository _mongoActRepository) {
 
-            mongoActRepository= _mongoActRepository;
+        public MongoGrain(IMongoActRepository _mongoActRepository, ILogger<MongoGrain> logger) : base(logger)
+        {
+            mongoActRepository = _mongoActRepository;
         }
         public async Task<BaseResultModel> DataInfo(string formName, string id)
         {

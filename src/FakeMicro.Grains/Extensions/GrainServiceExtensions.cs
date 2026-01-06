@@ -17,6 +17,9 @@ namespace FakeMicro.Grains.Extensions
         /// <returns>服务集合</returns>
         public static IServiceCollection AddGrainServices(this IServiceCollection services)
         {
+            // 注册日志服务
+            services.AddSingleton<ILoggerService, LoggerService>();
+            
             // 注册知识库服务
             //services.AddScoped<IKnowledgeBaseService, KnowledgeBaseService>();
             

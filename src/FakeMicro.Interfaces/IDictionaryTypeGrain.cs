@@ -4,6 +4,7 @@ using FakeMicro.Entities;
 using FakeMicro.Interfaces.Models;
 using FakeMicro.Utilities;
 using Orleans;
+using Orleans.Concurrency;
 namespace FakeMicro.Interfaces
 {
     /// <summary>
@@ -15,6 +16,8 @@ namespace FakeMicro.Interfaces
         /// 获取字典类型详情
         /// </summary>
         /// <returns>字典类型实体</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<DictionaryType> GetDictionaryTypeAsync();
 
         /// <summary>
@@ -43,6 +46,8 @@ namespace FakeMicro.Interfaces
         /// <param name="code">字典类型编码</param>
         /// <param name="excludeId">排除的ID（用于更新场景）</param>
         /// <returns>是否存在</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> CodeExistsAsync(string code, long excludeId = 0);
     }
 
@@ -59,6 +64,8 @@ namespace FakeMicro.Interfaces
         /// <param name="keyword">关键字</param>
         /// <param name="isEnabled">是否启用</param>
         /// <returns>分页结果</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<IPaginatedResult<DictionaryType>> GetDictionaryTypesAsync(int page, int pageSize, string? keyword = null, bool? isEnabled = null);
     }
 }

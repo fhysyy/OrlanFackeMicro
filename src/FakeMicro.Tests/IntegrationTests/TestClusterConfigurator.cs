@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
@@ -15,6 +16,21 @@ namespace FakeMicro.Tests.IntegrationTests
             siloBuilder.AddMemoryGrainStorageAsDefault();
             siloBuilder.AddMemoryGrainStorage("UserStateStore");
             siloBuilder.AddMemoryGrainStorage("PubSubStore");
+
+            siloBuilder.AddMemoryStreams("SMSProvider");
+            siloBuilder.AddMemoryStreams("DefaultStream");
+            siloBuilder.AddMemoryStreams("UserEventsStream");
+            siloBuilder.AddMemoryStreams("MessageEventsStream");
+            siloBuilder.AddMemoryStreams("AuthEventsStream");
+
+            siloBuilder.UseInMemoryReminderService();
+
+            // 注册服务依赖
+            siloBuilder.ConfigureServices(services =>
+            {
+                services.AddSingleton<FakeMicro.DatabaseAccess.IMessageRepository, FakeMicro.Tests.TestHelpers.MemoryMessageRepository>();
+                services.AddSingleton<FakeMicro.Interfaces.Events.IEventPublisher, FakeMicro.Tests.TestHelpers.MemoryEventPublisher>();
+            });
 
             siloBuilder.ConfigureLogging(logging =>
             {

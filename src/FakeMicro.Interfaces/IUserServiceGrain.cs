@@ -1,5 +1,6 @@
 using FakeMicro.Interfaces.Models;
 using Orleans;
+using Orleans.Concurrency;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -34,21 +35,29 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 根据用户名或邮箱查找用户
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<long?> FindUserByUsernameOrEmailAsync(string usernameOrEmail, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 验证用户权限
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> ValidateUserPermissionAsync(long userId, string resource, string permissionType, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 获取用户统计信息
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<UserStatistics> GetUserStatisticsAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
         /// 获取用户列表
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<UserDto>> GetUsersAsync(string? username = null, string? email = null, string? status = null, CancellationToken cancellationToken = default);
     }
 }

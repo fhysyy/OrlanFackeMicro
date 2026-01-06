@@ -49,14 +49,7 @@ namespace FakeMicro.Api
             // 修复Orleans数据库表的大小写敏感性问题
            // await FixOrleansDatabaseTables(builder.Configuration);
             
-            // 配置Orleans Silo
-            var configuration = builder.Configuration;
-          
-            // 从appsettings.json中读取Orleans端口配置
-            var siloPort = appSettings.Orleans.SiloPort;
-            var gatewayPort = appSettings.Orleans.GatewayPort;
-            
-            // 配置Orleans Silo - 同时启动Silo和Client
+            // 配置Orleans Silo - Silo内置了Client功能，不需要单独配置Client
             builder.Host.ConfigureOrleansSilo();
             
             // 添加必要的服务

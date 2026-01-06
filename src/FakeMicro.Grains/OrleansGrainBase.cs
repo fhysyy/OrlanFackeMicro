@@ -16,7 +16,7 @@ namespace FakeMicro.Grains
     /// Orleans通用Grain基类（无状态版本）
     /// 遵循Orleans 9.x最佳实践
     /// </summary>
-    public abstract class OrleansGrainBase:Grain
+    public abstract class OrleansGrainBase : Grain
     {
         protected readonly ILogger _logger;
         protected readonly IGrainContext? _grainContext;

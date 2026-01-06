@@ -11,6 +11,7 @@ public class AppSettings
 {
     public DatabaseConfig Database { get; set; } = new();
     public OrleansConfig Orleans { get; set; } = new();
+    public RedisConfig Redis { get; set; } = new();
     public JwtSettings Jwt { get; set; } = new();
     public RabbitMQConfig RabbitMQ { get; set; } = new();
     public RateLimitConfig RateLimit { get; set; } = new();
@@ -20,7 +21,7 @@ public class AppSettings
     public CorsConfig Cors { get; set; } = new();
     public AnomalyDetectionConfig AnomalyDetection { get; set; } = new();
     public HangfireConfig Hangfire { get; set; } = new();
-    public CapConfig CAP { get; set; } = new(); // 添加CAP配置
+    public CapConfig CAP { get; set; } = new();
 }
 
 /// <summary>
@@ -151,6 +152,84 @@ public class OrleansConfig
     public int DashboardPort { get; set; } = 8080;
     public string DashboardHost { get; set; } = "localhost";
     public int DashboardUpdateIntervalMs { get; set; } = 2000;
+    
+    /// <summary>
+    /// 流提供程序配置
+    /// </summary>
+    public StreamProvidersConfig StreamProviders { get; set; } = new();
+}
+
+/// <summary>
+/// 流提供程序配置
+/// </summary>
+public class StreamProvidersConfig
+{
+    /// <summary>
+    /// 简单消息流提供程序
+    /// </summary>
+    public StreamProviderConfig SimpleMessageStream { get; set; } = new()
+    {
+        ProviderType = "Simple",
+        Enabled = true
+    };
+    
+    /// <summary>
+    /// Azure队列流提供程序
+    /// </summary>
+    public StreamProviderConfig AzureQueueStream { get; set; } = new()
+    {
+        ProviderType = "AzureQueue",
+        Enabled = false
+    };
+    
+    /// <summary>
+    /// Kafka流提供程序
+    /// </summary>
+    public StreamProviderConfig KafkaStream { get; set; } = new()
+    {
+        ProviderType = "Kafka",
+        Enabled = false
+    };
+}
+
+/// <summary>
+/// 流提供程序配置
+/// </summary>
+public class StreamProviderConfig
+{
+    /// <summary>
+    /// 提供程序类型
+    /// </summary>
+    public string ProviderType { get; set; } = string.Empty;
+    
+    /// <summary>
+    /// 是否启用
+    /// </summary>
+    public bool Enabled { get; set; } = false;
+    
+    /// <summary>
+    /// 连接字符串（用于AzureQueue等）
+    /// </summary>
+    public string? ConnectionString { get; set; }
+    
+    /// <summary>
+    /// Bootstrap服务器（用于Kafka等）
+    /// </summary>
+    public string? BootstrapServers { get; set; }
+}
+
+/// <summary>
+/// Redis配置
+/// </summary>
+public class RedisConfig
+{
+    public string ConnectionString { get; set; } = "localhost:6789";
+    public int Database { get; set; } = 0;
+    public int ConnectTimeout { get; set; } = 5000;
+    public int SyncTimeout { get; set; } = 5000;
+    public bool AllowAdmin { get; set; } = false;
+    public int DefaultExpirationMinutes { get; set; } = 60;
+    public bool UseRedisClustering { get; set; } = false;
 }
 
 

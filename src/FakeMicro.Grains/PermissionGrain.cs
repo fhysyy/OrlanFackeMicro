@@ -11,27 +11,15 @@ using System.Linq;
 
 namespace FakeMicro.Grains
 {
-    public class PermissionGrain : Grain, IPermissionGrain
+    public class PermissionGrain : OrleansGrainBase, IPermissionGrain
     {
-        // 暂时注释掉导致编译错误的依赖
-        // private readonly IPermissionRepository _permissionRepository;
-        // private readonly IRoleRepository _roleRepository;
         private readonly IUserRepository _userRepository;
-        // private readonly IAuditLogRepository _auditLogRepository;
-        private readonly ILogger<PermissionGrain> _logger;
 
         public PermissionGrain(
-            // IPermissionRepository permissionRepository,
-            // IRoleRepository roleRepository,
             IUserRepository userRepository,
-            // IAuditLogRepository auditLogRepository,
-            ILogger<PermissionGrain> logger)
+            ILogger<PermissionGrain> logger) : base(logger)
         {
-            // _permissionRepository = permissionRepository;
-            // _roleRepository = roleRepository;
             _userRepository = userRepository;
-            // _auditLogRepository = auditLogRepository;
-            _logger = logger;
         }
 
         public async Task<bool> HasPermissionAsync(long userId, string resource, string permissionType)

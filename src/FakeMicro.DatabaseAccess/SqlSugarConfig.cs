@@ -53,6 +53,21 @@ public static class SqlSugarConfig
         public int ConnectionPoolSize { get; set; } = 50;
 
         /// <summary>
+        /// 最小连接池大小
+        /// </summary>
+        public int MinPoolSize { get; set; } = 5;
+
+        /// <summary>
+        /// 最大连接池大小
+        /// </summary>
+        public int MaxPoolSize { get; set; } = 100;
+
+        /// <summary>
+        /// 连接生命周期（秒）
+        /// </summary>
+        public int ConnectionLifetime { get; set; } = 300;
+
+        /// <summary>
         /// 连接超时时间（秒）
         /// </summary>
         public int ConnectionTimeout { get; set; } = 30;

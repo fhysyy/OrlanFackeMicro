@@ -1,5 +1,6 @@
 using FakeMicro.Interfaces.Attributes;
 using Orleans;
+using Orleans.Concurrency;
 
 namespace FakeMicro.Interfaces
 {
@@ -19,6 +20,8 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 验证Token
         /// </summary>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<UserAuthResult> ValidateTokenAsync(string token);
         
         /// <summary>
@@ -29,6 +32,7 @@ namespace FakeMicro.Interfaces
         /// <summary>
         /// 用户登出
         /// </summary>
+        [AlwaysInterleave]
         Task LogoutAsync();
         
         /// <summary>

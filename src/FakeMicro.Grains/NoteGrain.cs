@@ -13,16 +13,14 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 笔记Grain实现
     /// </summary>
-    public class NoteGrain : Grain, INoteGrain
+    public class NoteGrain : OrleansGrainBase, INoteGrain
     {
-        private readonly ILogger<NoteGrain> _logger;
         private readonly INoteRepository _repository;
 
         public NoteGrain(
             ILogger<NoteGrain> logger,
-            INoteRepository repository)
+            INoteRepository repository) : base(logger)
         {
-            _logger = logger;
             _repository = repository;
         }
 

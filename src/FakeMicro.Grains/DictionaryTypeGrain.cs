@@ -11,15 +11,13 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 字典类型管理Grain实现
     /// </summary>
-    public class DictionaryTypeGrain : Grain, IDictionaryTypeGrain
+    public class DictionaryTypeGrain : OrleansGrainBase, IDictionaryTypeGrain
     {
         private readonly IDictionaryTypeRepository _dictionaryTypeRepository;
-        private readonly ILogger<DictionaryTypeGrain> _logger;
 
-        public DictionaryTypeGrain(IDictionaryTypeRepository dictionaryTypeRepository, ILogger<DictionaryTypeGrain> logger)
+        public DictionaryTypeGrain(IDictionaryTypeRepository dictionaryTypeRepository, ILogger<DictionaryTypeGrain> logger) : base(logger)
         {
             _dictionaryTypeRepository = dictionaryTypeRepository;
-            _logger = logger;
         }
 
         public async Task<DictionaryType> GetDictionaryTypeAsync()
@@ -107,15 +105,13 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 字典类型管理服务Grain实现
     /// </summary>
-    public class DictionaryTypeService : Grain, IDictionaryTypeService
+    public class DictionaryTypeService : OrleansGrainBase, IDictionaryTypeService
     {
         private readonly IDictionaryTypeRepository _dictionaryTypeRepository;
-        private readonly ILogger<DictionaryTypeService> _logger;
 
-        public DictionaryTypeService(IDictionaryTypeRepository dictionaryTypeRepository, ILogger<DictionaryTypeService> logger)
+        public DictionaryTypeService(IDictionaryTypeRepository dictionaryTypeRepository, ILogger<DictionaryTypeService> logger) : base(logger)
         {
             _dictionaryTypeRepository = dictionaryTypeRepository;
-            _logger = logger;
         }
 
         public async Task<IPaginatedResult<DictionaryType>> GetDictionaryTypesAsync(int page, int pageSize, string? keyword = null, bool? isEnabled = null)

@@ -8,7 +8,7 @@ namespace FakeMicro.Grains.Eventing
     /// <summary>
     /// 简化版事件流提供程序（基于内存实现）
     /// </summary>
-    public class SimpleEventStreamProvider : IGrainObserver, IEventPublisher, IEventSubscriber
+    public class SimpleEventStreamProvider : IGrainObserver, ISimpleEventPublisher, ISimpleEventSubscriber
     {
         private readonly ILoggerService _logger;
         private readonly ConcurrentDictionary<string, ConcurrentBag<ISimpleEventObserver>> _subscribers;
@@ -97,17 +97,17 @@ namespace FakeMicro.Grains.Eventing
     }
 
     /// <summary>
-    /// 事件发布接口
+    /// 事件发布接口（简化版）
     /// </summary>
-    public interface IEventPublisher
+    public interface ISimpleEventPublisher
     {
         Task PublishAsync<TEvent>(TEvent @event, string streamNamespace) where TEvent : class;
     }
 
     /// <summary>
-    /// 事件订阅接口
+    /// 事件订阅接口（简化版）
     /// </summary>
-    public interface IEventSubscriber
+    public interface ISimpleEventSubscriber
     {
         Task SubscribeAsync<TEvent>(string streamNamespace, ISimpleEventObserver observer) where TEvent : class;
         Task UnsubscribeAsync(string streamNamespace, ISimpleEventObserver observer);

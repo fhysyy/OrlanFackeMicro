@@ -7,8 +7,8 @@ using FakeMicro.Utilities.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Logging;
 using Orleans.Storage;
-using System;
 using OrleansDashboard;
+using Orleans.Streaming;
 
 namespace FakeMicro.Utilities.Configuration;
 
@@ -28,6 +28,7 @@ public static class OrleansConfigurationExtensions
             ConfigureClustering(clientBuilder, appSettings);
             ConfigureMessaging(clientBuilder);
             ConfigureLogging(clientBuilder);
+            ConfigureStreaming(clientBuilder);
         });
 
         return services;
@@ -69,6 +70,7 @@ public static class OrleansConfigurationExtensions
             ConfigureMessaging(siloBuilder);
             ConfigureClusteringOptions(siloBuilder);
             ConfigureLogging(siloBuilder);
+            ConfigureStreaming(siloBuilder);
             
             // 配置OrleansDashboard
             ConfigureDashboard(siloBuilder, appSettings);
@@ -306,5 +308,29 @@ public static class OrleansConfigurationExtensions
                 options.CounterUpdateIntervalMs = 1000;
             });
         }
+    }
+
+    /// <summary>
+    /// 配置流（Client）
+    /// </summary>
+    private static void ConfigureStreaming(IClientBuilder builder)
+    {
+        builder.AddMemoryStreams("SMSProvider");
+        builder.AddMemoryStreams("DefaultStream");
+        builder.AddMemoryStreams("UserEventsStream");
+        builder.AddMemoryStreams("MessageEventsStream");
+        builder.AddMemoryStreams("AuthEventsStream");
+    }
+
+    /// <summary>
+    /// 配置流（Silo）
+    /// </summary>
+    private static void ConfigureStreaming(ISiloBuilder builder)
+    {
+        builder.AddMemoryStreams("SMSProvider");
+        builder.AddMemoryStreams("DefaultStream");
+        builder.AddMemoryStreams("UserEventsStream");
+        builder.AddMemoryStreams("MessageEventsStream");
+        builder.AddMemoryStreams("AuthEventsStream");
     }
 }

@@ -24,6 +24,7 @@
     <PackageReference Include="Microsoft.Orleans.Clustering.AdoNet" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Core" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Runtime" Version="9.2.1" />
+    <PackageReference Include="Microsoft.Orleans.Streaming" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Persistence.AdoNet" Version="9.2.1" />
     <PackageReference Include="Microsoft.Orleans.Persistence.Memory" Version="9.2.1" />
     <PackageReference Include="OrleansDashboard" Version="8.2.0" />

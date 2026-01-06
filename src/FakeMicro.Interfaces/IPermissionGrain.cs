@@ -1,5 +1,6 @@
  using FakeMicro.Interfaces.Models;
 using Orleans;
+using Orleans.Concurrency;
 
 namespace FakeMicro.Interfaces;
 
@@ -11,16 +12,22 @@ public interface IPermissionGrain : IGrainWithStringKey
     /// <summary>
     /// 检查用户权限
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<bool> HasPermissionAsync(long userId, string resource, string permissionType);
     
     /// <summary>
     /// 获取用户所有权限
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<PermissionDto>> GetUserPermissionsAsync(long userId);
     
     /// <summary>
     /// 获取角色权限
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<PermissionDto>> GetRolePermissionsAsync(long roleId);
     
     /// <summary>
@@ -56,16 +63,22 @@ public interface IPermissionGrain : IGrainWithStringKey
     /// <summary>
     /// 获取所有权限
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<PermissionDto>> GetAllPermissionsAsync();
     
     /// <summary>
     /// 获取所有角色
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<RoleDto>> GetAllRolesAsync();
     
     /// <summary>
     /// 获取用户角色
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<RoleDto>> GetUserRolesAsync(long userId);
     
     /// <summary>
@@ -76,5 +89,7 @@ public interface IPermissionGrain : IGrainWithStringKey
     /// <summary>
     /// 获取审计日志
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<AuditLogDto>> GetAuditLogsAsync(DateTime? startDate = null, DateTime? endDate = null, long? userId = null);
 }

@@ -28,7 +28,7 @@ namespace FakeMicro.Grains
 {
     [StatelessWorker(10)] // 设置为无状态工作者，提高吞吐量
     [Reentrant]
-    public class UserServiceGrain : Grain, IUserServiceGrain
+    public class UserServiceGrain : OrleansGrainBase, IUserServiceGrain
     {
         private readonly ILogger<UserServiceGrain> _logger;
         private readonly JwtSettings _jwtSettings;
@@ -41,9 +41,8 @@ namespace FakeMicro.Grains
             IOptions<JwtSettings> jwtSettings, 
             IUserRepository userRepository,
             ITransactionService transactionService,
-            IGrainFactory grainFactory)
+            IGrainFactory grainFactory) : base(logger)
         {
-            _logger = logger;
             _jwtSettings = jwtSettings.Value;
             _userRepository = userRepository;
             _transactionService = transactionService;

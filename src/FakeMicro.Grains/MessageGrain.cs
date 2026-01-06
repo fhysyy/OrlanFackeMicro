@@ -6,24 +6,23 @@ using FakeMicro.Interfaces.Models;
 using Microsoft.Extensions.Logging;
 using Orleans;
 using FakeMicro.DatabaseAccess;
+using Newtonsoft.Json;
 
 namespace FakeMicro.Grains
 {
     /// <summary>
     /// 消息Grain实现
     /// </summary>
-    public class MessageGrain : Grain, IMessageGrain
+    public class MessageGrain : OrleansGrainBase, IMessageGrain
     {
         private readonly IMessageRepository _messageRepository;
         private readonly IEventPublisher _eventPublisher;
-        private readonly ILogger<MessageGrain> _logger;
         private Message? _currentMessage;
 
-        public MessageGrain(IMessageRepository messageRepository, IEventPublisher eventPublisher, ILogger<MessageGrain> logger)
+        public MessageGrain(IMessageRepository messageRepository, IEventPublisher eventPublisher, ILogger<MessageGrain> logger) : base(logger)
         {
             _messageRepository = messageRepository;
             _eventPublisher = eventPublisher;
-            _logger = logger;
         }
 
         public override async Task OnActivateAsync(CancellationToken cancellationToken)
@@ -51,7 +50,7 @@ namespace FakeMicro.Grains
                    status = FakeMicro.Entities.Enums.MessageStatus.Pending.ToString(),
                     scheduled_at = request.ScheduledAt,
                     expires_at = request.ExpiresAt,
-                    metadata = request.Metadata != null ? System.Text.Json.JsonSerializer.Serialize(request.Metadata) : null
+                    metadata = request.Metadata != null ? JsonConvert.SerializeObject(request.Metadata) : null
                 };
 
                 _currentMessage = await _messageRepository.AddAsync(message);
@@ -110,7 +109,7 @@ namespace FakeMicro.Grains
                 FailedAt = _currentMessage.failed_at,
                 RetryCount = _currentMessage.retry_count,
                 ErrorMessage = _currentMessage.error_message,
-                Metadata = _currentMessage.metadata != null ? System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(_currentMessage.metadata) : new Dictionary<string, object>(),
+                Metadata = _currentMessage.metadata != null ? JsonConvert.DeserializeObject<Dictionary<string, object>>(_currentMessage.metadata) : new Dictionary<string, object>(),
                 ScheduledAt = _currentMessage.scheduled_at,
                 ExpiresAt = _currentMessage.expires_at,
                 CreatedAt = _currentMessage.CreatedAt,
@@ -204,16 +203,14 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 消息模板Grain实现
     /// </summary>
-    public class MessageTemplateGrain : Grain, IMessageTemplateGrain
+    public class MessageTemplateGrain : OrleansGrainBase, IMessageTemplateGrain
     {
         private readonly IMessageTemplateRepository _templateRepository;
-        private readonly ILogger<MessageTemplateGrain> _logger;
         private MessageTemplate? _currentTemplate;
 
-        public MessageTemplateGrain(IMessageTemplateRepository templateRepository, ILogger<MessageTemplateGrain> logger)
+        public MessageTemplateGrain(IMessageTemplateRepository templateRepository, ILogger<MessageTemplateGrain> logger) : base(logger)
         {
             _templateRepository = templateRepository;
-            _logger = logger;
         }
 
         public override async Task OnActivateAsync(CancellationToken cancellationToken)
@@ -282,17 +279,15 @@ namespace FakeMicro.Grains
     /// <summary>
     /// 消息服务Grain实现
     /// </summary>
-    public class MessageServiceGrain : Grain, IMessageServiceGrain
+    public class MessageServiceGrain : OrleansGrainBase, IMessageServiceGrain
     {
         private readonly IMessageRepository _messageRepository;
         private readonly IClusterClient _clusterClient;
-        private readonly ILogger<MessageServiceGrain> _logger;
 
-        public MessageServiceGrain(IMessageRepository messageRepository, IClusterClient clusterClient, ILogger<MessageServiceGrain> logger)
+        public MessageServiceGrain(IMessageRepository messageRepository, IClusterClient clusterClient, ILogger<MessageServiceGrain> logger) : base(logger)
         {
             _messageRepository = messageRepository;
             _clusterClient = clusterClient;
-            _logger = logger;
         }
 
         public async Task<BatchMessageResult> SendBatchMessagesAsync(List<MessageRequest> requests)

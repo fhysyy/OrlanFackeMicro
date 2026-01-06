@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Orleans;
+using Orleans.Concurrency;
 using FakeMicro.Entities;
 using FakeMicro.Entities.Enums;
 using FakeMicro.Interfaces.Models;
@@ -19,6 +20,8 @@ namespace FakeMicro.Interfaces
         /// </summary>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>表单配置实体</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<FormConfigDto?> GetAsync(CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -59,6 +62,8 @@ namespace FakeMicro.Interfaces
         /// <param name="excludeId">排除的ID（用于更新场景）</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>是否存在</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<bool> CodeExistsAsync(string code, string excludeId = "", CancellationToken cancellationToken = default);
     }
 
@@ -73,6 +78,8 @@ namespace FakeMicro.Interfaces
         /// <param name="query">查询参数</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>分页结果</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<PaginatedResult<FormConfigDto>> GetFormConfigsAsync(FormConfigQueryDto query, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -81,6 +88,8 @@ namespace FakeMicro.Interfaces
         /// <param name="status">状态筛选</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>表单配置列表</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<List<FormConfigDto>> GetAllFormConfigsAsync(FormConfigStatus? status = null, CancellationToken cancellationToken = default);
 
         /// <summary>
@@ -89,6 +98,8 @@ namespace FakeMicro.Interfaces
         /// <param name="code">表单编码</param>
         /// <param name="cancellationToken">取消令牌</param>
         /// <returns>表单配置实体</returns>
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<FormConfigDto?> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     }
 }

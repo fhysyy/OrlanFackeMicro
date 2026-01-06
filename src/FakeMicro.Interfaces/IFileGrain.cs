@@ -1,5 +1,6 @@
 using FakeMicro.Entities;
 using Orleans;
+using Orleans.Concurrency;
 using FileInfo = FakeMicro.Entities.FileInfo;
 
 namespace FakeMicro.Interfaces;
@@ -17,16 +18,22 @@ public interface IFileGrain :IGrainWithStringKey
     /// <summary>
     /// 下载文件
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<FileDownloadResult> DownloadFileAsync(long fileId);
     
     /// <summary>
     /// 获取文件信息
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<FileInfo> GetFileInfoAsync(long fileId);
     
     /// <summary>
     /// 生成预览地址
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<FilePreviewResult> GeneratePreviewUrlAsync(long fileId);
     
     /// <summary>
@@ -37,6 +44,8 @@ public interface IFileGrain :IGrainWithStringKey
     /// <summary>
     /// 获取用户文件列表
     /// </summary>
+    [ReadOnly]
+    [AlwaysInterleave]
     Task<List<FileInfo>> GetUserFilesAsync(int userId);
 }
 

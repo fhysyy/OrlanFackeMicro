@@ -1,4 +1,5 @@
 using Orleans;
+using Orleans.Concurrency;
 
 namespace FakeMicro.Interfaces
 {
@@ -6,6 +7,8 @@ namespace FakeMicro.Interfaces
     {
         Task<int> IncrementAsync();
         Task<int> DecrementAsync();
+        [ReadOnly]
+        [AlwaysInterleave]
         Task<int> GetCountAsync();
         Task ResetAsync();
     }

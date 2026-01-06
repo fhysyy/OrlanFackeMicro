@@ -1,11 +1,16 @@
 using FakeMicro.Interfaces;
 using Orleans;
+using Microsoft.Extensions.Logging;
 
 namespace FakeMicro.Grains
 {
-    public class CounterGrain : Grain, ICounterGrain
+    public class CounterGrain : OrleansGrainBase, ICounterGrain
     {
         private int _count = 0;
+
+        public CounterGrain(ILogger<CounterGrain> logger) : base(logger)
+        {
+        }
 
         public Task<int> IncrementAsync()
         {
