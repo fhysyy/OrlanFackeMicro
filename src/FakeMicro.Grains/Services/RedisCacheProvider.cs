@@ -2,6 +2,9 @@ using FakeMicro.Interfaces.Services;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System.Text.Json;
+using System.Security.Cryptography;
+using System.Text;
+
 namespace FakeMicro.Grains.Services
 {
     public interface IRedisCacheProvider
@@ -11,6 +14,7 @@ namespace FakeMicro.Grains.Services
         Task RemoveAsync(string key);
         Task<bool> ExistsAsync(string key);
         Task ClearByPatternAsync(string pattern);
+        Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, TimeSpan? expiration = null) where T : class;
     }
 
     public class RedisCacheProvider : IRedisCacheProvider
@@ -19,6 +23,11 @@ namespace FakeMicro.Grains.Services
         private readonly IDatabase _database;
         private readonly ILogger<RedisCacheProvider> _logger;
         private readonly int _databaseId;
+        private static readonly TimeSpan DefaultExpiration = TimeSpan.FromMinutes(30);
+        private static readonly TimeSpan BloomFilterExpiration = TimeSpan.FromHours(24);
+        private const string BloomFilterPrefix = "bloom:";
+        private const string NullCachePrefix = "null:";
+        private static readonly SemaphoreSlim _semaphore = new SemaphoreSlim(100, 100);
 
         public RedisCacheProvider(
             IConnectionMultiplexer redis,
@@ -31,10 +40,21 @@ namespace FakeMicro.Grains.Services
             _database = _redis.GetDatabase(databaseId);
         }
 
+        /// <summary>
+        /// 获取缓存，实现防穿透保护（空值缓存）
+        /// </summary>
         public async Task<T?> GetAsync<T>(string key) where T : class
         {
             try
             {
+                // 检查是否为空值缓存
+                var nullKey = NullCachePrefix + key;
+                if (await _database.KeyExistsAsync(nullKey))
+                {
+                    _logger.LogDebug("命中空值缓存: {Key}", key);
+                    return null;
+                }
+
                 var value = await _database.StringGetAsync(key);
                 if (value.HasValue)
                 {
@@ -53,26 +73,31 @@ namespace FakeMicro.Grains.Services
             }
         }
 
+        /// <summary>
+        /// 设置缓存，添加随机过期时间防止雪崩
+        /// </summary>
         public async Task SetAsync<T>(string key, T value, TimeSpan? expiration = null) where T : class
         {
             try
             {
                 if (value == null)
                 {
-                    _logger.LogWarning("尝试将空值存入Redis缓存: {Key}", key);
+                    // 空值缓存，防止缓存穿透
+                    var nullKey = NullCachePrefix + key;
+                    await _database.StringSetAsync(nullKey, "1", TimeSpan.FromMinutes(5));
+                    _logger.LogDebug("将空值存入Redis缓存: {Key}", key);
                     return;
                 }
 
                 var jsonValue = JsonSerializer.Serialize(value);
-                if (expiration.HasValue)
-                {
-                    await _database.StringSetAsync(key, jsonValue, expiration.Value);
-                }
-                else
-                {
-                    await _database.StringSetAsync(key, jsonValue);
-                }
-                _logger.LogDebug("将数据存入Redis缓存成功: {Key}", key);
+                
+                // 添加随机过期时间（±10%），防止缓存雪崩
+                var finalExpiration = expiration ?? DefaultExpiration;
+                var randomOffset = TimeSpan.FromSeconds(Random.Shared.Next(-(int)(finalExpiration.TotalSeconds * 0.1), (int)(finalExpiration.TotalSeconds * 0.1)));
+                finalExpiration = finalExpiration.Add(randomOffset);
+
+                await _database.StringSetAsync(key, jsonValue, finalExpiration);
+                _logger.LogDebug("将数据存入Redis缓存成功: {Key}, 过期时间: {Expiration}", key, finalExpiration);
             }
             catch (Exception ex)
             {
@@ -81,11 +106,98 @@ namespace FakeMicro.Grains.Services
             }
         }
 
+        /// <summary>
+        /// 获取或设置缓存，使用分布式锁防止击穿
+        /// </summary>
+        public async Task<T?> GetOrSetAsync<T>(string key, Func<Task<T?>> factory, TimeSpan? expiration = null) where T : class
+        {
+            try
+            {
+                // 先尝试从缓存获取
+                var cached = await GetAsync<T>(key);
+                if (cached != null)
+                {
+                    return cached;
+                }
+
+                // 使用分布式锁防止缓存击穿
+                var lockKey = $"lock:{key}";
+                var lockValue = Guid.NewGuid().ToString();
+                var lockExpiry = TimeSpan.FromSeconds(10);
+
+                // 尝试获取锁
+                var lockAcquired = await _database.StringSetAsync(lockKey, lockValue, lockExpiry, When.NotExists);
+
+                if (lockAcquired)
+                {
+                    try
+                    {
+                        _logger.LogDebug("获取分布式锁成功: {LockKey}", lockKey);
+
+                        // 双重检查：再次尝试从缓存获取
+                        cached = await GetAsync<T>(key);
+                        if (cached != null)
+                        {
+                            return cached;
+                        }
+
+                        // 从数据源获取数据
+                        var value = await factory();
+                        
+                        // 设置缓存（包括空值）
+                        await SetAsync(key, value, expiration);
+
+                        return value;
+                    }
+                    finally
+                    {
+                        // 释放锁
+                        var script = @"
+                            if redis.call('get', KEYS[1]) == ARGV[1] then
+                                return redis.call('del', KEYS[1])
+                            else
+                                return 0
+                            end";
+                        await _database.ScriptEvaluateAsync(script, new RedisKey[] { lockKey }, new RedisValue[] { lockValue });
+                        _logger.LogDebug("释放分布式锁: {LockKey}", lockKey);
+                    }
+                }
+                else
+                {
+                    // 未获取到锁，等待一段时间后重试
+                    _logger.LogDebug("未获取到分布式锁，等待后重试: {LockKey}", lockKey);
+                    await Task.Delay(100);
+                    
+                    // 重试获取缓存
+                    cached = await GetAsync<T>(key);
+                    if (cached != null)
+                    {
+                        return cached;
+                    }
+
+                    // 降级处理：直接查询数据源
+                    _logger.LogWarning("多次重试失败，直接查询数据源: {Key}", key);
+                    return await factory();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetOrSet操作失败: {Key}", key);
+                // 降级：直接从数据源获取
+                return await factory();
+            }
+        }
+
         public async Task RemoveAsync(string key)
         {
             try
             {
                 await _database.KeyDeleteAsync(key);
+                
+                // 同时删除空值缓存
+                var nullKey = NullCachePrefix + key;
+                await _database.KeyDeleteAsync(nullKey);
+                
                 _logger.LogDebug("从Redis缓存移除数据成功: {Key}", key);
             }
             catch (Exception ex)

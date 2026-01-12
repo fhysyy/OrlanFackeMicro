@@ -86,6 +86,7 @@ public static class DependencyInjectionExtensions
         });
 
         // 添加认证和授权策略
+        builder.Services.AddJwtAuthentication();
         builder.Services.AddAuthorizationPolicies();
 
         // 配置CAP事件总线服务
@@ -228,9 +229,9 @@ public static class DependencyInjectionExtensions
         // 注册幂等性中间件
         app.UseIdempotency();
 
-        // 暂时注释掉认证和授权中间件，因为JWT认证服务已被注释
-        // app.UseAuthentication();
-        // app.UseAuthorization();
+        // 启用认证和授权中间件
+        app.UseAuthentication();
+        app.UseAuthorization();
 
         // 配置OpenTelemetry Prometheus指标端点
         app.UseOpenTelemetryPrometheusScrapingEndpoint();

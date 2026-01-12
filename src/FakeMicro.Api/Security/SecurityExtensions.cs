@@ -7,6 +7,8 @@ using FakeMicro.Api.Security;
 using FakeMicro.Utilities.Configuration;
 using Microsoft.AspNetCore.Builder;
 using System;
+using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace FakeMicro.Api.Extensions
 {
@@ -20,10 +22,43 @@ namespace FakeMicro.Api.Extensions
         /// </summary>
         public static IServiceCollection AddJwtAuthentication(this IServiceCollection services)
         {
+            // 从配置中获取JWT设置
+            var configuration = services.BuildServiceProvider().GetRequiredService<IConfiguration>();
+            var appSettings = configuration.GetAppSettings();
+            
             services.AddAuthentication(options =>
             {
-                // JWT认证配置已移至集中式配置服务
+                options.DefaultAuthenticateScheme = "Bearer";
+                options.DefaultChallengeScheme = "Bearer";
+                options.DefaultScheme = "Bearer";
+            })
+            .AddJwtBearer("Bearer", options =>
+            {
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = appSettings.Jwt.Issuer,
+                    ValidAudience = appSettings.Jwt.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appSettings.Jwt.SecretKey))
+                };
+                
+                // 可选：配置Token验证事件
+                options.Events = new Microsoft.AspNetCore.Authentication.JwtBearer.JwtBearerEvents
+                {
+                    OnAuthenticationFailed = context =>
+                    {
+                        if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+                        {
+                            context.Response.Headers.Add("Token-Expired", "true");
+                        }
+                        return Task.CompletedTask;
+                    }
+                };
             });
+            
             return services;
         }
 
@@ -36,17 +71,21 @@ namespace FakeMicro.Api.Extensions
             {
                 // 管理员策略
                 options.AddPolicy("Admin", policy =>
-                    policy.RequireRole("Admin"));
+                    policy.RequireRole("Admin", "SUPER_ADMIN"));
 
                 // 系统管理员策略
                 options.AddPolicy("SystemAdmin", policy =>
-                    policy.RequireRole("SystemAdmin"));
+                    policy.RequireRole("SystemAdmin", "SUPER_ADMIN"));
+
+                // 超级管理员策略
+                options.AddPolicy("SuperAdmin", policy =>
+                    policy.RequireRole("SUPER_ADMIN"));
 
                 options.AddPolicy("AdminOnly", policy =>
-                    policy.RequireRole("Admin"));
+                    policy.RequireRole("Admin", "SUPER_ADMIN"));
 
                 options.AddPolicy("UserOrAdmin", policy =>
-                    policy.RequireRole("User", "Admin"));
+                    policy.RequireRole("User", "Admin", "SUPER_ADMIN"));
 
                 options.AddPolicy("ApiAccess", policy =>
                     policy.RequireAuthenticatedUser());

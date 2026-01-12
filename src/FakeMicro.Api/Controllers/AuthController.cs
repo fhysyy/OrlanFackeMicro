@@ -37,12 +37,8 @@ namespace FakeMicro.Api.Controllers
                 _logger.LogInformation("[{RequestId}] 用户注册请求 - 用户名: {Username}, 邮箱: {Email}", 
                     requestId, request.Username, request.Email);
                 
-                var authGrain = _clusterClient.GetGrain<IAuthGrain>("auth");
-                var result = await authGrain.RegisterAsync(
-                    request.Username, 
-                    request.Email, 
-                    request.Password, 
-                    request.DisplayName);
+                var authGrain = _clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
+                var result = await authGrain.RegisterAsync(request);
 
                 if (result.Success)
                 {
@@ -84,8 +80,8 @@ namespace FakeMicro.Api.Controllers
             {
                 _logger.LogInformation("[{RequestId}] 用户登录请求 - 用户名: {Username}", requestId, request.UsernameOrEmail);
                 
-                var authGrain = _clusterClient.GetGrain<IAuthGrain>("auth");
-                var result = await authGrain.LoginAsync(request.UsernameOrEmail, request.Password);
+                var authGrain = _clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
+                var result = await authGrain.LoginAsync(request);
 
                 if (result.Success)
                 {
@@ -131,9 +127,9 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                // 使用UserServiceGrain进行令牌刷新，支持分布式事务
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
-                var result = await userServiceGrain.RefreshTokenAsync(request);
+                // 使用AuthenticationGrain进行令牌刷新
+                var authGrain = _clusterClient.GetGrain<IAuthenticationGrain>(Guid.Empty);
+                var result = await authGrain.RefreshTokenAsync(request);
 
                 if (result.Success)
                 {
@@ -423,8 +419,8 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
-                var userId = await userServiceGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
+                var userQueryGrain = _clusterClient.GetGrain<IUserQueryGrain>(Guid.Empty);
+                var userId = await userQueryGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
 
                 if (userId.HasValue)
                 {
@@ -455,8 +451,8 @@ namespace FakeMicro.Api.Controllers
         {
             try
             {
-                var userServiceGrain = _clusterClient.GetGrain<IUserServiceGrain>(Guid.Empty);
-                var userId = await userServiceGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
+                var userQueryGrain = _clusterClient.GetGrain<IUserQueryGrain>(Guid.Empty);
+                var userId = await userQueryGrain.FindUserByUsernameOrEmailAsync(request.UsernameOrEmail);
 
                 if (userId.HasValue)
                 {

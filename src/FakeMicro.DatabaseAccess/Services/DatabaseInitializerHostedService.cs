@@ -436,21 +436,22 @@ namespace FakeMicro.DatabaseAccess.Services
         /// </summary>
         private async Task SeedAdminUserAsync(ISqlSugarClient db)
         {
-            var adminExists = await db.Queryable<User>()
+            var adminUser = await db.Queryable<User>()
                 .Where(x => x.username == "admin")
-                .AnyAsync();
+                .FirstAsync();
 
-            if (!adminExists)
+            // 使用与 AuthGrain 完全一致的密码哈希生成逻辑
+            var combinedHash = CryptoHelper.GeneratePasswordHash("admin123");
+            var hashBytes = Convert.FromBase64String(combinedHash);
+            var salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
+            var hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
+            
+            var snowflakeGenerator = new SnowflakeIdGenerator(1); // 机器ID为1
+
+            if (adminUser == null)
             {
-                // 使用PBKDF2密码哈希生成逻辑
-                var combinedHash = CryptoHelper.GeneratePasswordHash("admin123");
-                var hashBytes = Convert.FromBase64String(combinedHash);
-                var salt = Convert.ToBase64String(hashBytes.Take(16).ToArray());
-                var hash = Convert.ToBase64String(hashBytes.Skip(16).ToArray());
-                
-                var snowflakeGenerator = new SnowflakeIdGenerator(1); // 机器ID为1
-
-                var adminUser = new User
+                // 创建新用户
+                adminUser = new User
                 {
                     id = snowflakeGenerator.NextId(),
                     username = "admin",
@@ -470,14 +471,38 @@ namespace FakeMicro.DatabaseAccess.Services
                     last_login_at = DateTime.UtcNow,
                     tenant_id = 100,
                     locked_until = DateTime.UtcNow,
-                    refresh_token=Guid.NewGuid().ToString(),
-                    refresh_token_expiry=DateTime.UtcNow.AddDays(1),
-                    deleted_at = DateTime.UtcNow,
+                    refresh_token = Guid.NewGuid().ToString(),
+                    refresh_token_expiry = DateTime.UtcNow.AddDays(1),
+                    deleted_at = null, // 修复：设置为 null 表示未删除
                     is_deleted = false,
                 };
 
                 await db.Insertable(adminUser).ExecuteCommandAsync();
                 _logger.LogInformation("创建默认管理员用户: admin (密码: admin123)");
+            }
+            else
+            {
+                // 更新现有用户的密码哈希和其他字段
+                adminUser.password_hash = hash;
+                adminUser.password_salt = salt;
+                adminUser.is_active = true;
+                adminUser.status = "Active";
+                adminUser.deleted_at = null;
+                adminUser.is_deleted = false;
+                adminUser.UpdatedAt = DateTime.UtcNow;
+                
+                // 确保所有 DateTime 属性都是 UTC 时间
+                if (adminUser.CreatedAt.Kind != DateTimeKind.Utc)
+                    adminUser.CreatedAt = DateTime.SpecifyKind(adminUser.CreatedAt, DateTimeKind.Utc);
+                if (adminUser.last_login_at.HasValue && adminUser.last_login_at.Value.Kind != DateTimeKind.Utc)
+                    adminUser.last_login_at = DateTime.SpecifyKind(adminUser.last_login_at.Value, DateTimeKind.Utc);
+                if (adminUser.locked_until.HasValue && adminUser.locked_until.Value.Kind != DateTimeKind.Utc)
+                    adminUser.locked_until = DateTime.SpecifyKind(adminUser.locked_until.Value, DateTimeKind.Utc);
+                if (adminUser.refresh_token_expiry.HasValue && adminUser.refresh_token_expiry.Value.Kind != DateTimeKind.Utc)
+                    adminUser.refresh_token_expiry = DateTime.SpecifyKind(adminUser.refresh_token_expiry.Value, DateTimeKind.Utc);
+
+                await db.Updateable(adminUser).ExecuteCommandAsync();
+                _logger.LogInformation("更新默认管理员用户密码哈希: admin (密码: admin123)");
             }
         }
 

@@ -377,23 +377,25 @@ namespace FakeMicro.Grains
         {
             try
             {
+                // 调试：详细打印角色数组内容
+                LogInformation("GenerateJwtToken 接收到的角色数组: {Roles}", string.Join(", ", roles));
+                LogInformation("角色数组长度: {Count}", roles?.Length ?? 0);
+                
+                // 打印每个角色的详细信息
+                if (roles != null)
+                {
+                    for (int i = 0; i < roles.Length; i++)
+                    {
+                        LogInformation("角色 {Index}: '{Value}' (长度: {Length})", i, roles[i], roles[i]?.Length ?? 0);
+                    }
+                }
+                
                 var tokenHandler = new JwtSecurityTokenHandler();
 
-                // 使用与API项目一致的密钥处理逻辑
-                var secretKey = _jwtSettings.SecretKey ?? "a-string-secret-at-least-256-bits-long";
-
-                // 如果密钥长度不够，使用SHA256加密（与API项目保持一致）
-                if (string.IsNullOrEmpty(secretKey))
-                {
-                    secretKey = "a-string-secret-at-least-256-bits-long";
-                }
-                else if (secretKey.Length < 32)
-                {
-                    using var sha256 = System.Security.Cryptography.SHA256.Create();
-                    var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(secretKey));
-                    secretKey = System.Convert.ToBase64String(hashedBytes).Substring(0, 32);
-                }
-
+                // 使用与API项目完全一致的密钥处理逻辑
+                var secretKey = _jwtSettings.SecretKey ?? "a-string-secret-at-least-256-bits-long-for-development-only";
+                
+                // 直接使用配置的密钥，不进行额外的处理，确保与API项目验证时一致
                 var key = Encoding.UTF8.GetBytes(secretKey);
 
                 // 创建声明列表 - 与API项目完全一致
@@ -406,17 +408,17 @@ namespace FakeMicro.Grains
                     new Claim(JwtRegisteredClaimNames.Iat, DateTimeOffset.UtcNow.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),// 明确使用unique_name
                 };
 
-                // claims.Add(new Claim(ClaimTypes.Role, user.Role))
-                // 添加角色声明，与API项目完全一致
+                // 添加角色声明，确保只添加一次
                 if (roles != null)
                 {
-                    foreach (var role in roles)
+                    var uniqueRoles = roles.Where(r => !string.IsNullOrEmpty(r)).Distinct().ToList();
+                    LogInformation("去重后的角色列表: {Roles}", string.Join(", ", uniqueRoles));
+                    
+                    foreach (var role in uniqueRoles)
                     {
-                        if (!string.IsNullOrEmpty(role))
-                        {
-                            claims.Add(new Claim("role", role));
-                            claims.Add(new Claim(ClaimTypes.Role, role));
-                        }
+                        // 只添加 "role" 声明，避免与 API 项目的角色验证冲突
+                        claims.Add(new Claim("role", role));
+                        LogInformation("添加角色声明: '{Role}'", role);
                     }
                 }
                 // 添加所有角色声明，与API项目保持一致
@@ -437,7 +439,7 @@ namespace FakeMicro.Grains
                     Subject = new ClaimsIdentity(claims),
                     Expires = DateTime.UtcNow.AddMinutes(_jwtSettings.ExpireMinutes > 0 ? _jwtSettings.ExpireMinutes : 60),
                     Issuer = !string.IsNullOrEmpty(_jwtSettings.Issuer) ? _jwtSettings.Issuer : "FakeMicro",
-                    Audience = "FakeMicro-Users",
+                    Audience = !string.IsNullOrEmpty(_jwtSettings.Audience) ? _jwtSettings.Audience : "FakeMicro-Users",
                     //_jwtSettings.Audience ??
                     //Claims = claims.ToDictionary(c => c.Type, c => (object)c.Value),
                     SigningCredentials = new SigningCredentials(
